@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+target/
+.pnpm-store/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.db
+*.db-shm
+*.db-wal
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dojo
+chain/dojo/target/
+torii.db*
+
+# Noir
+zk/circuits/*/target/
+zk/circuits/*/Prover.toml
+zk/circuits/*/Verifier.toml
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary
+tmp/
+temp/
+*.tmp
+dojo-intro/
+*.bak

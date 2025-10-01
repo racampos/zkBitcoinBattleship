@@ -1,42 +1,47 @@
 # Development Progress - ZK Battleship
 
-## ✅ Phase 1: Core Infrastructure - Day 1 (IN PROGRESS)
+## ✅ Phase 1: Core Infrastructure - Day 1 (MAJOR MILESTONE!)
 
 ### Completed
 
 - ✅ **Tooling Setup**
-
-  - Dojo 1.7.0 installed (sozo, katana, torii)
-  - Scarb 2.12.2 installed
+  - Katana 1.7.0-alpha.4-dev installed and running
+  - Sozo 1.7.0-alpha.0 installed and working
+  - Scarb 2.12.2 installed and configured
   - PATH configured correctly
+  - dev-env.sh script created for easy setup
 
 - ✅ **Repository Structure**
-
   - Monorepo created with all directories
-  - Git initialized
+  - Git initialized with first commit
   - .gitignore configured
 
 - ✅ **Dojo Project Setup**
-
   - Scarb.toml configured (Cairo 2.12.2, Dojo 1.7.0)
-  - dojo_dev.toml configured
+  - dojo_dev.toml configured with world address
+  - katana.toml and torii.toml created
   - **PROJECT COMPILES SUCCESSFULLY** ✅
 
 - ✅ **All 11 Models Defined** (Dojo 1.7.0 syntax)
-
-  - ✅ Game (with GameStatus constants)
+  - ✅ Game (with GameStatus constants as u8)
   - ✅ StartCommit, StartReveal (coin-flip)
   - ✅ BoardCommit, CellHit, ShipAliveCount
   - ✅ PendingShot, AttackerShot, Shot, NullifierSet
   - ✅ Escrow
 
 - ✅ **First System**
-
   - ✅ game_management.cairo (create_game function)
 
 - ✅ **Helper Modules**
   - ✅ constants.cairo (all domain tags & timeouts)
   - ✅ errors.cairo (Cairo 2.12 compatible)
+
+- ✅ **DEPLOYMENT SUCCESS**
+  - ✅ World deployed at: `0x04b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69`
+  - ✅ All 11 models synced on-chain
+  - ✅ game_management system deployed
+  - ✅ create_game function tested - 2 games created successfully
+  - ✅ Katana devnet running on localhost:5050
 
 ### Next Steps (Today - Day 1 continues)
 
@@ -55,11 +60,11 @@
 - [ ] `systems/coin_flip.cairo` - coin-flip commit/reveal
 - [ ] `systems/timeout.cairo` - timeout, resign, cancel
 
-**Priority 3: Test Local**
+**Priority 3: Test Local** ✅ COMPLETED
 
-- [ ] Start Katana local devnet
-- [ ] Deploy with `sozo migrate`
-- [ ] Test create_game function
+- ✅ Katana local devnet running
+- ✅ Deployed with `sozo migrate`
+- ✅ Tested create_game function - works perfectly!
 
 ## Build Command
 
@@ -88,8 +93,17 @@ sozo test
 - ✅ Use `core::poseidon::poseidon_hash_span` for hashing
 - ✅ Use `core::panic_with_felt252` for errors
 
+### ⚠️ Known Issues
+
+**Torii Indexer (Non-blocking):**
+- Torii 1.7.0-alpha.0 has RPC version mismatch with Katana 1.7.0-alpha.4
+- **Impact:** Cannot use Torii GraphQL indexer currently
+- **Workaround:** Direct RPC queries work, all sozo commands work
+- **Status:** Low priority - development can continue without it
+- **See:** DEPLOYMENT_NOTES.md for details
+
 ## Time Estimate
 
-- **Completed**: ~4 hours (setup + first models)
-- **Remaining Day 1**: ~4-6 hours (helpers + core systems)
+- **Completed**: ~5 hours (setup + models + deployment)
+- **Remaining Day 1**: ~3-5 hours (helpers + core systems)
 - **Total for MVP**: Still on track for 2-week timeline

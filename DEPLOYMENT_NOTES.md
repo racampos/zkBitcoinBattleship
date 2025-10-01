@@ -4,12 +4,12 @@
 
 **Date:** September 30, 2025
 
-### Working Configuration
+### Working Configuration ✅
 
-**Dojo Toolchain:**
-- **Katana**: 1.7.0-alpha.4-dev (c4403da)
-- **Sozo**: 1.7.0-alpha.0
-- **Torii**: 1.7.0-alpha.0 (NOT currently working)
+**Dojo Toolchain (All Working!):**
+- **Katana**: 1.7.0-alpha.4-dev (c4403da) ✅
+- **Sozo**: 1.7.1 ✅
+- **Torii**: 1.7.0-alpha.4 ✅ **NOW WORKING!**
 - **Scarb**: 2.12.2
 - **Cairo**: 2.12.2
 
@@ -37,18 +37,18 @@
 - Games created with correct parameters
 - Gas usage: ~2.3M L2 gas per game creation
 
-### Known Issues
+### ✅ Torii Now Working!
 
-**Torii Indexer:**
-- ❌ Version mismatch: Torii 1.7.0-alpha.0 expects Katana RPC v0.9, but Katana 1.7.0-alpha.4 provides v0.8.1
-- **Impact:** Cannot start Torii indexer for GraphQL queries
-- **Workaround:** Direct RPC queries work, sozo commands work
-- **Resolution:** Either upgrade Katana or downgrade Torii - to be addressed later
+**Resolution:** Upgraded to matching versions
+- **Torii**: 1.7.0-alpha.4 (matches Katana 1.7.0-alpha.4)
+- **Sozo**: 1.7.1 (compatible with both)
+- **Port**: Running on 8081 (default 8080 had conflicts)
 
-**Model Queries:**
-- `sozo model get` returns empty data (likely needs Torii)
-- Events show correct data being written
-- Contracts are functional despite indexing issues
+**Verified Working:**
+- ✅ All 11 models registered
+- ✅ Game entities indexed
+- ✅ GraphQL playground available at http://127.0.0.1:8081/graphql
+- ✅ Real-time indexing working
 
 ### Development Commands
 
@@ -56,25 +56,34 @@
 # Setup environment
 source dev-env.sh  # or: export PATH="$HOME/.local/bin:$PATH" && source ~/.dojo/env
 
-# Build
-cd chain/dojo && sozo build
+# Terminal 1: Start Katana
+cd chain/dojo && katana --dev
 
-# Deploy
+# Terminal 2: Build & Deploy
+cd chain/dojo
+sozo build
 sozo migrate
 
-# Execute
+# Terminal 3: Start Torii (after deployment)
+cd chain/dojo
+torii --world <WORLD_ADDRESS> --http.port 8081
+
+# Execute transactions
 sozo execute game_management create_game <p2_address> 10 --wait --receipt
 
-# Query events directly from RPC
-curl -X POST http://localhost:5050 \
+# Query via Torii GraphQL
+curl -X POST http://127.0.0.1:8081/graphql \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"starknet_getTransactionReceipt","params":["<tx_hash>"],"id":1}'
+  -d '{"query": "{ entities { edges { node { keys } } } }"}'
+
+# Or open GraphQL Playground in browser:
+# http://127.0.0.1:8081/graphql
 ```
 
 ### Next Steps
 
 1. ✅ Basic deployment working
-2. ⏳ Implement remaining game systems
-3. ⏳ Address Torii version mismatch (low priority for development)
+2. ✅ Torii indexer working (RESOLVED!)
+3. ⏳ Implement remaining game systems (fire_shot, coin_flip, timeout, etc.)
 4. ⏳ Add ZK circuits and verifiers
 5. ⏳ Build client application

@@ -93,14 +93,15 @@ sozo test
 - ✅ Use `core::poseidon::poseidon_hash_span` for hashing
 - ✅ Use `core::panic_with_felt252` for errors
 
-### ⚠️ Known Issues
+### ✅ Torii Issue Resolved!
 
-**Torii Indexer (Non-blocking):**
-- Torii 1.7.0-alpha.0 has RPC version mismatch with Katana 1.7.0-alpha.4
-- **Impact:** Cannot use Torii GraphQL indexer currently
-- **Workaround:** Direct RPC queries work, all sozo commands work
-- **Status:** Low priority - development can continue without it
-- **See:** DEPLOYMENT_NOTES.md for details
+**Torii Indexer:**
+- ✅ Upgraded to Torii 1.7.0-alpha.4 (matches Katana)
+- ✅ Upgraded to Sozo 1.7.1 (compatible)
+- ✅ Running on port 8081
+- ✅ All 11 models registered
+- ✅ GraphQL playground: http://127.0.0.1:8081/graphql
+- ✅ Real-time indexing working
 
 ## Time Estimate
 

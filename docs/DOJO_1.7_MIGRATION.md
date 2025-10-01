@@ -7,6 +7,7 @@
 ### Models
 
 **Old (0.7.x):**
+
 ```cairo
 #[derive(Copy, Drop, Serde, PartialEq)]
 enum GameStatus {
@@ -22,6 +23,7 @@ struct Game {
 ```
 
 **New (1.7.0):**
+
 ```cairo
 // Enums can't be stored directly - use u8 constants
 pub mod GameStatus {
@@ -44,6 +46,7 @@ pub struct Game {
 ### Systems
 
 **Old (0.7.x):**
+
 ```cairo
 #[system]
 impl IFireShot {
@@ -56,6 +59,7 @@ impl IFireShot {
 ```
 
 **New (1.7.0):**
+
 ```cairo
 #[starknet::interface]
 pub trait IFireShot<T> {
@@ -68,27 +72,27 @@ pub mod fire_shot {
     use dojo::model::ModelStorage;
     use starknet::get_caller_address;
     use crate::Game;
-    
+
     #[abi(embed_v0)]
     impl FireShotImpl of IFireShot<ContractState> {
         fn fire_shot(ref self: ContractState, game_id: felt252, x: u8, y: u8) {
             let mut world = self.world_default();
-            
+
             // Read model
             let mut g: Game = world.read_model(game_id);
-            
+
             // Modify
             g.last_action = get_block_timestamp();
-            
+
             // Write back
             world.write_model(@g);
-            
+
             // Delete model
             let pending = PendingShot { game_id, turn_no: g.turn_no, ...default };
             world.erase_model(@pending);
         }
     }
-    
+
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
@@ -101,6 +105,7 @@ pub mod fire_shot {
 ### Helper Functions
 
 **Old (0.7.x):**
+
 ```cairo
 fn get_attacker_address(game_id: felt252) -> ContractAddress {
     let g = get!(world, Game { id: game_id });
@@ -109,6 +114,7 @@ fn get_attacker_address(game_id: felt252) -> ContractAddress {
 ```
 
 **New (1.7.0):**
+
 ```cairo
 // Helper functions can't access world implicitly - must pass WorldStorage
 use dojo::world::WorldStorage;
@@ -127,6 +133,7 @@ let attacker = get_attacker_address(world, game_id);
 **Concept:** Check if a model exists before reading.
 
 **Old (0.7.x):**
+
 ```cairo
 fn get_opt<T>(world: IWorldDispatcher, entity: T) -> Option<T> {
     let data = get!(world, entity);
@@ -135,34 +142,35 @@ fn get_opt<T>(world: IWorldDispatcher, entity: T) -> Option<T> {
 ```
 
 **New (1.7.0):**
+
 ```cairo
 use dojo::world::WorldStorage;
 
 // Model-specific helpers using sentinel field checks
 pub fn get_opt_board_commit(
-    world: WorldStorage, 
-    game_id: felt252, 
+    world: WorldStorage,
+    game_id: felt252,
     player: ContractAddress
 ) -> Option<BoardCommit> {
     let rec: BoardCommit = world.read_model((game_id, player));
-    if rec.commitment != 0 { 
-        Option::Some(rec) 
-    } else { 
-        Option::None 
+    if rec.commitment != 0 {
+        Option::Some(rec)
+    } else {
+        Option::None
     }
 }
 
 // For ContractAddress fields, convert first:
 pub fn get_opt_pending_shot(
     world: WorldStorage,
-    game_id: felt252, 
+    game_id: felt252,
     turn_no: u32
 ) -> Option<PendingShot> {
     let rec: PendingShot = world.read_model((game_id, turn_no));
     if rec.shooter.into() != 0 { // ContractAddress to felt252
-        Option::Some(rec) 
-    } else { 
-        Option::None 
+        Option::Some(rec)
+    } else {
+        Option::None
     }
 }
 ```
@@ -170,6 +178,7 @@ pub fn get_opt_pending_shot(
 ### Hash Functions
 
 **Old (0.7.x):**
+
 ```cairo
 use starknet::hash::pedersen::pedersen;
 
@@ -177,6 +186,7 @@ let hash = pedersen(a, b);
 ```
 
 **New (1.7.0):**
+
 ```cairo
 use core::poseidon::poseidon_hash_span;
 
@@ -188,11 +198,13 @@ let hash = poseidon_hash_span(input.span());
 ### Errors
 
 **Old (0.7.x):**
+
 ```cairo
 assert(condition, 'ERROR_CODE');
 ```
 
 **New (1.7.0):**
+
 ```cairo
 // Custom require helper
 pub fn require(cond: bool, code: felt252) {
@@ -208,11 +220,13 @@ errors::require(condition, 'ERROR_CODE');
 ### Events
 
 **Old (0.7.x):**
+
 ```cairo
 emit!(world, GameCreated { game_id, p1, p2 });
 ```
 
 **New (1.7.0):**
+
 ```cairo
 // Define events in the contract module
 #[dojo::contract]
@@ -222,14 +236,14 @@ pub mod game_management {
     pub enum Event {
         GameCreated: GameCreated,
     }
-    
+
     #[derive(Drop, starknet::Event)]
     pub struct GameCreated {
         pub game_id: felt252,
         pub p1: ContractAddress,
         pub p2: ContractAddress,
     }
-    
+
     // Emit:
     self.emit(Event::GameCreated(GameCreated { game_id, p1, p2 }));
 }
@@ -266,8 +280,8 @@ world.write_model(@g);
 delete!(world, PendingShot { game_id, turn_no });
 
 // New:
-let pending = PendingShot { 
-    game_id, 
+let pending = PendingShot {
+    game_id,
     turn_no,
     shooter: 0.try_into().unwrap(), // Fill required fields with defaults
     x: 0,
@@ -297,16 +311,17 @@ When implementing systems from IMPLEMENTATION_PLAN.md:
 ## Example: Complete System Translation
 
 **From IMPLEMENTATION_PLAN.md (0.7.x):**
+
 ```cairo
 #[system]
 impl IFireShot {
     fn fire_shot(game_id: felt252, x: u8, y: u8) {
         let mut g = get!(world, Game { id: game_id });
         errors::require(g.status == GameStatus::Started, 'NOT_STARTED');
-        
+
         let pending = get_opt_pending_shot(world, game_id, g.turn_no);
         errors::require(pending.is_none(), 'ALREADY_PENDING');
-        
+
         set!(world, PendingShot { game_id, turn_no: g.turn_no, shooter: get_caller_address(), x, y });
         g.last_action = starknet::get_block_timestamp();
         set!(world, Game { ..g });
@@ -315,6 +330,7 @@ impl IFireShot {
 ```
 
 **Translated to 1.7.0:**
+
 ```cairo
 use starknet::ContractAddress;
 
@@ -330,20 +346,20 @@ pub mod fire_shot {
     use dojo::model::ModelStorage;
     use crate::{Game, PendingShot, GameStatus};
     use crate::helpers::{errors, get_opt};
-    
+
     #[abi(embed_v0)]
     impl FireShotImpl of IFireShot<ContractState> {
         fn fire_shot(ref self: ContractState, game_id: felt252, x: u8, y: u8) {
             let mut world = self.world_default();
-            
+
             // Read game
             let mut g: Game = world.read_model(game_id);
             errors::require(g.status == GameStatus::Started, 'NOT_STARTED');
-            
+
             // Check for pending shot
             let pending = get_opt::get_opt_pending_shot(world, game_id, g.turn_no);
             errors::require(pending.is_none(), 'ALREADY_PENDING');
-            
+
             // Create pending shot
             let pending_shot = PendingShot {
                 game_id,
@@ -353,13 +369,13 @@ pub mod fire_shot {
                 y,
             };
             world.write_model(@pending_shot);
-            
+
             // Update game
             g.last_action = get_block_timestamp();
             world.write_model(@g);
         }
     }
-    
+
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {
@@ -372,11 +388,13 @@ pub mod fire_shot {
 ## Next Steps
 
 As we implement each system, we'll:
+
 1. Reference the IMPLEMENTATION_PLAN.md for the security logic
 2. Translate to Dojo 1.7.0 syntax using this guide
 3. Update this migration guide with any new patterns discovered
 
 The IMPLEMENTATION_PLAN.md remains valuable for:
+
 - Security patterns and guards
 - Helper function logic
 - Game flow and state transitions

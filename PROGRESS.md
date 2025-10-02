@@ -5,6 +5,7 @@
 ### Completed
 
 - ✅ **Tooling Setup**
+
   - Katana 1.7.0-alpha.4-dev installed and running
   - Sozo 1.7.0-alpha.0 installed and working
   - Scarb 2.12.2 installed and configured
@@ -12,17 +13,20 @@
   - dev-env.sh script created for easy setup
 
 - ✅ **Repository Structure**
+
   - Monorepo created with all directories
   - Git initialized with first commit
   - .gitignore configured
 
 - ✅ **Dojo Project Setup**
+
   - Scarb.toml configured (Cairo 2.12.2, Dojo 1.7.0)
   - dojo_dev.toml configured with world address
   - katana.toml and torii.toml created
   - **PROJECT COMPILES SUCCESSFULLY** ✅
 
 - ✅ **All 11 Models Defined** (Dojo 1.7.0 syntax)
+
   - ✅ Game (with GameStatus constants as u8)
   - ✅ StartCommit, StartReveal (coin-flip)
   - ✅ BoardCommit, CellHit, ShipAliveCount
@@ -30,9 +34,11 @@
   - ✅ Escrow
 
 - ✅ **First System**
+
   - ✅ game_management.cairo (create_game function)
 
 - ✅ **Helper Modules**
+
   - ✅ constants.cairo (all domain tags & timeouts)
   - ✅ errors.cairo (Cairo 2.12 compatible)
 
@@ -96,6 +102,7 @@ sozo test
 ### ✅ Torii Issue Resolved!
 
 **Torii Indexer:**
+
 - ✅ Upgraded to Torii 1.7.0-alpha.4 (matches Katana)
 - ✅ Upgraded to Sozo 1.7.1 (compatible)
 - ✅ Running on port 8081

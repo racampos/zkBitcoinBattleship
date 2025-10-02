@@ -15,10 +15,18 @@ pub use models_impl::escrow::Escrow;
 // Systems
 pub mod systems {
     pub mod game_management;
+    pub mod coin_flip;
+    pub mod gameplay;
+    pub mod timeout;
+    pub mod escrow;
+    pub mod board_commit;
+    pub mod proof_verify;
 }
 
 // Helpers
 pub mod helpers {
     pub mod constants;
     pub mod errors;
+    pub mod get_opt;
+    pub mod game_helpers;
 }

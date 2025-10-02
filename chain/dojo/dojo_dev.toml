@@ -15,11 +15,10 @@ world_address = "0x04b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24b
 [writers]
 "battleship" = [
   "battleship-game_management",
-  # Additional systems will be added as they're implemented:
-  # "battleship-coin_flip",
-  # "battleship-board_commit",
-  # "battleship-gameplay",
-  # "battleship-proof_verify",
-  # "battleship-timeout",
-  # "battleship-escrow",
+  "battleship-coin_flip",
+  "battleship-board_commit",
+  "battleship-gameplay",
+  "battleship-proof_verify",
+  "battleship-timeout",
+  "battleship-escrow",
 ]

@@ -1,0 +1,23 @@
+{
+  "name": "battleship-client",
+  "version": "1.0.0",
+  "description": "ZK Battleship Client",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@cartridge/controller": "^0.10.5",
+    "@dojoengine/core": "1.7.1",
+    "@dojoengine/sdk": "^1.7.2",
+    "@dojoengine/torii-client": "1.7.2",
+    "starknet": "^8.5.2"
+  },
+  "devDependencies": {
+    "vite": "^7.1.4",
+    "vite-plugin-mkcert": "^1.17.8",
+    "vite-plugin-wasm": "^3.5.0"
+  }
+}

@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <title>ZK Battleship</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #0a0a0a;
+        color: #e0e0e0;
+      }
+      h1 {
+        color: #4CAF50;
+      }
+      button {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background: #2196F3;
+        color: white;
+      }
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+      button:hover:not(:disabled) {
+        background: #1976D2;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        background: #1a1a1a;
+        border-radius: 8px;
+        border: 1px solid #333;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        background: #2a2a2a;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      #controller-button {
+        background: #FF5722;
+        font-weight: bold;
+      }
+      #controller-button.connected {
+        background: #4CAF50;
+      }
+      .game-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 10px 0;
+      }
+      .info-item {
+        padding: 8px;
+        background: #2a2a2a;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>⚔️ ZK Battleship on Starknet</h1>
+
+    <!-- Connection Section -->
+    <div class="section">
+      <h2>🎮 Controller</h2>
+      <button id="controller-button">Connect Wallet</button>
+      <div id="account-display" class="status">Not connected</div>
+    </div>
+
+    <!-- Game Management -->
+    <div class="section">
+      <h2>🎲 Game Management</h2>
+      <button id="create-game-button" disabled>Create Game</button>
+      <div id="game-id-display" class="status">No game created</div>
+    </div>
+
+    <!-- Coin Flip -->
+    <div class="section">
+      <h2>🪙 Coin Flip</h2>
+      <button id="coin-commit-button" disabled>Commit (Start Game)</button>
+      <button id="coin-reveal-button" disabled>Reveal</button>
+      <div id="coin-status" class="status">Waiting for game...</div>
+    </div>
+
+    <!-- Board Commit -->
+    <div class="section">
+      <h2>🛡️ Board Commitment</h2>
+      <button id="commit-board-button" disabled>Commit Board (Mock Proof)</button>
+      <div id="board-status" class="status">Waiting for game...</div>
+    </div>
+
+    <!-- Gameplay -->
+    <div class="section">
+      <h2>🎯 Gameplay</h2>
+      <div>
+        <label>Target X: <input id="shot-x" type="number" min="0" max="9" value="5" style="width: 60px"></label>
+        <label>Target Y: <input id="shot-y" type="number" min="0" max="9" value="5" style="width: 60px"></label>
+      </div>
+      <button id="fire-shot-button" disabled>Fire Shot</button>
+      <button id="apply-proof-button" disabled>Apply Proof (Defender)</button>
+      <div id="game-status" class="status">No active game</div>
+    </div>
+
+    <!-- Game State -->
+    <div class="section">
+      <h2>📊 Game State</h2>
+      <div class="game-info">
+        <div class="info-item">Status: <span id="status-display">-</span></div>
+        <div class="info-item">Turn: <span id="turn-display">-</span></div>
+        <div class="info-item">P1: <span id="p1-display">-</span></div>
+        <div class="info-item">P2: <span id="p2-display">-</span></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import Controller from '@cartridge/controller';
+      import { init, ToriiQueryBuilder, KeysClause } from '@dojoengine/sdk';
+      import controllerOpts from './controller.js';
+      import { initGame, updateFromEntitiesData } from './game.js';
+      import manifest from '../../chain/dojo/manifest_dev.json' assert { type: 'json' };
+
+      const DOMAIN_SEPARATOR = {
+        name: 'zk-battleship',
+        version: '1.0',
+        chainId: 'KATANA',
+        revision: '1',
+      };
+
+      let currentAccount = null;
+
+      async function run(account) {
+        currentAccount = account;
+
+        const torii = await init({
+          client: {
+            worldAddress: manifest.world.address,
+            toriiUrl: 'http://localhost:8081', // Port 8081 (our custom port)
+          },
+          domain: DOMAIN_SEPARATOR,
+        });
+
+        initGame(account, manifest);
+
+        // Subscribe to game updates
+        const [_, subscription] = await torii.subscribeEntityQuery({
+          query: new ToriiQueryBuilder()
+            .withClause(KeysClause(['battleship-Game'], ['*'], 'Hashed'))
+            .build(),
+          callback: ({ data, error }) => {
+            if (data) {
+              updateFromEntitiesData(data);
+            }
+            if (error) {
+              console.error('Torii error:', error);
+            }
+          },
+        });
+
+        // Unsubscribe on exit
+        window.addEventListener('beforeunload', () => {
+          if (subscription) {
+            subscription.cancel();
+          }
+        });
+
+        console.log('✅ Connected to Dojo world:', manifest.world.address);
+      }
+
+      const controller = new Controller(controllerOpts);
+
+      document.getElementById('controller-button').onclick = async () => {
+        try {
+          let account = await controller.connect();
+
+          document.getElementById('controller-button').textContent = 'Connected';
+          document.getElementById('controller-button').className = 'connected';
+          document.getElementById('account-display').textContent = `Address: ${account.address}`;
+
+          // Enable buttons
+          document.getElementById('create-game-button').disabled = false;
+
+          run(account).catch((error) => {
+            console.error('Error running game:', error);
+          });
+        } catch (error) {
+          console.error('Failed to connect:', error);
+          document.getElementById('controller-button').textContent = 'Connection Failed';
+        }
+      };
+    </script>
+  </body>
+</html>
+

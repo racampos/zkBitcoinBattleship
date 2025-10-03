@@ -2,7 +2,7 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 pub trait IGameManagement<T> {
-    fn create_game(ref self: T, p2: ContractAddress, board_size: u8) -> felt252;
+    fn create_game(ref self: T, p2: ContractAddress, board_size: u8, nonce: felt252) -> felt252;
     fn join_game(ref self: T, game_id: felt252);
 }
 
@@ -18,15 +18,20 @@ pub mod game_management {
     
     #[abi(embed_v0)]
     impl GameManagementImpl of IGameManagement<ContractState> {
-        fn create_game(ref self: ContractState, p2: ContractAddress, board_size: u8) -> felt252 {
+        fn create_game(ref self: ContractState, p2: ContractAddress, board_size: u8, nonce: felt252) -> felt252 {
             let mut world = self.world_default();
             let p1 = get_caller_address();
             
             // Enforce 10×10 board size (circuits hardcoded for this)
             errors::require(board_size == BOARD_SIZE, 'BAD_BOARD_SIZE');
             
-            // Generate unique game ID using poseidon
-            let mut hash_input = array![p1.into(), p2.into(), get_block_timestamp().into()];
+            // Generate unique game ID using poseidon with client-provided random nonce
+            let mut hash_input = array![
+                p1.into(), 
+                p2.into(), 
+                get_block_timestamp().into(),
+                nonce // Random nonce from client ensures uniqueness
+            ];
             let game_id = poseidon_hash_span(hash_input.span());
             
             // Zero ContractAddress for initialization

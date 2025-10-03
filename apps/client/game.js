@@ -27,6 +27,51 @@ window.viewGameHistory = () => {
   return gameStateHistory;
 };
 
+// Check transaction receipt for revert
+async function checkTransactionReceipt(txHash) {
+  try {
+    const response = await fetch('http://localhost:5050', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'starknet_getTransactionReceipt',
+        params: [txHash],
+        id: 1
+      })
+    });
+
+    const data = await response.json();
+    const receipt = data.result;
+
+    if (receipt.execution_status === 'REVERTED') {
+      const revertReason = receipt.revert_reason || 'Unknown error';
+      
+      // Extract readable error codes
+      const errorMatch = revertReason.match(/0x([0-9a-f]+) \('([^']+)'\)/g);
+      const errors = errorMatch ? errorMatch.map(m => {
+        const match = m.match(/\('([^']+)'\)/);
+        return match ? match[1] : m;
+      }) : ['Unknown error'];
+
+      logGameState('Transaction REVERTED', { 
+        tx: txHash, 
+        errors: errors,
+        fullReason: revertReason.substring(0, 200) 
+      });
+
+      return { success: false, errors, fullReason: revertReason };
+    }
+
+    logGameState('Transaction SUCCESS', { tx: txHash });
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error checking receipt:', error);
+    return { success: false, errors: ['Failed to check receipt'] };
+  }
+}
+
 // Export a function to set game ID from URL
 function setGameIdFromUrl(gameId) {
   currentGameId = gameId;
@@ -104,15 +149,25 @@ function initGame(acc, man) {
 
 async function createOpenGame() {
   const zero_address = '0x0'; // Open game - anyone can join
+  
+  // Generate truly unique nonce: timestamp + random bytes
+  const timestamp = Date.now().toString(16).padStart(12, '0');
+  const random1 = Math.random().toString(16).substring(2).padStart(16, '0');
+  const random2 = Math.random().toString(16).substring(2).padStart(16, '0');
+  const random3 = Math.random().toString(16).substring(2).padStart(16, '0');
+  const randomNonce = '0x' + timestamp + random1 + random2 + random3;
 
   document.getElementById('create-open-game-button').disabled = true;
   document.getElementById('game-id-display').textContent = 'Creating open game...';
 
   try {
+    console.log('🎲 Using nonce:', randomNonce);
+    logGameState('Create Game', { nonce: randomNonce });
+    
     const tx = await account.execute({
       contractAddress: getContractAddress('battleship-game_management'),
       entrypoint: 'create_game',
-      calldata: [zero_address, '10'], // p2 = 0 (open), board_size = 10
+      calldata: [zero_address, '10', randomNonce], // p2, board_size, nonce
     });
 
     console.log('✅ Create game tx:', tx.transaction_hash);
@@ -193,30 +248,40 @@ async function joinGame() {
   }
 }
 
-// Poll Torii for the newly created game
+// Poll for the newly created game by checking the transaction receipt
 async function pollForNewGame(txHash) {
   const maxAttempts = 10;
   let attempts = 0;
+  
+  console.log('🔍 Polling for game ID from tx:', txHash);
 
   const checkInterval = setInterval(async () => {
     attempts++;
     
     try {
-      // Query Torii for recent games
-      const response = await fetch('http://localhost:8081/graphql', {
+      // Get transaction receipt which contains the return value (game_id)
+      const response = await fetch('http://localhost:5050', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: `{ entities(first: 5) { edges { node { keys } } } }`
+          jsonrpc: '2.0',
+          method: 'starknet_getTransactionReceipt',
+          params: [txHash],
+          id: 1
         })
       });
 
       const data = await response.json();
+      const receipt = data.result;
       
-      if (data.data?.entities?.edges?.length > 0) {
-        // Get the most recent game ID (last in list)
-        const latestGame = data.data.entities.edges[data.data.entities.edges.length - 1];
-        const gameId = latestGame.node.keys[0];
+      if (receipt && receipt.execution_status === 'SUCCEEDED') {
+        // Look for Game model update event which contains the game_id
+        const gameEvent = receipt.events?.find(e => 
+          e.keys && e.keys.length > 2 && e.keys[1]?.includes('19ecd3fc') // Game model selector
+        );
+        
+        // Game ID is in data[1] (field value), not keys[2] (entity hash)
+        const gameId = gameEvent?.data?.[1];
         
         if (gameId) {
           currentGameId = gameId;
@@ -362,15 +427,31 @@ async function fireShot() {
       calldata: [currentGameId, x, y],
     });
 
-    logGameState('Fire Shot Success', { x, y, tx: tx.transaction_hash });
-    document.getElementById('game-status').textContent = `Shot fired at (${x},${y})! tx: ${tx.transaction_hash.substring(0, 10)}...`;
+    logGameState('Fire Shot TX Sent', { x, y, tx: tx.transaction_hash });
+    document.getElementById('game-status').textContent = `Checking transaction... tx: ${tx.transaction_hash.substring(0, 10)}...`;
     
-    // DON'T optimistically update buttons - wait for Torii
-    // Auto-increment coordinates for next shot
-    document.getElementById('shot-x').value = (parseInt(x) + 1) % 10;
-    
-    // Wait for Torii to update state
-    setTimeout(() => refreshGameState(), 2000);
+    // Check if transaction actually succeeded
+    setTimeout(async () => {
+      const result = await checkTransactionReceipt(tx.transaction_hash);
+      
+      if (result.success) {
+        logGameState('Fire Shot SUCCESS', { x, y });
+        document.getElementById('game-status').textContent = `✅ Shot fired at (${x},${y})! Waiting for defender...`;
+        
+        // Store the shot coordinates for P2 to see
+        console.log(`🎯 P1 fired at: (${x}, ${y}) - P2 must apply proof with these EXACT coordinates!`);
+        
+        // Auto-increment X for next shot (after storing current coords)
+        document.getElementById('shot-x').value = (parseInt(x) + 1) % 10;
+        
+        // Wait for Torii to update state
+        setTimeout(() => refreshGameState(), 2000);
+      } else {
+        logGameState('Fire Shot FAILED', { x, y, errors: result.errors });
+        document.getElementById('game-status').textContent = `❌ Fire shot failed!`;
+        alert(`Fire shot FAILED!\n\nErrors:\n${result.errors.join('\n')}\n\nCheck console for details.`);
+      }
+    }, 3000);
     
   } catch (error) {
     logGameState('Fire Shot FAILED', { error: error.message, x, y });
@@ -396,14 +477,27 @@ async function applyProof() {
       calldata: [currentGameId, x, y, result, nullifier, rulesHash], // No proof parameter!
     });
 
-    logGameState('Apply Proof Success', { x, y, result, tx: tx.transaction_hash });
-    document.getElementById('game-status').textContent = `Proof applied! tx: ${tx.transaction_hash.substring(0, 10)}...`;
+    logGameState('Apply Proof TX Sent', { x, y, result, tx: tx.transaction_hash });
+    document.getElementById('game-status').textContent = `Checking transaction... tx: ${tx.transaction_hash.substring(0, 10)}...`;
 
-    // DON'T optimistically update buttons - wait for Torii to confirm turn flip
-    // Refresh state after a delay
+    // Check if transaction actually succeeded
     setTimeout(async () => {
-      await refreshGameState();
-      logGameState('Post-Proof Refresh', { message: 'State refreshed after proof application' });
+      const receipt = await checkTransactionReceipt(tx.transaction_hash);
+      
+      if (receipt.success) {
+        logGameState('Apply Proof SUCCESS', { x, y, result });
+        document.getElementById('game-status').textContent = `✅ Proof applied! Waiting for turn flip...`;
+        
+        // Refresh state after a delay
+        setTimeout(async () => {
+          await refreshGameState();
+          logGameState('Post-Proof Refresh', { message: 'Turn should have flipped!' });
+        }, 2000);
+      } else {
+        logGameState('Apply Proof FAILED', { x, y, errors: receipt.errors });
+        document.getElementById('game-status').textContent = `❌ Apply proof failed!`;
+        alert(`Apply proof FAILED!\n\nErrors:\n${receipt.errors.join('\n')}\n\nCheck console for details.`);
+      }
     }, 3000);
 
   } catch (error) {

@@ -37,7 +37,7 @@ pub fn get_opt_pending_shot(
     }
 }
 
-// AttackerShot: sentinel on attacker (ContractAddress)
+// AttackerShot: sentinel on fired (the non-key field)
 pub fn get_opt_attacker_shot(
     world: WorldStorage,
     game_id: felt252,
@@ -46,21 +46,23 @@ pub fn get_opt_attacker_shot(
     y: u8
 ) -> Option<AttackerShot> {
     let rec: AttackerShot = world.read_model((game_id, attacker, x, y));
-    if rec.attacker.into() != 0 {
+    // Check 'fired' field since key fields are always populated by Dojo
+    if rec.fired {
         Option::Some(rec)
     } else {
         Option::None
     }
 }
 
-// NullifierSet: sentinel on nullifier field
+// NullifierSet: sentinel on 'used' field (the non-key field)
 pub fn get_opt_nullifier(
     world: WorldStorage,
     game_id: felt252,
     nullifier: felt252
 ) -> Option<NullifierSet> {
     let rec: NullifierSet = world.read_model((game_id, nullifier));
-    if rec.nullifier != 0 {
+    // Check 'used' field since key fields are always populated by Dojo
+    if rec.used {
         Option::Some(rec)
     } else {
         Option::None
@@ -108,7 +110,7 @@ pub fn get_opt_escrow(
     }
 }
 
-// CellHit: sentinel on player (ContractAddress)
+// CellHit: sentinel on 'hit' field (the non-key field)
 pub fn get_opt_cell_hit(
     world: WorldStorage,
     game_id: felt252,
@@ -117,21 +119,23 @@ pub fn get_opt_cell_hit(
     y: u8
 ) -> Option<CellHit> {
     let rec: CellHit = world.read_model((game_id, player, x, y));
-    if rec.player.into() != 0 {
+    // Check 'hit' field since key fields are always populated by Dojo
+    if rec.hit {
         Option::Some(rec)
     } else {
         Option::None
     }
 }
 
-// ShipAliveCount: sentinel on player (ContractAddress)
+// ShipAliveCount: sentinel on remaining_hits (non-zero means record exists)
 pub fn get_opt_ship_alive_count(
     world: WorldStorage,
     game_id: felt252,
     player: ContractAddress
 ) -> Option<ShipAliveCount> {
     let rec: ShipAliveCount = world.read_model((game_id, player));
-    if rec.player.into() != 0 {
+    // Check if remaining_hits is non-zero (default would be 0)
+    if rec.remaining_hits != 0 {
         Option::Some(rec)
     } else {
         Option::None

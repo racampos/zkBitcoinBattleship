@@ -2174,7 +2174,7 @@
     },
     {
       "address": "0x4a3951b0d55ee2a6f6f3884c55ece644c304ffdae7b7b08e2bcface3d2a3d49",
-      "class_hash": "0x4dfc05b1e3e540eddcea61aa72223ebccb5198406f2205ede38a4d46f17c1d6",
+      "class_hash": "0x478ef991036fc9c84163185eace796cf8836ca1215c9a985f6a88934a798af0",
       "abi": [
         {
           "type": "impl",
@@ -2246,6 +2246,10 @@
                 {
                   "name": "board_size",
                   "type": "core::integer::u8"
+                },
+                {
+                  "name": "nonce",
+                  "type": "core::felt252"
                 }
               ],
               "outputs": [
@@ -2395,7 +2399,7 @@
     },
     {
       "address": "0x3fe71030ed839b54e452a40a82e1d19ada3dff8c3d9d2e771094f64ecb9760c",
-      "class_hash": "0x12fbaf9108d4ee30160531297fa039d748160baf081f59c3601aac4bc4b117d",
+      "class_hash": "0x1bf50487dae9892bc0c54e752d62b68dd82f0da3fafd7e879f737d17e4c6867",
       "abi": [
         {
           "type": "impl",
@@ -2603,7 +2607,7 @@
     },
     {
       "address": "0x5a654180ea8ee046abf9b8f4408a7a5b24e517c26e9ebeb0de866cb2fc78632",
-      "class_hash": "0x2aadf53944458fd2f79686f9f118dcce9178ef4a60c57fc466bae88b70909eb",
+      "class_hash": "0x55ec88aa7339726c1b26dfc3b5dcf9d49c2567a5d21a9ad5bfdb295fe1ec18b",
       "abi": [
         {
           "type": "impl",

@@ -97,13 +97,15 @@ function generateRandomBoard() {
   return board;
 }
 
-// Display board as ASCII grid with consistent character widths
-function displayBoard(board) {
-  // Header with proper alignment (matches row number spacing)
-  let html = '<div style="color: #4CAF50; font-weight: bold; margin-bottom: 4px;">&nbsp;&nbsp;0 1 2 3 4 5 6 7 8 9</div>';
+// Display board as ASCII grid with consistent character widths (Battleship style: A-J rows, 1-10 columns)
+function displayBoard(board, elementId = 'board-grid') {
+  const rowLabels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  
+  // Header with column numbers 1-10 (proper alignment)
+  let html = '<div style="color: #4CAF50; font-weight: bold; margin-bottom: 4px;">&nbsp;&nbsp;1 2 3 4 5 6 7 8 9 10</div>';
   
   for (let y = 0; y < 10; y++) {
-    let row = `<div style="margin: 2px 0;">${y}  `;
+    let row = `<div style="margin: 2px 0;">${rowLabels[y]}  `;
     for (let x = 0; x < 10; x++) {
       const cell = board[y][x];
       if (cell === 1) {
@@ -119,22 +121,31 @@ function displayBoard(board) {
     row += '</div>';
     html += row;
   }
-  document.getElementById('board-grid').innerHTML = html;
+  document.getElementById(elementId).innerHTML = html;
 }
 
 function initGame(acc, man) {
   account = acc;
   manifest = man;
   
-  // Generate player's board
+  // Generate player's defense board (my ships)
   window._currentBoard = generateRandomBoard();
-  displayBoard(window._currentBoard);
+  displayBoard(window._currentBoard, 'board-grid');
+  
+  // Initialize opponent tracking board (starts empty - all water)
+  window._opponentBoard = [];
+  for (let i = 0; i < 10; i++) {
+    window._opponentBoard[i] = new Array(10).fill(0);
+  }
+  displayBoard(window._opponentBoard, 'opponent-board-grid');
   
   // Auto-refresh game state every 3 seconds while in active game
   setInterval(() => {
     if (currentGameId && account) {
       // Silent refresh (no logs unless something changes)
       refreshGameState();
+      // Update opponent board to track MY shots against them
+      updateOpponentBoard(currentGameId, account.address);
     }
   }, 3000);
   
@@ -190,16 +201,18 @@ function initGame(acc, man) {
 
   // Random coordinates button
   document.getElementById('random-coords-button').onclick = () => {
-    document.getElementById('shot-x').value = Math.floor(Math.random() * 10);
-    document.getElementById('shot-y').value = Math.floor(Math.random() * 10);
+    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    document.getElementById('shot-row').value = rows[Math.floor(Math.random() * 10)];
+    document.getElementById('shot-col').value = Math.floor(Math.random() * 10) + 1; // 1-10
   };
 
   // Auto-set pending shot coordinates
   document.getElementById('auto-set-coords').onclick = () => {
-    const x = document.getElementById('pending-x').textContent;
-    const y = document.getElementById('pending-y').textContent;
-    document.getElementById('shot-x').value = x;
-    document.getElementById('shot-y').value = y;
+    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    const x = parseInt(document.getElementById('pending-x').textContent);
+    const y = parseInt(document.getElementById('pending-y').textContent);
+    document.getElementById('shot-row').value = rows[y]; // Convert 0-9 to A-J
+    document.getElementById('shot-col').value = x + 1;    // Convert 0-9 to 1-10
   };
 
   // Gameplay
@@ -504,8 +517,18 @@ async function commitBoard() {
 }
 
 async function fireShot() {
-  const x = document.getElementById('shot-x').value;
-  const y = document.getElementById('shot-y').value;
+  // Convert A-J, 1-10 to 0-9, 0-9 for internal use
+  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  const rowInput = document.getElementById('shot-row').value.toUpperCase();
+  const colInput = parseInt(document.getElementById('shot-col').value);
+  
+  const y = rows.indexOf(rowInput);
+  const x = colInput - 1; // Convert 1-10 to 0-9
+  
+  if (y === -1 || x < 0 || x > 9) {
+    alert('Invalid coordinates! Row must be A-J, Column must be 1-10');
+    return;
+  }
 
   try {
     logGameState('Fire Shot Attempt', { x, y, gameId: currentGameId });
@@ -524,14 +547,13 @@ async function fireShot() {
       const result = await checkTransactionReceipt(tx.transaction_hash);
       
       if (result.success) {
+        const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
         logGameState('Fire Shot SUCCESS', { x, y });
-        document.getElementById('game-status').textContent = `✅ Shot fired at (${x},${y})! Waiting for defender...`;
+        document.getElementById('game-status').textContent = `✅ Shot fired at ${rows[y]}${x+1}! Waiting for defender...`;
         
-        // Store the shot coordinates for P2 to see
-        console.log(`🎯 P1 fired at: (${x}, ${y}) - P2 must apply proof with these EXACT coordinates!`);
-        
-        // Auto-increment X for next shot (after storing current coords)
-        document.getElementById('shot-x').value = (parseInt(x) + 1) % 10;
+        // Mark on opponent board as "pending" (will update to hit/miss later)
+        // For now, just mark that we fired there
+        console.log(`🎯 Fired at: ${rows[y]}${x+1} (${x}, ${y}) - Waiting for proof result...`);
         
         // Wait for Torii to update state
         setTimeout(() => refreshGameState(), 2000);
@@ -551,9 +573,24 @@ async function fireShot() {
 }
 
 async function applyProof() {
-  const x = document.getElementById('shot-x').value;
-  const y = document.getElementById('shot-y').value;
-  const result = '1'; // Mock result (hit)
+  // Convert A-J, 1-10 to 0-9, 0-9 for internal use
+  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  const rowInput = document.getElementById('shot-row').value.toUpperCase();
+  const colInput = parseInt(document.getElementById('shot-col').value);
+  
+  const y = rows.indexOf(rowInput);
+  const x = colInput - 1; // Convert 1-10 to 0-9
+  
+  if (y === -1 || x < 0 || x > 9) {
+    alert('Invalid coordinates! Row must be A-J, Column must be 1-10');
+    return;
+  }
+  
+  // Check if this shot hit a ship on OUR board (defender's perspective)
+  const wasHit = window._currentBoard && window._currentBoard[y][x] === 1;
+  const result = wasHit ? '1' : '0'; // 1 = hit, 0 = miss
+  console.log(`🎯 Defender applying proof for shot at (${x}, ${y}): ${wasHit ? 'HIT' : 'MISS'} (result=${result})`);
+  
   const nullifier = '0x' + Math.random().toString(16).substring(2).padStart(64, '0'); // Random nullifier
   const rulesHash = '0x' + 'a'.repeat(64); // Mock rules hash
 
@@ -864,6 +901,85 @@ async function updateBoardWithHits(gameId, player) {
   }
 }
 
+// Query completed shots and update opponent tracking board (MY shots against opponent)
+async function updateOpponentBoard(gameId, myAddress) {
+  try {
+    if (!window._opponentBoard || !myAddress) return;
+    
+    console.log('🔍 Querying MY completed shots for opponent board...');
+    
+    // Query Shot entities where I was the attacker
+    const response = await fetch('http://localhost:8081/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `{ entities(first: 100) { edges { node { models { __typename ... on battleship_AttackerShot { game_id attacker x y fired } ... on battleship_Shot { game_id turn_no x y result } } } } } }`
+      })
+    });
+    
+    const result = await response.json();
+    
+    // Find MY shots (where I'm the attacker) and their results
+    const myShots = new Map(); // Map of "x,y" -> result
+    
+    // First pass: collect all MY AttackerShot coordinates
+    result.data?.entities?.edges.forEach(edge => {
+      const attackerShot = edge.node?.models?.find(m => 
+        m.__typename === 'battleship_AttackerShot' && 
+        m.game_id === gameId &&
+        m.attacker?.toLowerCase() === myAddress?.toLowerCase() &&
+        m.fired
+      );
+      
+      if (attackerShot) {
+        const key = `${attackerShot.x},${attackerShot.y}`;
+        myShots.set(key, null); // Mark as fired, result unknown yet
+      }
+    });
+    
+    // Second pass: find Shot results for MY coordinates
+    result.data?.entities?.edges.forEach(edge => {
+      const shot = edge.node?.models?.find(m => 
+        m.__typename === 'battleship_Shot' && 
+        m.game_id === gameId
+      );
+      
+      if (shot) {
+        const key = `${shot.x},${shot.y}`;
+        if (myShots.has(key)) {
+          // This is MY shot with a result
+          const resultValue = parseInt(shot.result);
+          myShots.set(key, resultValue);
+          console.log(`📍 Found result for MY shot at (${shot.x}, ${shot.y}): raw=${shot.result} (type=${typeof shot.result}), parsed=${resultValue}, interpretation=${resultValue === 1 ? 'HIT' : 'MISS'}`);
+        }
+      }
+    });
+    
+    console.log(`📊 Total MY shots tracked: ${myShots.size}`);
+    console.log(`📊 MY shots with results:`, Array.from(myShots.entries()).filter(([k, v]) => v !== null));
+    
+    // Update opponent board with MY shots only
+    myShots.forEach((shotResult, coordKey) => {
+      const [x, y] = coordKey.split(',').map(Number);
+      
+      if (x >= 0 && x < 10 && y >= 0 && y < 10 && shotResult !== null) {
+        // result: 1 = hit, 0 = miss
+        const cellValue = shotResult === 1 ? 2 : 3;
+        window._opponentBoard[y][x] = cellValue;
+        console.log(`🎯 Updated opponent board[${y}][${x}] = ${cellValue} (${shotResult === 1 ? 'X' : 'o'})`);
+      }
+    });
+    
+    // Redisplay opponent board
+    if (myShots.size > 0) {
+      displayBoard(window._opponentBoard, 'opponent-board-grid');
+      console.log(`✅ Updated opponent board with ${myShots.size} of MY shots`);
+    }
+  } catch (error) {
+    console.error('Error updating opponent board:', error);
+  }
+}
+
 // Query for pending shot when defending
 async function queryPendingShot(gameId, turnNo) {
   try {
@@ -894,19 +1010,24 @@ async function queryPendingShot(gameId, turnNo) {
     console.log('📡 Pending shot search result:', pendingShot || 'Not found');
     
     if (pendingShot) {
-      document.getElementById('pending-x').textContent = pendingShot.x;
-      document.getElementById('pending-y').textContent = pendingShot.y;
+      const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+      const x = parseInt(pendingShot.x);
+      const y = parseInt(pendingShot.y);
+      const displayCoords = `${rows[y]}${x+1}`;
+      
+      // Display Battleship-style coordinates
+      document.getElementById('pending-coords').textContent = displayCoords;
       document.getElementById('pending-shot-display').style.display = 'block';
       
-      // Auto-set coordinates
-      document.getElementById('shot-x').value = pendingShot.x;
-      document.getElementById('shot-y').value = pendingShot.y;
+      // Auto-set coordinates (convert 0-9 to A-J and 1-10)
+      document.getElementById('shot-row').value = rows[y];
+      document.getElementById('shot-col').value = x + 1;
       
       // Only log once to avoid spam
-      if (!window._lastPendingShot || window._lastPendingShot !== `${pendingShot.x},${pendingShot.y}`) {
-        logGameState('Pending Shot Found', { x: pendingShot.x, y: pendingShot.y });
-        console.log('🎯🎯🎯 Opponent fired at:', pendingShot.x, pendingShot.y, '🎯🎯🎯');
-        window._lastPendingShot = `${pendingShot.x},${pendingShot.y}`;
+      if (!window._lastPendingShot || window._lastPendingShot !== `${x},${y}`) {
+        logGameState('Pending Shot Found', { x, y, display: displayCoords });
+        console.log(`🎯🎯🎯 Opponent fired at: ${displayCoords} 🎯🎯🎯`);
+        window._lastPendingShot = `${x},${y}`;
       }
     } else {
       document.getElementById('pending-shot-display').style.display = 'none';

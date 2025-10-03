@@ -106,7 +106,10 @@
 
     <!-- Board Setup -->
     <div class="section" id="board-section" style="display: none;">
-      <h2>🛡️ Your Board</h2>
+      <h2>🛡️ Your Defense Board</h2>
+      <div class="status" style="font-size: 12px; color: #4CAF50; margin-bottom: 10px;">
+        Ships: Carrier(5), Battleship(4), Cruiser(3), Submarine(3), Destroyer(2)
+      </div>
       <div id="board-display" style="font-family: monospace; font-size: 14px; line-height: 1.4; background: #2a2a2a; padding: 15px; border-radius: 4px; overflow-x: auto;">
         <div id="board-grid">Loading...</div>
       </div>
@@ -123,21 +126,26 @@
 
     <!-- Gameplay -->
     <div class="section" id="gameplay-section" style="display: none;">
-      <h2>🎯 Gameplay</h2>
+      <h2>🎯 Attack Board (Track Your Shots)</h2>
+      <div id="opponent-board-display" style="font-family: monospace; font-size: 14px; line-height: 1.4; background: #2a2a2a; padding: 15px; border-radius: 4px; overflow-x: auto; margin-bottom: 15px;">
+        <div id="opponent-board-grid">Loading...</div>
+      </div>
+      
       <div id="pending-shot-display" class="status" style="background: #FF5722; display: none;">
-        🎯 Opponent fired at: (<span id="pending-x">-</span>, <span id="pending-y">-</span>)
+        🎯 Opponent fired at: <span id="pending-coords">-</span>
         <button id="auto-set-coords">Set These Coords</button>
       </div>
+      
       <div>
-        <label>Target X: <input id="shot-x" type="number" min="0" max="9" value="0" style="width: 60px"></label>
-        <label>Target Y: <input id="shot-y" type="number" min="0" max="9" value="0" style="width: 60px"></label>
+        <label>Row (A-J): <input id="shot-row" type="text" maxlength="1" value="A" style="width: 50px; text-transform: uppercase;"></label>
+        <label>Column (1-10): <input id="shot-col" type="number" min="1" max="10" value="1" style="width: 60px"></label>
         <button id="random-coords-button">🎲 Random</button>
       </div>
       <button id="fire-shot-button" disabled>Fire Shot</button>
       <button id="apply-proof-button" disabled>Apply Proof (Defender)</button>
       <div id="game-status" class="status">No active game</div>
       <div class="status" style="font-size: 11px; color: #FFA726;">
-        ⚠️ Can't fire at same spot twice! Auto-increments X after each shot.
+        💡 Attacker fires, defender applies proof, turn flips!
       </div>
     </div>
 

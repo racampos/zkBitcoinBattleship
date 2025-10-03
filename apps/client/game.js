@@ -97,21 +97,23 @@ function generateRandomBoard() {
   return board;
 }
 
-// Display board as ASCII grid
+// Display board as ASCII grid with consistent character widths
 function displayBoard(board) {
-  let html = '<div style="color: #4CAF50;">   0 1 2 3 4 5 6 7 8 9</div>';
+  // Header with proper alignment (matches row number spacing)
+  let html = '<div style="color: #4CAF50; font-weight: bold; margin-bottom: 4px;">&nbsp;&nbsp;0 1 2 3 4 5 6 7 8 9</div>';
+  
   for (let y = 0; y < 10; y++) {
-    let row = `<div>${y}  `;
+    let row = `<div style="margin: 2px 0;">${y}  `;
     for (let x = 0; x < 10; x++) {
       const cell = board[y][x];
       if (cell === 1) {
-        row += '🚢 '; // Ship
+        row += '<span style="color: #4CAF50; font-weight: bold;">S</span> '; // Ship (green)
       } else if (cell === 2) {
-        row += '💥 '; // Hit
+        row += '<span style="color: #F44336; font-weight: bold;">X</span> '; // Hit (red)
       } else if (cell === 3) {
-        row += '💦 '; // Miss
+        row += '<span style="color: #2196F3;">o</span> '; // Miss (blue)
       } else {
-        row += '~  '; // Water
+        row += '<span style="color: #555;">·</span> '; // Water (gray)
       }
     }
     row += '</div>';
@@ -125,8 +127,8 @@ function initGame(acc, man) {
   manifest = man;
   
   // Generate player's board
-  myBoard = generateRandomBoard();
-  displayBoard(myBoard);
+  window._currentBoard = generateRandomBoard();
+  displayBoard(window._currentBoard);
   
   // Auto-refresh game state every 3 seconds while in active game
   setInterval(() => {
@@ -575,6 +577,29 @@ async function applyProof() {
         logGameState('Apply Proof SUCCESS', { x, y, result });
         document.getElementById('game-status').textContent = `✅ Proof applied! Waiting for turn flip...`;
         
+        // Update board with the shot result (we know locally!)
+        console.log('🔍 Checking board for hit/miss...', {
+          boardExists: !!window._currentBoard,
+          x: x,
+          y: y
+        });
+        
+        if (window._currentBoard) {
+          const shotX = parseInt(x);
+          const shotY = parseInt(y);
+          console.log('🎯 Board value at', shotX, shotY, '=', window._currentBoard[shotY][shotX]);
+          const wasShip = window._currentBoard[shotY][shotX] === 1;
+          
+          // 2 = hit, 3 = miss
+          window._currentBoard[shotY][shotX] = wasShip ? 2 : 3;
+          displayBoard(window._currentBoard);
+          
+          const hitOrMiss = wasShip ? 'HIT' : 'MISS';
+          console.log(`💥 Shot at (${shotX}, ${shotY}) was a ${hitOrMiss}!`);
+        } else {
+          console.error('❌ NO BOARD EXISTS! Cannot update hit/miss visual.');
+        }
+        
         // Refresh state after a delay
         setTimeout(async () => {
           await refreshGameState();
@@ -764,6 +789,78 @@ async function refreshGameState() {
 
   } catch (error) {
     console.error('Error refreshing game state:', error);
+  }
+}
+
+// Query CellHit data and update board display
+async function updateBoardWithHits(gameId, player) {
+  try {
+    console.log('🔍 Querying CellHit data for player:', player);
+    
+    // Query all CellHit entities
+    const response = await fetch('http://localhost:8081/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `{ entities(first: 100) { edges { node { models { __typename ... on battleship_CellHit { game_id player x y hit } } } } } }`
+      })
+    });
+    
+    const result = await response.json();
+    
+    console.log('🔍 Raw query result:', result);
+    
+    // Find all hits for this game and player (the one being attacked)
+    // Normalize addresses for comparison (lowercase, no padding differences)
+    const normalizeAddr = (addr) => addr?.toLowerCase().replace(/^0x0+/, '0x');
+    const normalizedPlayer = normalizeAddr(player);
+    const normalizedGameId = gameId?.toLowerCase();
+    
+    const cellHits = [];
+    result.data?.entities?.edges.forEach(edge => {
+      const cellHitModel = edge.node?.models?.find(m => m.__typename === 'battleship_CellHit');
+      if (cellHitModel) {
+        console.log('🔍 Checking CellHit:', {
+          game_id: cellHitModel.game_id,
+          player: cellHitModel.player,
+          normalized_player: normalizeAddr(cellHitModel.player),
+          target_player: normalizedPlayer,
+          match: normalizeAddr(cellHitModel.player) === normalizedPlayer && cellHitModel.game_id?.toLowerCase() === normalizedGameId
+        });
+        
+        if (normalizeAddr(cellHitModel.player) === normalizedPlayer && 
+            cellHitModel.game_id?.toLowerCase() === normalizedGameId) {
+          cellHits.push(cellHitModel);
+        }
+      }
+    });
+    
+    console.log('📊 Found cell hits:', cellHits);
+    
+    // Ensure board exists
+    if (!window._currentBoard) {
+      console.log('⚠️ Board not generated yet, creating placeholder');
+      window._currentBoard = generateRandomBoard();
+      displayBoard(window._currentBoard);
+    }
+    
+    // Update board with hits
+    if (cellHits.length > 0) {
+      cellHits.forEach(hit => {
+        const x = parseInt(hit.x);
+        const y = parseInt(hit.y);
+        if (x >= 0 && x < 10 && y >= 0 && y < 10) {
+          // 2 = hit, 3 = miss
+          window._currentBoard[y][x] = hit.hit ? 2 : 3;
+        }
+      });
+      
+      // Redisplay board
+      displayBoard(window._currentBoard);
+      console.log('✅ Board updated with', cellHits.length, 'hits/misses');
+    }
+  } catch (error) {
+    console.error('Error updating board with hits:', error);
   }
 }
 

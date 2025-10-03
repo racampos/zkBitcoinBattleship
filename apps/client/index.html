@@ -103,22 +103,25 @@
       <div id="coin-status" class="status">Coin-flip disabled. P1 goes first automatically!</div>
     </div>
 
-    <!-- Board Commit -->
-    <div class="section">
-      <h2>🛡️ Board Commitment</h2>
-      <button id="commit-board-button" disabled>Commit Board (Mock Proof)</button>
-      <div id="board-status" class="status">Waiting for game...</div>
+    <!-- Board Setup -->
+    <div class="section" id="board-section" style="display: none;">
+      <h2>🛡️ Your Board</h2>
+      <div id="board-display" style="font-family: monospace; font-size: 14px; line-height: 1.4; background: #2a2a2a; padding: 15px; border-radius: 4px; overflow-x: auto;">
+        <div id="board-grid">Loading...</div>
+      </div>
+      <button id="commit-board-button" disabled>Commit Board</button>
+      <div id="board-status" class="status">Set up your ships...</div>
     </div>
 
-    <!-- Dev Mode -->
-    <div class="section" style="border: 2px solid #FF9800;">
+    <!-- Dev Mode (Hidden) -->
+    <div class="section" id="dev-mode-section" style="display: none; border: 2px solid #FF9800;">
       <h2>🔧 Dev Mode (Testing Shortcuts)</h2>
       <button id="skip-to-gameplay-button" disabled style="background: #FF9800;">Enable Gameplay (Skip Checks)</button>
-      <div class="status" style="font-size: 11px;">⚠️ For single-account testing. Bypasses coin-flip requirement.</div>
+      <div class="status" style="font-size: 11px;">⚠️ For single-account testing. Press Shift+D to toggle.</div>
     </div>
 
     <!-- Gameplay -->
-    <div class="section">
+    <div class="section" id="gameplay-section" style="display: none;">
       <h2>🎯 Gameplay</h2>
       <div id="pending-shot-display" class="status" style="background: #FF5722; display: none;">
         🎯 Opponent fired at: (<span id="pending-x">-</span>, <span id="pending-y">-</span>)
@@ -138,7 +141,7 @@
     </div>
 
     <!-- Game State -->
-    <div class="section">
+    <div class="section" id="game-state-section" style="display: none;">
       <h2>📊 Game State</h2>
       <div class="game-info">
         <div class="info-item">Status: <span id="status-display">-</span></div>
@@ -180,17 +183,18 @@
 
         initGame(account, manifest);
 
-        // Subscribe to game updates
+        // Subscribe to all Game model updates for this world
         const [_, subscription] = await torii.subscribeEntityQuery({
-          query: new ToriiQueryBuilder()
-            .withClause(KeysClause(['battleship-Game'], ['*'], 'Hashed'))
-            .build(),
+          query: new ToriiQueryBuilder().withClause(
+            KeysClause(['battleship-Game'], [], 'Keys')
+          ),
           callback: ({ data, error }) => {
             if (data) {
+              console.log('📡 Torii update received:', data);
               updateFromEntitiesData(data);
             }
             if (error) {
-              console.error('Torii error:', error);
+              console.error('Torii subscription error:', error);
             }
           },
         });

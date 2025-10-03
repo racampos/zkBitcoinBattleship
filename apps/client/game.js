@@ -8,6 +8,7 @@ let currentGameId = null;
 let account = null;
 let manifest = null;
 let gameStateHistory = []; // Track state changes for debugging
+let myBoard = null; // Store player's board layout
 
 function logGameState(event, details) {
   const timestamp = new Date().toLocaleTimeString();
@@ -78,9 +79,63 @@ function setGameIdFromUrl(gameId) {
   console.log('✅ Game ID loaded from URL:', gameId);
 }
 
+// Generate random board with ships
+function generateRandomBoard() {
+  const board = Array(10).fill(null).map(() => Array(10).fill(0));
+  
+  // Simplified: Place 17 random ship cells (will add proper ship placement later)
+  let cellsPlaced = 0;
+  while (cellsPlaced < 17) {
+    const x = Math.floor(Math.random() * 10);
+    const y = Math.floor(Math.random() * 10);
+    if (board[y][x] === 0) {
+      board[y][x] = 1; // 1 = ship
+      cellsPlaced++;
+    }
+  }
+  
+  return board;
+}
+
+// Display board as ASCII grid
+function displayBoard(board) {
+  let html = '<div style="color: #4CAF50;">   0 1 2 3 4 5 6 7 8 9</div>';
+  for (let y = 0; y < 10; y++) {
+    let row = `<div>${y}  `;
+    for (let x = 0; x < 10; x++) {
+      const cell = board[y][x];
+      if (cell === 1) {
+        row += '🚢 '; // Ship
+      } else if (cell === 2) {
+        row += '💥 '; // Hit
+      } else if (cell === 3) {
+        row += '💦 '; // Miss
+      } else {
+        row += '~  '; // Water
+      }
+    }
+    row += '</div>';
+    html += row;
+  }
+  document.getElementById('board-grid').innerHTML = html;
+}
+
 function initGame(acc, man) {
   account = acc;
   manifest = man;
+  
+  // Generate player's board
+  myBoard = generateRandomBoard();
+  displayBoard(myBoard);
+  
+  // Keyboard shortcut for Dev Mode (Shift+D)
+  document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.key === 'D') {
+      const devSection = document.getElementById('dev-mode-section');
+      devSection.style.display = devSection.style.display === 'none' ? 'block' : 'none';
+      console.log('🔧 Dev mode toggled');
+    }
+  });
 
   // Create Open Game
   document.getElementById('create-open-game-button').onclick = async () => {
@@ -286,15 +341,16 @@ async function pollForNewGame(txHash) {
         if (gameId) {
           currentGameId = gameId;
           document.getElementById('game-id-display').textContent = `✅ Game ID: ${gameId.substring(0, 20)}...`;
-          document.getElementById('coin-commit-button').disabled = false;
-          document.getElementById('commit-board-button').disabled = false;
-          document.getElementById('coin-status').textContent = 'Ready to commit!';
-          document.getElementById('board-status').textContent = 'Ready to commit board!';
           
           // Update share URL
           const shareUrl = `${window.location.origin}${window.location.pathname}?game=${gameId}`;
           document.getElementById('share-url').textContent = shareUrl;
           document.getElementById('share-url').innerHTML = `<a href="${shareUrl}" target="_blank">${shareUrl}</a>`;
+          
+          // Show board section - player needs to commit board
+          document.getElementById('board-section').style.display = 'block';
+          document.getElementById('commit-board-button').disabled = false;
+          document.getElementById('board-status').textContent = 'Commit your board to continue!';
           
           console.log('✅ Game created with ID:', gameId);
           console.log('📤 Share this URL with opponent:', shareUrl);
@@ -398,7 +454,14 @@ async function commitBoard() {
       
       if (boardCommit) {
         logGameState('Board Commit VERIFIED', { commitment: boardCommit.commitment });
-        document.getElementById('board-status').textContent = `✅ Board committed successfully!`;
+        document.getElementById('board-status').textContent = `✅ Board committed! Game ready.`;
+        
+        // Show gameplay sections now that board is committed  
+        setTimeout(() => {
+          document.getElementById('gameplay-section').style.display = 'block';
+          document.getElementById('game-state-section').style.display = 'block';
+          console.log('🎮 Gameplay sections now visible!');
+        }, 500);
       } else {
         logGameState('Board Commit FAILED', { reason: 'Not found in Torii - transaction likely reverted' });
         document.getElementById('board-status').textContent = `⚠️ Board commit may have failed. Check console.`;

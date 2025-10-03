@@ -81,16 +81,26 @@
     <!-- Game Management -->
     <div class="section">
       <h2>🎲 Game Management</h2>
-      <button id="create-game-button" disabled>Create Game</button>
+      <div>
+        <button id="create-open-game-button" disabled>Create Open Game</button>
+        <button id="join-game-button" disabled>Join Game (Enter ID)</button>
+        <button id="refresh-game-button" disabled>Refresh Game State</button>
+      </div>
       <div id="game-id-display" class="status">No game created</div>
+      <div class="status" style="font-size: 11px;">
+        💡 Tip: Share game URL with opponent: <span id="share-url"></span>
+      </div>
+      <div class="status" style="font-size: 12px; color: #4CAF50;">
+        ✅ P1 always goes first (like white in chess). Game starts when P2 joins!
+      </div>
     </div>
 
-    <!-- Coin Flip -->
-    <div class="section">
-      <h2>🪙 Coin Flip</h2>
+    <!-- Coin Flip (Hidden - Auto-start enabled) -->
+    <div class="section" style="display: none;">
+      <h2>🪙 Coin Flip (Disabled - P1 Always Goes First)</h2>
       <button id="coin-commit-button" disabled>Commit (Start Game)</button>
       <button id="coin-reveal-button" disabled>Reveal</button>
-      <div id="coin-status" class="status">Waiting for game...</div>
+      <div id="coin-status" class="status">Coin-flip disabled. P1 goes first automatically!</div>
     </div>
 
     <!-- Board Commit -->
@@ -100,16 +110,31 @@
       <div id="board-status" class="status">Waiting for game...</div>
     </div>
 
+    <!-- Dev Mode -->
+    <div class="section" style="border: 2px solid #FF9800;">
+      <h2>🔧 Dev Mode (Testing Shortcuts)</h2>
+      <button id="skip-to-gameplay-button" disabled style="background: #FF9800;">Enable Gameplay (Skip Checks)</button>
+      <div class="status" style="font-size: 11px;">⚠️ For single-account testing. Bypasses coin-flip requirement.</div>
+    </div>
+
     <!-- Gameplay -->
     <div class="section">
       <h2>🎯 Gameplay</h2>
+      <div id="pending-shot-display" class="status" style="background: #FF5722; display: none;">
+        🎯 Opponent fired at: (<span id="pending-x">-</span>, <span id="pending-y">-</span>)
+        <button id="auto-set-coords">Set These Coords</button>
+      </div>
       <div>
-        <label>Target X: <input id="shot-x" type="number" min="0" max="9" value="5" style="width: 60px"></label>
-        <label>Target Y: <input id="shot-y" type="number" min="0" max="9" value="5" style="width: 60px"></label>
+        <label>Target X: <input id="shot-x" type="number" min="0" max="9" value="0" style="width: 60px"></label>
+        <label>Target Y: <input id="shot-y" type="number" min="0" max="9" value="0" style="width: 60px"></label>
+        <button id="random-coords-button">🎲 Random</button>
       </div>
       <button id="fire-shot-button" disabled>Fire Shot</button>
       <button id="apply-proof-button" disabled>Apply Proof (Defender)</button>
       <div id="game-status" class="status">No active game</div>
+      <div class="status" style="font-size: 11px; color: #FFA726;">
+        ⚠️ Can't fire at same spot twice! Auto-increments X after each shot.
+      </div>
     </div>
 
     <!-- Game State -->
@@ -121,13 +146,16 @@
         <div class="info-item">P1: <span id="p1-display">-</span></div>
         <div class="info-item">P2: <span id="p2-display">-</span></div>
       </div>
+      <div class="status" style="font-size: 11px;">
+        💡 Debug: Type <code>viewGameHistory()</code> in console to see state change log
+      </div>
     </div>
 
     <script type="module">
       import Controller from '@cartridge/controller';
       import { init, ToriiQueryBuilder, KeysClause } from '@dojoengine/sdk';
       import controllerOpts from './controller.js';
-      import { initGame, updateFromEntitiesData } from './game.js';
+      import { initGame, updateFromEntitiesData, setGameIdFromUrl } from './game.js';
       import manifest from '../../chain/dojo/manifest_dev.json' assert { type: 'json' };
 
       const DOMAIN_SEPARATOR = {
@@ -188,7 +216,29 @@
           document.getElementById('account-display').textContent = `Address: ${account.address}`;
 
           // Enable buttons
-          document.getElementById('create-game-button').disabled = false;
+          document.getElementById('create-open-game-button').disabled = false;
+          document.getElementById('join-game-button').disabled = false;
+          document.getElementById('refresh-game-button').disabled = false;
+          document.getElementById('skip-to-gameplay-button').disabled = false;
+
+          // Check if there's a game ID in URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const gameIdFromUrl = urlParams.get('game');
+          if (gameIdFromUrl) {
+            console.log('🔗 Game ID from URL:', gameIdFromUrl);
+            setGameIdFromUrl(gameIdFromUrl); // Set in game.js scope
+            document.getElementById('game-id-display').textContent = `Game ID (from URL): ${gameIdFromUrl.substring(0, 20)}...`;
+            document.getElementById('join-game-button').textContent = '👉 Join This Game';
+            document.getElementById('join-game-button').style.background = '#4CAF50';
+            
+            // Auto-prompt to join
+            setTimeout(() => {
+              const shouldJoin = confirm(`🎮 Join game ${gameIdFromUrl.substring(0, 20)}...?\n\nClick OK to join as Player 2!`);
+              if (shouldJoin) {
+                document.getElementById('join-game-button').click();
+              }
+            }, 1000);
+          }
 
           run(account).catch((error) => {
             console.error('Error running game:', error);

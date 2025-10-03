@@ -22,12 +22,17 @@ const controllerOpts = {
       // Game Management
       [gameManagement.address]: {
         name: 'Game Management',
-        description: 'Create games',
+        description: 'Create and join games',
         methods: [
           {
             name: 'Create Game',
             entrypoint: 'create_game',
             description: 'Create a new Battleship game',
+          },
+          {
+            name: 'Join Game',
+            entrypoint: 'join_game',
+            description: 'Join an open game',
           },
         ],
       },

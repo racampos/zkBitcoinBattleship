@@ -7,8 +7,8 @@ pub trait IBoardCommit<T> {
         ref self: T,
         game_id: felt252,
         commitment: felt252,
-        rules_hash: felt252,
-        proof: Span<felt252>
+        rules_hash: felt252
+        // Note: proof parameter removed for MVP - will add back with real ZK
     );
 }
 
@@ -22,21 +22,13 @@ pub mod board_commit {
     use crate::helpers::constants::BOARD_SIZE;
     use crate::helpers::get_opt::get_opt_board_commit;
 
-    // MOCK VERIFIER - Replace with Garaga verifier later
-    fn mock_verify_board_commit(proof: Span<felt252>, commitment: felt252, rules_hash: felt252) -> bool {
-        // TODO: Replace with real Garaga verifier
-        // For now, always return true for development
-        true
-    }
-
     #[abi(embed_v0)]
     impl BoardCommitImpl of IBoardCommit<ContractState> {
         fn commit_board(
             ref self: ContractState,
             game_id: felt252,
             commitment: felt252,
-            rules_hash: felt252,
-            proof: Span<felt252>
+            rules_hash: felt252
         ) {
             let mut world = self.world_default();
             let caller = get_caller_address();
@@ -45,18 +37,13 @@ pub mod board_commit {
             // Guard: only players can commit
             errors::require(caller == g.p1 || caller == g.p2, 'NOT_PLAYER');
 
-            // Guard: can't commit after game has started or finished
-            errors::require(g.status != GameStatus::Started, 'ALREADY_STARTED');
+            // Guard: can't commit after game is finished (allow during Started for MVP)
             errors::require(g.status != GameStatus::Finished, 'GAME_FINISHED');
 
             // Guard: board size must be 10×10 (circuits hardcoded)
             errors::require(g.board_size == BOARD_SIZE, 'BAD_BOARD_SIZE');
 
-            // Call verifier (currently mock)
-            errors::require(
-                mock_verify_board_commit(proof, commitment, rules_hash),
-                'INVALID_PROOF'
-            );
+            // Mock verification (always passes for MVP - will add real ZK later)
 
             // Each player can only commit once
             let prior = get_opt_board_commit(world, game_id, caller);

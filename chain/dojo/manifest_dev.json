@@ -1479,8 +1479,8 @@
   },
   "contracts": [
     {
-      "address": "0x389c7445593ffe55d0b54fa0ce4ac42794be04c45249351ff428c52ec8cfd0",
-      "class_hash": "0xfdbf0557807d98731018166cbc5dedd7224397c89dd70b8095fb3910237a60",
+      "address": "0x3adc25ebec1dff2afc48f10830e361cd321cdd63ec7fa0804f3dfbb093ef8fd",
+      "class_hash": "0x12c08f5509150110fabe2ec7278a66027232eb19335330442e8451cc3bc3f16",
       "abi": [
         {
           "type": "impl",
@@ -1538,16 +1538,6 @@
           "interface_name": "battleship::systems::board_commit::IBoardCommit"
         },
         {
-          "type": "struct",
-          "name": "core::array::Span::<core::felt252>",
-          "members": [
-            {
-              "name": "snapshot",
-              "type": "@core::array::Array::<core::felt252>"
-            }
-          ]
-        },
-        {
           "type": "interface",
           "name": "battleship::systems::board_commit::IBoardCommit",
           "items": [
@@ -1566,10 +1556,6 @@
                 {
                   "name": "rules_hash",
                   "type": "core::felt252"
-                },
-                {
-                  "name": "proof",
-                  "type": "core::array::Span::<core::felt252>"
                 }
               ],
               "outputs": [],
@@ -2187,8 +2173,8 @@
       ]
     },
     {
-      "address": "0x22056e8686d6f6b14bedd1611fd41bc33a2323470efae27f39aa0ca3a673afc",
-      "class_hash": "0xbe0f552c3ef3d0d3b6568b5ba881585371c63408d5397d5751dbacddf39b7c",
+      "address": "0x4a3951b0d55ee2a6f6f3884c55ece644c304ffdae7b7b08e2bcface3d2a3d49",
+      "class_hash": "0x4dfc05b1e3e540eddcea61aa72223ebccb5198406f2205ede38a4d46f17c1d6",
       "abi": [
         {
           "type": "impl",
@@ -2267,6 +2253,18 @@
                   "type": "core::felt252"
                 }
               ],
+              "state_mutability": "external"
+            },
+            {
+              "type": "function",
+              "name": "join_game",
+              "inputs": [
+                {
+                  "name": "game_id",
+                  "type": "core::felt252"
+                }
+              ],
+              "outputs": [],
               "state_mutability": "external"
             }
           ]
@@ -2391,6 +2389,7 @@
       "selector": "0x10e4cde4fcca55752a6ca87a4c5ffa3fd831d2869a86803c8139373fb22b0",
       "systems": [
         "create_game",
+        "join_game",
         "upgrade"
       ]
     },
@@ -2603,8 +2602,8 @@
       ]
     },
     {
-      "address": "0x77f2315861628012c60526361a4a416dad69c16aed068a9b20b181c9a436acc",
-      "class_hash": "0x36f4451301473f8d173c9060baced718b7b874062606a4d1b8d28ad9580cd05",
+      "address": "0x5a654180ea8ee046abf9b8f4408a7a5b24e517c26e9ebeb0de866cb2fc78632",
+      "class_hash": "0x2aadf53944458fd2f79686f9f118dcce9178ef4a60c57fc466bae88b70909eb",
       "abi": [
         {
           "type": "impl",
@@ -2662,16 +2661,6 @@
           "interface_name": "battleship::systems::proof_verify::IProofVerify"
         },
         {
-          "type": "struct",
-          "name": "core::array::Span::<core::felt252>",
-          "members": [
-            {
-              "name": "snapshot",
-              "type": "@core::array::Array::<core::felt252>"
-            }
-          ]
-        },
-        {
           "type": "interface",
           "name": "battleship::systems::proof_verify::IProofVerify",
           "items": [
@@ -2702,10 +2691,6 @@
                 {
                   "name": "rules_hash",
                   "type": "core::felt252"
-                },
-                {
-                  "name": "proof",
-                  "type": "core::array::Span::<core::felt252>"
                 }
               ],
               "outputs": [],

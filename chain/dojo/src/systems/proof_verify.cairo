@@ -10,8 +10,8 @@ pub trait IProofVerify<T> {
         y: u8,
         result: u8,
         nullifier: felt252,
-        rules_hash: felt252,
-        proof: Span<felt252>
+        rules_hash: felt252
+        // Note: proof parameter removed for MVP - will add back with real ZK
     );
 }
 
@@ -28,23 +28,6 @@ pub mod proof_verify {
         finalize_win
     };
 
-    // MOCK VERIFIER - Replace with Garaga verifier later
-    fn mock_verify_shot_result(
-        proof: Span<felt252>,
-        commitment: felt252,
-        rules_hash: felt252,
-        game_id: felt252,
-        defender: felt252,
-        x: felt252,
-        y: felt252,
-        result: felt252,
-        nullifier: felt252
-    ) -> bool {
-        // TODO: Replace with real Garaga verifier
-        // For now, always return true for development
-        true
-    }
-
     #[abi(embed_v0)]
     impl ProofVerifyImpl of IProofVerify<ContractState> {
         fn apply_shot_proof(
@@ -54,8 +37,7 @@ pub mod proof_verify {
             y: u8,
             result: u8,
             nullifier: felt252,
-            rules_hash: felt252,
-            proof: Span<felt252>
+            rules_hash: felt252
         ) {
             let mut world = self.world_default();
             let g: Game = world.read_model(game_id);
@@ -76,23 +58,10 @@ pub mod proof_verify {
             errors::require(get_caller_address() == defender, 'ONLY_DEFENDER');
 
             let bc: BoardCommit = world.read_model((game_id, defender));
-            let commitment = bc.commitment;
+            let _commitment = bc.commitment;
 
-            // Verify proof (currently mock)
-            errors::require(
-                mock_verify_shot_result(
-                    proof,
-                    commitment,
-                    rules_hash,
-                    game_id,
-                    defender.into(),
-                    x.into(),
-                    y.into(),
-                    result.into(),
-                    nullifier
-                ),
-                'INVALID_SHOT_PROOF'
-            );
+            // Mock verification (always passes for MVP - will add real ZK later)
+            // In production: verify ZK proof that defender's board has ship/miss at (x,y)
 
             // Lock rules to game
             let game_rules_hash = get_game_rules_hash(world, game_id);

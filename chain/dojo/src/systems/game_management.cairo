@@ -3,6 +3,7 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IGameManagement<T> {
     fn create_game(ref self: T, p2: ContractAddress, board_size: u8) -> felt252;
+    fn join_game(ref self: T, game_id: felt252);
 }
 
 #[dojo::contract]
@@ -52,8 +53,36 @@ pub mod game_management {
             
             game_id
         }
+
+        fn join_game(ref self: ContractState, game_id: felt252) {
+            let mut world = self.world_default();
+            let caller = get_caller_address();
+            let mut g: Game = world.read_model(game_id);
+
+            // Guard: game must exist (p1 != 0)
+            errors::require(g.p1.into() != 0, 'GAME_NOT_FOUND');
+
+            // Guard: can't join if P2 already set
+            let zero_ca: ContractAddress = 0.try_into().unwrap();
+            errors::require(g.p2 == zero_ca, 'GAME_FULL');
+
+            // Guard: can't join your own game
+            errors::require(caller != g.p1, 'CANT_JOIN_OWN_GAME');
+
+            // Guard: game must not be started yet
+            errors::require(g.status == GameStatus::Created, 'GAME_ALREADY_STARTED');
+
+            // Set caller as P2 and auto-start game (P1 goes first)
+            g.p2 = caller;
+            g.status = GameStatus::Started; // Skip coin-flip, P1 goes first
+            g.turn_player = g.p1; // P1 always starts (like white in chess)
+            g.last_action = get_block_timestamp();
+            world.write_model(@g);
+
+            // TODO: Emit PlayerJoined and GameStarted events
+        }
     }
-    
+
     #[generate_trait]
     impl InternalImpl of InternalTrait {
         fn world_default(self: @ContractState) -> dojo::world::WorldStorage {

@@ -36,13 +36,15 @@
 ## 📊 Statistics
 
 ### Smart Contracts (Cairo)
+
 - **11 Models:** Game state, board tracking, shot tracking, escrow
 - **7 Systems:** All game logic implemented
 - **14 Helpers:** Game state, optional getters, win detection
 - **~1,300 lines** of production-ready Cairo
 - **Status:** ✅ Compiling, ✅ Deployed, ✅ Tested
 
-### Client Application  
+### Client Application
+
 - **Framework:** Vite + Vanilla JS
 - **Auth:** Cartridge Controller (gasless transactions)
 - **Data:** Torii client (real-time GraphQL)
@@ -50,6 +52,7 @@
 - **Status:** ✅ Running on https://localhost:3000
 
 ### Documentation
+
 - **5,000+ lines** across 10+ files
 - **IMPLEMENTATION_PLAN.md:** 2,200 lines (security blueprint)
 - **DOJO_1.7_MIGRATION.md:** Syntax translation guide
@@ -59,6 +62,7 @@
 ## ✅ Completed Features
 
 ### Game Mechanics
+
 - ✅ Game creation with unique IDs
 - ✅ Coin-flip commit-reveal (fair first player selection)
 - ✅ Board commitment (mock ZK proofs)
@@ -69,6 +73,7 @@
 - ✅ Escrow system (ready for ERC20)
 
 ### Security Guards
+
 - ✅ Replay protection (nullifier tracking)
 - ✅ Duplicate shot prevention
 - ✅ Turn validation
@@ -78,6 +83,7 @@
 - ✅ Grace periods for cancellation
 
 ### Infrastructure
+
 - ✅ Dojo 1.7.0-alpha.4 (Katana, Sozo, Torii)
 - ✅ Scarb 2.12.2 / Cairo 2.12.2
 - ✅ Full development environment
@@ -86,6 +92,7 @@
 ## 🎯 Current State
 
 ### What Works End-to-End
+
 1. ✅ Create game
 2. ✅ Coin-flip (tested via CLI)
 3. ⏳ Board commit (client handles Span properly)
@@ -94,6 +101,7 @@
 6. ⏳ Escrow settlement
 
 ### What's Using Mocks
+
 - 🔶 BoardCommit ZK verifier (mock - always true)
 - 🔶 ShotResult ZK verifier (mock - always true)
 - 🔶 ERC20 token transfers (placeholder)
@@ -101,6 +109,7 @@
 ## 📋 Phase 1: COMPLETE ✅
 
 From the original plan (Week 1, Days 1-2):
+
 - ✅ Dojo world setup
 - ✅ All models defined
 - ✅ All systems implemented
@@ -112,7 +121,9 @@ From the original plan (Week 1, Days 1-2):
 ## 🚀 Next Steps
 
 ### Priority 1: Test Complete Flow (NOW)
+
 **Time:** 30 mins - 1 hour
+
 1. Open https://localhost:3000
 2. Connect Cartridge wallet
 3. Create game via UI
@@ -121,22 +132,28 @@ From the original plan (Week 1, Days 1-2):
 6. Fire shots and verify
 
 ### Priority 2: ZK Circuits (Phase 2)
+
 **Time:** 6-8 hours
+
 1. Set up Noir projects
 2. Implement BoardCommit circuit
-3. Implement ShotResult circuit  
+3. Implement ShotResult circuit
 4. Generate Garaga verifiers
 5. Replace mock verifiers
 
 ### Priority 3: Complete Client (Phase 4)
+
 **Time:** 4-6 hours
+
 1. Add NoirJS for browser proving
 2. Visual board (Three.js or simple grid)
 3. Better UI/UX
 4. Ship placement interface
 
 ### Priority 4: Bitcoin Integration (Phase 5)
+
 **Time:** 4-6 hours
+
 1. Xverse wallet integration
 2. Atomiq swap service
 3. Deposit/withdraw flows
@@ -147,11 +164,13 @@ From the original plan (Week 1, Days 1-2):
 **Current Progress:** ~30% complete in 1 day!
 
 ### Completed
-- ✅ Week 1, Days 1-2: Core Infrastructure  
+
+- ✅ Week 1, Days 1-2: Core Infrastructure
 - ✅ Week 1-2, Days 6-7: Game Logic (ahead!)
 - ✅ Week 2, Day 7-8: Basic Client (ahead!)
 
 ### Remaining
+
 - ⏳ Week 1, Days 3-6: ZK Circuits + Garaga
 - ⏳ Week 2, Days 8-9: Enhanced UI
 - ⏳ Week 2, Days 9-11: Bitcoin Integration

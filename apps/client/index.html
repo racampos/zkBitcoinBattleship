@@ -88,7 +88,8 @@
       </div>
       <div id="game-id-display" class="status">No game created</div>
       <div class="status" style="font-size: 11px;">
-        💡 Tip: Share game URL with opponent: <span id="share-url"></span>
+        💡 Share game URL: <span id="share-url"></span>
+        <button id="copy-url-button" style="display: none; margin-left: 10px; padding: 5px 10px; font-size: 11px;">📋 Copy URL</button>
       </div>
       <div class="status" style="font-size: 12px; color: #4CAF50;">
         ✅ P1 always goes first (like white in chess). Game starts when P2 joins!
@@ -235,12 +236,10 @@
             document.getElementById('join-game-button').textContent = '👉 Join This Game';
             document.getElementById('join-game-button').style.background = '#4CAF50';
             
-            // Auto-prompt to join
+            // Auto-join after a moment (no confirmation needed)
             setTimeout(() => {
-              const shouldJoin = confirm(`🎮 Join game ${gameIdFromUrl.substring(0, 20)}...?\n\nClick OK to join as Player 2!`);
-              if (shouldJoin) {
-                document.getElementById('join-game-button').click();
-              }
+              console.log('🎮 Auto-joining game as Player 2...');
+              document.getElementById('join-game-button').click();
             }, 1000);
           }
 

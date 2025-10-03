@@ -128,6 +128,14 @@ function initGame(acc, man) {
   myBoard = generateRandomBoard();
   displayBoard(myBoard);
   
+  // Auto-refresh game state every 3 seconds while in active game
+  setInterval(() => {
+    if (currentGameId && account) {
+      // Silent refresh (no logs unless something changes)
+      refreshGameState();
+    }
+  }, 3000);
+  
   // Keyboard shortcut for Dev Mode (Shift+D)
   document.addEventListener('keydown', (e) => {
     if (e.shiftKey && e.key === 'D') {
@@ -284,8 +292,13 @@ async function joinGame() {
       
       if (game?.p2 && game.p2 !== '0x0') {
         clearInterval(checkJoined);
-        document.getElementById('game-id-display').textContent = `✅ Joined as P2! Game started.`;
+        document.getElementById('game-id-display').textContent = `✅ Joined as P2! Commit your board.`;
+        
+        // Show board section for P2
+        document.getElementById('board-section').style.display = 'block';
         document.getElementById('commit-board-button').disabled = false;
+        document.getElementById('board-status').textContent = 'Commit your board to continue!';
+        
         console.log('✅ Successfully joined as P2. Game status:', game.status);
       } else if (attempts > 10) {
         clearInterval(checkJoined);
@@ -345,7 +358,18 @@ async function pollForNewGame(txHash) {
           // Update share URL
           const shareUrl = `${window.location.origin}${window.location.pathname}?game=${gameId}`;
           document.getElementById('share-url').textContent = shareUrl;
-          document.getElementById('share-url').innerHTML = `<a href="${shareUrl}" target="_blank">${shareUrl}</a>`;
+          document.getElementById('share-url').innerHTML = `<a href="${shareUrl}" target="_blank" style="color: #2196F3;">${shareUrl}</a>`;
+          
+          // Show copy button
+          const copyButton = document.getElementById('copy-url-button');
+          copyButton.style.display = 'inline-block';
+          copyButton.onclick = () => {
+            navigator.clipboard.writeText(shareUrl);
+            copyButton.textContent = '✅ Copied!';
+            setTimeout(() => {
+              copyButton.textContent = '📋 Copy URL';
+            }, 2000);
+          };
           
           // Show board section - player needs to commit board
           document.getElementById('board-section').style.display = 'block';
@@ -746,16 +770,31 @@ async function refreshGameState() {
 // Query for pending shot when defending
 async function queryPendingShot(gameId, turnNo) {
   try {
+    console.log('🔍 Querying for pending shot:', { gameId, turnNo });
+    
+    // Query all PendingShots and filter for our game
     const response = await fetch('http://localhost:8081/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        query: `{ entities(keys: ["${gameId}", "${turnNo}"]) { edges { node { models { __typename ... on battleship_PendingShot { x y shooter } } } } } }`
+        query: `{ entities(first: 100) { edges { node { models { __typename ... on battleship_PendingShot { game_id turn_no x y shooter } } } } } }`
       })
     });
     
     const result = await response.json();
-    const pendingShot = result.data?.entities?.edges[0]?.node?.models?.find(m => m.__typename === 'battleship_PendingShot');
+    
+    // Find PendingShot for our game and turn
+    let pendingShot = null;
+    result.data?.entities?.edges.forEach(edge => {
+      const ps = edge.node?.models?.find(m => 
+        m.__typename === 'battleship_PendingShot' && 
+        m.game_id === gameId && 
+        m.turn_no === turnNo
+      );
+      if (ps) pendingShot = ps;
+    });
+    
+    console.log('📡 Pending shot search result:', pendingShot || 'Not found');
     
     if (pendingShot) {
       document.getElementById('pending-x').textContent = pendingShot.x;
@@ -766,10 +805,15 @@ async function queryPendingShot(gameId, turnNo) {
       document.getElementById('shot-x').value = pendingShot.x;
       document.getElementById('shot-y').value = pendingShot.y;
       
-      logGameState('Pending Shot Found', { x: pendingShot.x, y: pendingShot.y });
-      console.log('🎯 Opponent fired at:', pendingShot.x, pendingShot.y);
+      // Only log once to avoid spam
+      if (!window._lastPendingShot || window._lastPendingShot !== `${pendingShot.x},${pendingShot.y}`) {
+        logGameState('Pending Shot Found', { x: pendingShot.x, y: pendingShot.y });
+        console.log('🎯🎯🎯 Opponent fired at:', pendingShot.x, pendingShot.y, '🎯🎯🎯');
+        window._lastPendingShot = `${pendingShot.x},${pendingShot.y}`;
+      }
     } else {
       document.getElementById('pending-shot-display').style.display = 'none';
+      window._lastPendingShot = null;
     }
   } catch (error) {
     console.error('Error querying pending shot:', error);

@@ -1,0 +1,128 @@
+# Prover.toml for ShotResult Circuit
+# This proves a shot at (x=2, y=0) which hits the Carrier
+# Uses the SAME board and salt as BoardCommit to ensure commitment matches
+
+# Same board as in BoardCommit
+board = [
+  # Row 0: Carrier (5 cells)
+  "1",
+  "1",
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 1: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 2: Battleship (4 cells)
+  "1",
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 3: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 4: Cruiser (3 cells)
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 5: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 6: Submarine (3 cells)
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 7: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 8: Destroyer (2 cells)
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 9: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+]
+
+# Same salt as BoardCommit (must match for commitment to be identical)
+salt = "12345678901234567890"
+
+# Shot coordinates: x=2 (column), y=0 (row)
+# This hits the Carrier at position (2, 0)
+x = 2
+y = 0
+
+# Nullifier salt (secret, unique per shot to prevent replay)
+nullifier_salt = "99999999999999999999"

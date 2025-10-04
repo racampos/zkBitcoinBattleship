@@ -1,0 +1,125 @@
+# Prover.toml for BoardCommit Circuit
+# This represents a valid Battleship board with:
+# - Carrier (5 cells) at row 0, columns 0-4
+# - Battleship (4 cells) at row 2, columns 0-3
+# - Cruiser (3 cells) at row 4, columns 0-2
+# - Submarine (3 cells) at row 6, columns 0-2
+# - Destroyer (2 cells) at row 8, columns 0-1
+
+# Board is 10x10 = 100 cells, flattened row-major (row 0, then row 1, etc.)
+# 0 = water, 1 = ship
+board = [
+  # Row 0: Carrier (5 cells)
+  "1",
+  "1",
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 1: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 2: Battleship (4 cells)
+  "1",
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 3: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 4: Cruiser (3 cells)
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 5: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 6: Submarine (3 cells)
+  "1",
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 7: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 8: Destroyer (2 cells)
+  "1",
+  "1",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  # Row 9: Empty
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+  "0",
+]
+
+# Salt for commitment (random value, keep secret during game)
+salt = "12345678901234567890"

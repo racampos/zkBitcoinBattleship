@@ -2,9 +2,7 @@
 name = "battleship_shot_result"
 type = "bin"
 authors = ["BitcoinShip"]
-# Pin your toolchain if you like:
-compiler_version = ">=1.0.0-beta.9"
+# Note: Requires Noir >= 1.0.0-beta.9 (poseidon2 v0.4.0 dependency)
 
 [dependencies]
 poseidon2 = { git = "https://github.com/TaceoLabs/noir-poseidon", tag = "v0.4.0", directory = "poseidon2" }
-

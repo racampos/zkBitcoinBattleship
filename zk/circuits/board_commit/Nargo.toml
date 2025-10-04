@@ -2,12 +2,9 @@
 name = "battleship_board_commit"
 type = "bin"
 authors = ["BitcoinShip"]
-# Use a compiler compatible with recent poseidon2 releases
-# (v0.4.0 targets Noir v1.0.0-beta.9 per the tag notes).
-compiler_version = ">=1.0.0-beta.9"
+# Note: Requires Noir >= 1.0.0-beta.9 (poseidon2 v0.4.0 dependency)
 
 [dependencies]
 # Poseidon2 (Noir) by TaceoLabs. The repo is a multi-crate workspace, so we
 # point at the "poseidon2" subdirectory and pin a released tag.
 poseidon2 = { git = "https://github.com/TaceoLabs/noir-poseidon", tag = "v0.4.0", directory = "poseidon2" }
-

@@ -8,6 +8,7 @@ let currentGameId = null;
 let account = null;
 let manifest = null;
 let gameStateHistory = []; // Track state changes for debugging
+let pendingShotCoordinates = null; // Store pending shot coords for defender (separate from input boxes)
 let myBoard = null; // Store player's board layout
 
 function logGameState(event, details) {
@@ -214,9 +215,10 @@ function initGame(acc, man) {
     }
   }, 3000);
   
-  // Keyboard shortcut for Dev Mode (Shift+D)
+  // Keyboard shortcut for Dev Mode (Ctrl+D)
   document.addEventListener('keydown', (e) => {
-    if (e.shiftKey && e.key === 'D') {
+    if (e.ctrlKey && e.key === 'd') {
+      e.preventDefault(); // Prevent browser bookmark dialog
       const devSection = document.getElementById('dev-mode-section');
       devSection.style.display = devSection.style.display === 'none' ? 'block' : 'none';
       console.log('🔧 Dev mode toggled');
@@ -226,11 +228,6 @@ function initGame(acc, man) {
   // Create Open Game
   document.getElementById('create-open-game-button').onclick = async () => {
     await createOpenGame();
-  };
-
-  // Join Game
-  document.getElementById('join-game-button').onclick = async () => {
-    await joinGame();
   };
 
   // Refresh Game State
@@ -269,15 +266,6 @@ function initGame(acc, man) {
     const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     document.getElementById('shot-row').value = rows[Math.floor(Math.random() * 10)];
     document.getElementById('shot-col').value = Math.floor(Math.random() * 10) + 1; // 1-10
-  };
-
-  // Auto-set pending shot coordinates
-  document.getElementById('auto-set-coords').onclick = () => {
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-    const x = parseInt(document.getElementById('pending-x').textContent);
-    const y = parseInt(document.getElementById('pending-y').textContent);
-    document.getElementById('shot-row').value = rows[y]; // Convert 0-9 to A-J
-    document.getElementById('shot-col').value = x + 1;    // Convert 0-9 to 1-10
   };
 
   // Gameplay
@@ -334,8 +322,8 @@ async function joinGame() {
     if (!gameId) return;
   }
 
-  document.getElementById('join-game-button').disabled = true;
   document.getElementById('game-id-display').textContent = `Joining game... ${gameId.substring(0, 20)}...`;
+  document.getElementById('game-id-display').style.display = 'block';
 
   try {
     console.log('🔄 Executing join_game with game_id:', gameId);
@@ -372,7 +360,10 @@ async function joinGame() {
       
       if (game?.p2 && game.p2 !== '0x0') {
         clearInterval(checkJoined);
-        document.getElementById('game-id-display').textContent = `✅ Joined as P2! Commit your board.`;
+        
+        // Update game management section
+        document.getElementById('game-id-display').textContent = '✅ Joined as P2! Commit your board.';
+        document.getElementById('game-id-display').style.display = 'block';
         
         // Show board section for P2
         document.getElementById('board-section').style.display = 'block';
@@ -383,7 +374,6 @@ async function joinGame() {
       } else if (attempts > 10) {
         clearInterval(checkJoined);
         document.getElementById('game-id-display').textContent = `⚠️ Join may have failed. Check console.`;
-        document.getElementById('join-game-button').disabled = false;
       }
     }, 1000);
 
@@ -391,7 +381,7 @@ async function joinGame() {
     console.error('❌ Error joining game:', error);
     console.error('Full error:', JSON.stringify(error, null, 2));
     document.getElementById('game-id-display').textContent = `Error: ${error.message || 'Join failed'}`;
-    document.getElementById('join-game-button').disabled = false;
+    document.getElementById('game-id-display').style.display = 'block';
     alert(`Join failed: ${error.message || 'Unknown error'}. Check console for details.`);
   }
 }
@@ -433,16 +423,13 @@ async function pollForNewGame(txHash) {
         
         if (gameId) {
           currentGameId = gameId;
-          document.getElementById('game-id-display').textContent = `✅ Game ID: ${gameId.substring(0, 20)}...`;
           
-          // Update share URL
+          // Show "Game created!" section with copy button
           const shareUrl = `${window.location.origin}${window.location.pathname}?game=${gameId}`;
-          document.getElementById('share-url').textContent = shareUrl;
-          document.getElementById('share-url').innerHTML = `<a href="${shareUrl}" target="_blank" style="color: #2196F3;">${shareUrl}</a>`;
+          const shareSection = document.getElementById('share-url-section');
+          shareSection.style.display = 'block';
           
-          // Show copy button
           const copyButton = document.getElementById('copy-url-button');
-          copyButton.style.display = 'inline-block';
           copyButton.onclick = () => {
             navigator.clipboard.writeText(shareUrl);
             copyButton.textContent = '✅ Copied!';
@@ -532,6 +519,10 @@ async function commitBoard() {
   try {
     logGameState('Board Commit Attempt', { gameId: currentGameId, commitment });
     
+    // Disable button immediately
+    const commitButton = document.getElementById('commit-board-button');
+    commitButton.disabled = true;
+    
     const tx = await account.execute({
       contractAddress: getContractAddress('battleship-board_commit'),
       entrypoint: 'commit_board',
@@ -559,6 +550,7 @@ async function commitBoard() {
       if (boardCommit) {
         logGameState('Board Commit VERIFIED', { commitment: boardCommit.commitment });
         document.getElementById('board-status').textContent = `✅ Board committed! Game ready.`;
+        // Keep button disabled on success
         
         // Show gameplay sections now that board is committed  
         setTimeout(() => {
@@ -569,6 +561,8 @@ async function commitBoard() {
       } else {
         logGameState('Board Commit FAILED', { reason: 'Not found in Torii - transaction likely reverted' });
         document.getElementById('board-status').textContent = `⚠️ Board commit may have failed. Check console.`;
+        // Re-enable button on failure
+        commitButton.disabled = false;
         alert('Board commit transaction was sent but not found in game state. It likely reverted. Check console for tx hash.');
       }
     }, 3000);
@@ -577,6 +571,8 @@ async function commitBoard() {
     logGameState('Board Commit ERROR', { error: error.message });
     console.error('Board commit error:', error);
     document.getElementById('board-status').textContent = `❌ Error: ${error.message}`;
+    // Re-enable button on error
+    document.getElementById('commit-board-button').disabled = false;
     alert(`Board commit failed!\n\nError: ${error.message}`);
   }
 }
@@ -598,6 +594,10 @@ async function fireShot() {
   try {
     logGameState('Fire Shot Attempt', { x, y, gameId: currentGameId });
     
+    // Disable button immediately
+    const fireButton = document.getElementById('fire-shot-button');
+    fireButton.disabled = true;
+    
     const tx = await account.execute({
       contractAddress: getContractAddress('battleship-gameplay'),
       entrypoint: 'fire_shot',
@@ -615,6 +615,7 @@ async function fireShot() {
         const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
         logGameState('Fire Shot SUCCESS', { x, y });
         document.getElementById('game-status').textContent = `✅ Shot fired at ${rows[y]}${x+1}! Waiting for defender...`;
+        // Keep button disabled on success - will be re-enabled by game state updates
         
         // Mark on opponent board as "pending" (will update to hit/miss later)
         // For now, just mark that we fired there
@@ -625,6 +626,8 @@ async function fireShot() {
       } else {
         logGameState('Fire Shot FAILED', { x, y, errors: result.errors });
         document.getElementById('game-status').textContent = `❌ Fire shot failed!`;
+        // Re-enable button on failure
+        fireButton.disabled = false;
         alert(`Fire shot FAILED!\n\nErrors:\n${result.errors.join('\n')}\n\nCheck console for details.`);
       }
     }, 3000);
@@ -633,21 +636,26 @@ async function fireShot() {
     logGameState('Fire Shot FAILED', { error: error.message, x, y });
     console.error('Fire shot error:', error);
     document.getElementById('game-status').textContent = `❌ Fire shot failed: ${error.message}`;
+    // Re-enable button on error
+    document.getElementById('fire-shot-button').disabled = false;
     alert(`Fire shot failed!\n\nError: ${error.message}\n\nPossible reasons:\n- Not your turn\n- Boards not committed\n- Already pending shot\n- Out of bounds`);
   }
 }
 
 async function applyProof() {
-  // Convert A-J, 1-10 to 0-9, 0-9 for internal use
-  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-  const rowInput = document.getElementById('shot-row').value.toUpperCase();
-  const colInput = parseInt(document.getElementById('shot-col').value);
+  // Use the stored pending shot coordinates (NOT from input boxes)
+  if (!pendingShotCoordinates) {
+    alert('No pending shot to apply proof for!');
+    return;
+  }
   
-  const y = rows.indexOf(rowInput);
-  const x = colInput - 1; // Convert 1-10 to 0-9
+  const x = pendingShotCoordinates.x;
+  const y = pendingShotCoordinates.y;
   
-  if (y === -1 || x < 0 || x > 9) {
-    alert('Invalid coordinates! Row must be A-J, Column must be 1-10');
+  console.log(`🛡️ Applying proof for opponent's shot at (${x}, ${y})`);
+  
+  if (x < 0 || x > 9 || y < 0 || y > 9) {
+    alert('Invalid coordinates!');
     return;
   }
   
@@ -678,6 +686,11 @@ async function applyProof() {
       if (receipt.success) {
         logGameState('Apply Proof SUCCESS', { x, y, result });
         document.getElementById('game-status').textContent = `✅ Proof applied! Waiting for turn flip...`;
+        
+        // Hide pending shot banner and disable button after successful proof
+        document.getElementById('pending-shot-display').style.display = 'none';
+        document.getElementById('apply-proof-button').disabled = true;
+        pendingShotCoordinates = null; // Clear stored coordinates
         
         // Update board with the shot result (we know locally!)
         console.log('🔍 Checking board for hit/miss...', {
@@ -847,41 +860,58 @@ async function refreshGameState() {
               // ALWAYS sync button states to actual game state (no optimistic updates)
               if (model.status === 1) { // Started
                 if (isMyTurn) {
-                  // My turn to attack
+                  // My turn to attack - enable coordinate inputs
                   document.getElementById('fire-shot-button').disabled = false;
-                  document.getElementById('apply-proof-button').disabled = true;
-                  document.getElementById('pending-shot-display').style.display = 'none';
+                  document.getElementById('fire-shot-button').style.display = 'inline-block';
+                  document.getElementById('pending-shot-display').style.display = 'none'; // Hide banner with Apply Proof
+                  document.getElementById('shot-row').disabled = false;
+                  document.getElementById('shot-col').disabled = false;
+                  document.getElementById('random-coords-button').disabled = false;
                   document.getElementById('game-status').textContent = `🎯 Your turn! (Turn ${model.turn_no})`;
-                  logGameState('Button State', { fire: 'enabled', apply: 'disabled', reason: 'My turn to attack' });
+                  logGameState('Button State', { fire: 'enabled', apply: 'in-banner', reason: 'My turn to attack' });
                 } else if (isP1 || isP2) {
-                  // Opponent's turn - I defend
-                  document.getElementById('fire-shot-button').disabled = true;
-                  document.getElementById('apply-proof-button').disabled = false;
+                  // Opponent's turn - I defend, disable coordinate inputs (they're set by opponent's shot)
+                  document.getElementById('fire-shot-button').style.display = 'none'; // Hide Fire Shot
+                  document.getElementById('shot-row').disabled = true;
+                  document.getElementById('shot-col').disabled = true;
+                  document.getElementById('random-coords-button').disabled = true;
                   document.getElementById('game-status').textContent = `🛡️ Opponent's turn. Waiting for their shot... (Turn ${model.turn_no})`;
-                  logGameState('Button State', { fire: 'disabled', apply: 'enabled', reason: 'Defending' });
+                  logGameState('Button State', { fire: 'hidden', apply: 'in-banner', reason: 'Defending' });
                   
-                  // Check for pending shot
+                  // Check for pending shot (will show banner with Apply Proof button if shot exists)
                   queryPendingShot(currentGameId, model.turn_no);
                 } else {
                   // Spectator
                   document.getElementById('fire-shot-button').disabled = true;
-                  document.getElementById('apply-proof-button').disabled = true;
+                  document.getElementById('fire-shot-button').style.display = 'inline-block';
+                  document.getElementById('pending-shot-display').style.display = 'none';
+                  document.getElementById('shot-row').disabled = true;
+                  document.getElementById('shot-col').disabled = true;
+                  document.getElementById('random-coords-button').disabled = true;
                   document.getElementById('game-status').textContent = '👀 Spectating...';
                 }
               } else if (model.status === 0) { // Created
                 document.getElementById('fire-shot-button').disabled = true;
-                document.getElementById('apply-proof-button').disabled = true;
+                document.getElementById('fire-shot-button').style.display = 'inline-block';
+                document.getElementById('pending-shot-display').style.display = 'none';
+                document.getElementById('shot-row').disabled = true;
+                document.getElementById('shot-col').disabled = true;
+                document.getElementById('random-coords-button').disabled = true;
                 const waitingForP2 = model.p2 === '0x0';
                 document.getElementById('game-status').textContent = waitingForP2 
                   ? '⏳ Waiting for P2 to join...' 
                   : '⏳ Both players joined. Waiting for start...';
-                logGameState('Button State', { fire: 'disabled', apply: 'disabled', reason: 'Game not started', p2Set: !waitingForP2 });
+                logGameState('Button State', { fire: 'disabled', apply: 'hidden', reason: 'Game not started', p2Set: !waitingForP2 });
               } else if (model.status === 2) { // Finished
                 document.getElementById('fire-shot-button').disabled = true;
-                document.getElementById('apply-proof-button').disabled = true;
+                document.getElementById('fire-shot-button').style.display = 'inline-block';
+                document.getElementById('pending-shot-display').style.display = 'none';
+                document.getElementById('shot-row').disabled = true;
+                document.getElementById('shot-col').disabled = true;
+                document.getElementById('random-coords-button').disabled = true;
                 const winnerIsMe = model.winner?.toLowerCase() === account.address.toLowerCase();
                 document.getElementById('game-status').textContent = winnerIsMe ? '🏆 You won!' : '😞 You lost!';
-                logGameState('Button State', { fire: 'disabled', apply: 'disabled', reason: 'Game finished' });
+                logGameState('Button State', { fire: 'disabled', apply: 'hidden', reason: 'Game finished' });
               }
             }
           });
@@ -1080,13 +1110,17 @@ async function queryPendingShot(gameId, turnNo) {
       const y = parseInt(pendingShot.y);
       const displayCoords = `${rows[y]}${x+1}`;
       
+      // Store pending shot coordinates globally (for applyProof to use)
+      pendingShotCoordinates = { x, y };
+      
       // Display Battleship-style coordinates
       document.getElementById('pending-coords').textContent = displayCoords;
       document.getElementById('pending-shot-display').style.display = 'block';
       
-      // Auto-set coordinates (convert 0-9 to A-J and 1-10)
-      document.getElementById('shot-row').value = rows[y];
-      document.getElementById('shot-col').value = x + 1;
+      // Enable Apply Proof button
+      document.getElementById('apply-proof-button').disabled = false;
+      
+      // DO NOT populate input boxes - those are for attacker mode only!
       
       // Only log once to avoid spam
       if (!window._lastPendingShot || window._lastPendingShot !== `${x},${y}`) {
@@ -1096,6 +1130,8 @@ async function queryPendingShot(gameId, turnNo) {
       }
     } else {
       document.getElementById('pending-shot-display').style.display = 'none';
+      document.getElementById('apply-proof-button').disabled = true;
+      pendingShotCoordinates = null;
       window._lastPendingShot = null;
     }
   } catch (error) {
@@ -1103,5 +1139,5 @@ async function queryPendingShot(gameId, turnNo) {
   }
 }
 
-export { initGame, updateFromEntitiesData, setGameIdFromUrl };
+export { initGame, updateFromEntitiesData, setGameIdFromUrl, joinGame };
 

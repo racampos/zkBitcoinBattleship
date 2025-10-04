@@ -83,16 +83,10 @@
       <h2>🎲 Game Management</h2>
       <div>
         <button id="create-open-game-button" disabled>Create Open Game</button>
-        <button id="join-game-button" disabled>Join Game (Enter ID)</button>
-        <button id="refresh-game-button" disabled>Refresh Game State</button>
       </div>
-      <div id="game-id-display" class="status">No game created</div>
-      <div class="status" style="font-size: 11px;">
-        💡 Share game URL: <span id="share-url"></span>
-        <button id="copy-url-button" style="display: none; margin-left: 10px; padding: 5px 10px; font-size: 11px;">📋 Copy URL</button>
-      </div>
-      <div class="status" style="font-size: 12px; color: #4CAF50;">
-        ✅ P1 always goes first (like white in chess). Game starts when P2 joins!
+      <div id="game-id-display" class="status" style="display: none;">No game created</div>
+      <div id="share-url-section" class="status" style="font-size: 12px; display: none;">
+        🎉 Game created! <button id="copy-url-button" style="margin-left: 10px; padding: 5px 10px; font-size: 11px;">📋 Copy URL</button>
       </div>
     </div>
 
@@ -107,13 +101,7 @@
     <!-- Board Setup -->
     <div class="section" id="board-section" style="display: none;">
       <h2>🛡️ Your Defense Board</h2>
-      <div class="status" style="font-size: 12px; color: #4CAF50; margin-bottom: 10px;">
-        ⚓ Fleet: Carrier(5), Battleship(4), Cruiser(3), Submarine(3), Destroyer(2) = 17 cells
-      </div>
-      <div class="status" style="font-size: 11px; color: #888; margin-bottom: 10px;">
-        Ships are randomly placed on your board (horizontal or vertical). Green 'S' marks your ships.
-      </div>
-      <div id="board-display" style="font-family: monospace; font-size: 14px; line-height: 1.4; background: #2a2a2a; padding: 15px; border-radius: 4px; overflow-x: auto;">
+      <div id="board-display" style="font-family: monospace; font-size: 14px; line-height: 1.4; background: #2a2a2a; padding: 15px; border-radius: 4px; overflow-x: auto; margin-bottom: 10px;">
         <div id="board-grid">Loading...</div>
       </div>
       <button id="commit-board-button" disabled>Commit Board</button>
@@ -124,7 +112,8 @@
     <div class="section" id="dev-mode-section" style="display: none; border: 2px solid #FF9800;">
       <h2>🔧 Dev Mode (Testing Shortcuts)</h2>
       <button id="skip-to-gameplay-button" disabled style="background: #FF9800;">Enable Gameplay (Skip Checks)</button>
-      <div class="status" style="font-size: 11px;">⚠️ For single-account testing. Press Shift+D to toggle.</div>
+      <button id="refresh-game-button" disabled>Refresh Game State</button>
+      <div class="status" style="font-size: 11px;">⚠️ For debugging/testing. Press Ctrl+D to toggle.</div>
     </div>
 
     <!-- Gameplay -->
@@ -136,20 +125,16 @@
       
       <div id="pending-shot-display" class="status" style="background: #FF5722; display: none;">
         🎯 Opponent fired at: <span id="pending-coords">-</span>
-        <button id="auto-set-coords">Set These Coords</button>
+        <button id="apply-proof-button" disabled style="margin-left: 10px;">Apply Proof</button>
       </div>
       
-      <div>
-        <label>Row (A-J): <input id="shot-row" type="text" maxlength="1" value="A" style="width: 50px; text-transform: uppercase;"></label>
-        <label>Column (1-10): <input id="shot-col" type="number" min="1" max="10" value="1" style="width: 60px"></label>
-        <button id="random-coords-button">🎲 Random</button>
+      <div style="font-size: 16px; margin: 15px 0;">
+        <label style="font-weight: 500;">Row: <input id="shot-row" type="text" maxlength="1" value="A" style="width: 60px; height: 32px; font-size: 16px; text-transform: uppercase; text-align: center;"></label>
+        <label style="font-weight: 500; margin-left: 15px;">Column: <input id="shot-col" type="number" min="1" max="10" value="1" style="width: 70px; height: 32px; font-size: 16px; text-align: center;"></label>
+        <button id="random-coords-button" style="padding: 6px 10px; font-size: 14px; background: #444; margin-left: 10px; height: 32px;">🎲</button>
+        <button id="fire-shot-button" disabled style="margin-left: 10px; background: #f44336; height: 32px; padding: 0 20px; font-size: 16px; font-weight: 500;">Fire Shot</button>
       </div>
-      <button id="fire-shot-button" disabled>Fire Shot</button>
-      <button id="apply-proof-button" disabled>Apply Proof (Defender)</button>
       <div id="game-status" class="status">No active game</div>
-      <div class="status" style="font-size: 11px; color: #FFA726;">
-        💡 Attacker fires, defender applies proof, turn flips!
-      </div>
     </div>
 
     <!-- Game State -->
@@ -170,7 +155,7 @@
       import Controller from '@cartridge/controller';
       import { init, ToriiQueryBuilder, KeysClause } from '@dojoengine/sdk';
       import controllerOpts from './controller.js';
-      import { initGame, updateFromEntitiesData, setGameIdFromUrl } from './game.js';
+      import { initGame, updateFromEntitiesData, setGameIdFromUrl, joinGame } from './game.js';
       import manifest from '../../chain/dojo/manifest_dev.json' assert { type: 'json' };
 
       const DOMAIN_SEPARATOR = {
@@ -231,24 +216,28 @@
 
         // Enable buttons
         document.getElementById('create-open-game-button').disabled = false;
-        document.getElementById('join-game-button').disabled = false;
         document.getElementById('refresh-game-button').disabled = false;
         document.getElementById('skip-to-gameplay-button').disabled = false;
 
-        // Check if there's a game ID in URL
+        // Check if there's a game ID in URL and auto-join
         const urlParams = new URLSearchParams(window.location.search);
         const gameIdFromUrl = urlParams.get('game');
         if (gameIdFromUrl) {
           console.log('🔗 Game ID from URL:', gameIdFromUrl);
           setGameIdFromUrl(gameIdFromUrl); // Set in game.js scope
-          document.getElementById('game-id-display').textContent = `Game ID (from URL): ${gameIdFromUrl.substring(0, 20)}...`;
-          document.getElementById('join-game-button').textContent = '👉 Join This Game';
-          document.getElementById('join-game-button').style.background = '#4CAF50';
           
-          // Auto-join after a moment (no confirmation needed)
+          // Hide Create Game button for P2 (joining via URL)
+          document.getElementById('create-open-game-button').style.display = 'none';
+          
+          // Show joining message
+          const gameIdDisplay = document.getElementById('game-id-display');
+          gameIdDisplay.textContent = '⏳ Joining game...';
+          gameIdDisplay.style.display = 'block';
+          
+          // Auto-join after a moment (direct call, no button needed)
           setTimeout(() => {
             console.log('🎮 Auto-joining game as Player 2...');
-            document.getElementById('join-game-button').click();
+            joinGame(); // Direct function call from game.js
           }, 1000);
         }
 

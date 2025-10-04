@@ -220,40 +220,62 @@
 
       const controller = new Controller(controllerOpts);
 
+      // Function to handle successful connection/reconnection
+      async function onConnected(account) {
+        document.getElementById('controller-button').textContent = 'Connected';
+        document.getElementById('controller-button').className = 'connected';
+        document.getElementById('account-display').textContent = `Address: ${account.address}`;
+
+        // Enable buttons
+        document.getElementById('create-open-game-button').disabled = false;
+        document.getElementById('join-game-button').disabled = false;
+        document.getElementById('refresh-game-button').disabled = false;
+        document.getElementById('skip-to-gameplay-button').disabled = false;
+
+        // Check if there's a game ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameIdFromUrl = urlParams.get('game');
+        if (gameIdFromUrl) {
+          console.log('🔗 Game ID from URL:', gameIdFromUrl);
+          setGameIdFromUrl(gameIdFromUrl); // Set in game.js scope
+          document.getElementById('game-id-display').textContent = `Game ID (from URL): ${gameIdFromUrl.substring(0, 20)}...`;
+          document.getElementById('join-game-button').textContent = '👉 Join This Game';
+          document.getElementById('join-game-button').style.background = '#4CAF50';
+          
+          // Auto-join after a moment (no confirmation needed)
+          setTimeout(() => {
+            console.log('🎮 Auto-joining game as Player 2...');
+            document.getElementById('join-game-button').click();
+          }, 1000);
+        }
+
+        run(account).catch((error) => {
+          console.error('Error running game:', error);
+        });
+      }
+
+      // Try to reconnect with existing session on page load
+      (async () => {
+        try {
+          console.log('🔄 Checking for existing session...');
+          const account = await controller.probe();
+          
+          if (account) {
+            console.log('✅ Found existing session! Auto-reconnecting...');
+            await onConnected(account);
+          } else {
+            console.log('ℹ️ No existing session found. Please connect wallet.');
+          }
+        } catch (error) {
+          console.log('ℹ️ No existing session:', error.message);
+        }
+      })();
+
+      // Manual connect button
       document.getElementById('controller-button').onclick = async () => {
         try {
-          let account = await controller.connect();
-
-          document.getElementById('controller-button').textContent = 'Connected';
-          document.getElementById('controller-button').className = 'connected';
-          document.getElementById('account-display').textContent = `Address: ${account.address}`;
-
-          // Enable buttons
-          document.getElementById('create-open-game-button').disabled = false;
-          document.getElementById('join-game-button').disabled = false;
-          document.getElementById('refresh-game-button').disabled = false;
-          document.getElementById('skip-to-gameplay-button').disabled = false;
-
-          // Check if there's a game ID in URL
-          const urlParams = new URLSearchParams(window.location.search);
-          const gameIdFromUrl = urlParams.get('game');
-          if (gameIdFromUrl) {
-            console.log('🔗 Game ID from URL:', gameIdFromUrl);
-            setGameIdFromUrl(gameIdFromUrl); // Set in game.js scope
-            document.getElementById('game-id-display').textContent = `Game ID (from URL): ${gameIdFromUrl.substring(0, 20)}...`;
-            document.getElementById('join-game-button').textContent = '👉 Join This Game';
-            document.getElementById('join-game-button').style.background = '#4CAF50';
-            
-            // Auto-join after a moment (no confirmation needed)
-            setTimeout(() => {
-              console.log('🎮 Auto-joining game as Player 2...');
-              document.getElementById('join-game-button').click();
-            }, 1000);
-          }
-
-          run(account).catch((error) => {
-            console.error('Error running game:', error);
-          });
+          const account = await controller.connect();
+          await onConnected(account);
         } catch (error) {
           console.error('Failed to connect:', error);
           document.getElementById('controller-button').textContent = 'Connection Failed';

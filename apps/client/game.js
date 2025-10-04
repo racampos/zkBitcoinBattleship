@@ -788,7 +788,8 @@ async function refreshGameState() {
   }
 
   try {
-    const response = await fetch('http://localhost:8081/graphql', {
+    // Query 1: Get Game entity
+    const gameResponse = await fetch('http://localhost:8081/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -810,10 +811,6 @@ async function refreshGameState() {
                     winner
                     last_action
                   }
-                  ... on battleship_BoardCommit {
-                    player
-                    commitment
-                  }
                 }
               } 
             } 
@@ -822,30 +819,50 @@ async function refreshGameState() {
       })
     });
 
-    const result = await response.json();
-    console.log('✅ Game state refreshed:', result);
-
-    // Extract Game data and update UI
-    if (result.data?.entities?.edges) {
-      // First, collect all BoardCommit models across all edges
-      const allBoardCommits = [];
-      result.data.entities.edges.forEach(edge => {
-        if (edge.node?.models) {
-          edge.node.models.forEach(m => {
-            if (m.__typename === 'battleship_BoardCommit') {
-              allBoardCommits.push(m);
+    // Query 2: Get ALL BoardCommit entities for this game
+    const commitsResponse = await fetch('http://localhost:8081/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `{
+          battleshipBoardCommitModels(where: { game_id: "${currentGameId}" }) {
+            edges {
+              node {
+                player
+                commitment
+                game_id
+              }
             }
-          });
+          }
+        }`
+      })
+    });
+
+    const gameResult = await gameResponse.json();
+    const commitsResult = await commitsResponse.json();
+    
+    console.log('✅ Game state refreshed:', gameResult);
+    console.log('✅ Board commits query result:', commitsResult);
+
+    // Extract BoardCommit data from the dedicated query
+    const allBoardCommits = [];
+    if (commitsResult.data?.battleshipBoardCommitModels?.edges) {
+      commitsResult.data.battleshipBoardCommitModels.edges.forEach(edge => {
+        if (edge.node) {
+          allBoardCommits.push(edge.node);
         }
       });
-      
-      console.log('📋 Board commits found:', allBoardCommits.map(bc => ({ 
-        player: bc.player, 
-        commitment: bc.commitment?.substring(0, 10) + '...' 
-      })));
-      
+    }
+    
+    console.log('📋 Board commits found:', allBoardCommits.length, allBoardCommits.map(bc => ({ 
+      player: bc.player?.substring(0, 10) + '...', 
+      commitment: bc.commitment?.substring(0, 10) + '...' 
+    })));
+
+    // Extract Game data and update UI
+    if (gameResult.data?.entities?.edges) {
       // Now process Game models
-      result.data.entities.edges.forEach(edge => {
+      gameResult.data.entities.edges.forEach(edge => {
         if (edge.node.models) {
           edge.node.models.forEach(model => {
             if (model.__typename === 'battleship_Game') {

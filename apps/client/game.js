@@ -205,15 +205,11 @@ function initGame(acc, man) {
   }
   displayBoard(window._opponentBoard, 'opponent-board-grid');
   
-  // Auto-refresh game state every 3 seconds while in active game
-  setInterval(() => {
-    if (currentGameId && account) {
-      // Silent refresh (no logs unless something changes)
-      refreshGameState();
-      // Update opponent board to track MY shots against them
-      updateOpponentBoard(currentGameId, account.address);
-    }
-  }, 3000);
+  // Expose refreshGameState globally for Torii subscription callback
+  window.refreshGameState = refreshGameState;
+  
+  // Torii subscription will trigger refreshGameState() on model updates
+  // No polling needed - real-time updates via subscription!
   
   // Keyboard shortcut for Dev Mode (Ctrl+D)
   document.addEventListener('keydown', (e) => {
@@ -744,43 +740,7 @@ function getContractAddress(tag) {
   return contract.address;
 }
 
-function updateFromEntitiesData(entities) {
-  entities.forEach((entity) => {
-    if (entity.models && entity.models[NAMESPACE]) {
-      const models = entity.models[NAMESPACE];
-
-      if (models.Game) {
-        const game = models.Game;
-        
-        // Update display
-        document.getElementById('status-display').textContent = game.status;
-        document.getElementById('turn-display').textContent = game.turn_no;
-        document.getElementById('p1-display').textContent = game.p1?.substring(0, 10) + '...';
-        document.getElementById('p2-display').textContent = game.p2?.substring(0, 10) + '...';
-
-        // Store game ID for later use
-        if (!currentGameId) {
-          currentGameId = game.id;
-          document.getElementById('game-id-display').textContent = `Game ID: ${game.id}`;
-        }
-
-        // Enable gameplay when game is started (status = 1)
-        if (game.status === 1 || game.status === '1') {
-          document.getElementById('fire-shot-button').disabled = false;
-          document.getElementById('game-status').textContent = '🎯 Game Started! Fire away!';
-          console.log('✅ Game started! Turn player:', game.turn_player);
-        } else if (game.status === 0 || game.status === '0') {
-          document.getElementById('game-status').textContent = '⏳ Game created, waiting for coin-flip...';
-        } else if (game.status === 2 || game.status === '2') {
-          document.getElementById('game-status').textContent = '🏆 Game finished! Winner: ' + game.winner?.substring(0, 10) + '...';
-          document.getElementById('fire-shot-button').disabled = true;
-        }
-      }
-    }
-  });
-}
-
-// Manually refresh game state from Torii
+// Refresh game state from Torii (called by subscription callback or manually)
 async function refreshGameState() {
   if (!currentGameId) {
     alert('No game ID set. Create a game first or enter game ID.');
@@ -1000,6 +960,11 @@ async function refreshGameState() {
   } catch (error) {
     console.error('Error refreshing game state:', error);
   }
+  
+  // Update opponent board to show MY shots (if I'm the attacker)
+  if (currentGameId && account) {
+    await updateOpponentBoard(currentGameId, account.address);
+  }
 }
 
 // Query CellHit data and update board display
@@ -1217,5 +1182,5 @@ async function queryPendingShot(gameId, turnNo) {
   }
 }
 
-export { initGame, updateFromEntitiesData, setGameIdFromUrl, joinGame };
+export { initGame, setGameIdFromUrl, joinGame };
 

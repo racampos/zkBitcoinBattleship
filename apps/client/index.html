@@ -155,7 +155,7 @@
       import Controller from '@cartridge/controller';
       import { init, ToriiQueryBuilder, KeysClause } from '@dojoengine/sdk';
       import controllerOpts from './controller.js';
-      import { initGame, updateFromEntitiesData, setGameIdFromUrl, joinGame } from './game.js';
+      import { initGame, setGameIdFromUrl, joinGame } from './game.js';
       import manifest from '../../chain/dojo/manifest_dev.json' assert { type: 'json' };
 
       const DOMAIN_SEPARATOR = {
@@ -173,7 +173,9 @@
         const torii = await init({
           client: {
             worldAddress: manifest.world.address,
-            toriiUrl: 'http://localhost:8081', // Port 8081 (our custom port)
+            toriiUrl: 'http://localhost:8081',
+            rpcUrl: 'http://localhost:5050',  // Katana RPC
+            relayUrl: 'http://localhost:50051', // Torii gRPC port (default)
           },
           domain: DOMAIN_SEPARATOR,
         });
@@ -183,12 +185,16 @@
         // Subscribe to all Game model updates for this world
         const [_, subscription] = await torii.subscribeEntityQuery({
           query: new ToriiQueryBuilder().withClause(
-            KeysClause(['battleship-Game'], [], 'Keys')
+            KeysClause(['battleship-Game'], [], 'VariableLen').build()
           ),
           callback: ({ data, error }) => {
             if (data) {
-              console.log('📡 Torii update received:', data);
-              updateFromEntitiesData(data);
+              console.log('📡 Torii subscription update received - refreshing game state');
+              // Trigger full game state refresh when subscription receives an update
+              // This reuses all the sophisticated logic in refreshGameState()
+              if (window.refreshGameState) {
+                window.refreshGameState();
+              }
             }
             if (error) {
               console.error('Torii subscription error:', error);

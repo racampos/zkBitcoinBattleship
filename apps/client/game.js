@@ -83,17 +83,82 @@ function setGameIdFromUrl(gameId) {
 function generateRandomBoard() {
   const board = Array(10).fill(null).map(() => Array(10).fill(0));
   
-  // Simplified: Place 17 random ship cells (will add proper ship placement later)
-  let cellsPlaced = 0;
-  while (cellsPlaced < 17) {
-    const x = Math.floor(Math.random() * 10);
-    const y = Math.floor(Math.random() * 10);
-    if (board[y][x] === 0) {
-      board[y][x] = 1; // 1 = ship
-      cellsPlaced++;
+  // Traditional Battleship ships with their sizes
+  const ships = [
+    { name: 'Carrier', size: 5 },
+    { name: 'Battleship', size: 4 },
+    { name: 'Cruiser', size: 3 },
+    { name: 'Submarine', size: 3 },
+    { name: 'Destroyer', size: 2 }
+  ];
+  
+  // Helper: Check if ship can be placed at position
+  function canPlaceShip(x, y, size, isHorizontal) {
+    if (isHorizontal) {
+      // Check bounds
+      if (x + size > 10) return false;
+      // Check collision
+      for (let i = 0; i < size; i++) {
+        if (board[y][x + i] !== 0) return false;
+      }
+    } else {
+      // Vertical
+      if (y + size > 10) return false;
+      for (let i = 0; i < size; i++) {
+        if (board[y + i][x] !== 0) return false;
+      }
+    }
+    return true;
+  }
+  
+  // Helper: Place ship on board
+  function placeShip(x, y, size, isHorizontal) {
+    if (isHorizontal) {
+      for (let i = 0; i < size; i++) {
+        board[y][x + i] = 1;
+      }
+    } else {
+      for (let i = 0; i < size; i++) {
+        board[y + i][x] = 1;
+      }
     }
   }
   
+  // Place each ship
+  for (const ship of ships) {
+    let placed = false;
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    while (!placed && attempts < maxAttempts) {
+      const x = Math.floor(Math.random() * 10);
+      const y = Math.floor(Math.random() * 10);
+      const isHorizontal = Math.random() < 0.5;
+      
+      if (canPlaceShip(x, y, ship.size, isHorizontal)) {
+        placeShip(x, y, ship.size, isHorizontal);
+        console.log(`✅ Placed ${ship.name} (size ${ship.size}) at (${x}, ${y}) ${isHorizontal ? 'horizontally' : 'vertically'}`);
+        placed = true;
+      }
+      attempts++;
+    }
+    
+    if (!placed) {
+      console.error(`❌ Failed to place ${ship.name} after ${maxAttempts} attempts. Retrying board generation...`);
+      // Recursive retry: generate a completely new board
+      return generateRandomBoard();
+    }
+  }
+  
+  // Verify total cells
+  let totalCells = 0;
+  for (let y = 0; y < 10; y++) {
+    for (let x = 0; x < 10; x++) {
+      if (board[y][x] === 1) totalCells++;
+    }
+  }
+  
+  console.log(`🎯 Board generated successfully! ${ships.length} ships placed, ${totalCells} total cells (expected 17)`);
   return board;
 }
 

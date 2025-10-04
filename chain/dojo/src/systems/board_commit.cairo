@@ -1,13 +1,13 @@
 // board_commit.cairo - Board commitment with ZK proof verification
 // Currently using MOCK verifier - will be replaced with Garaga verifier
+// Rules are hardcoded: 10x10 board, 5 ships (Carrier:5, Battleship:4, Cruiser:3, Submarine:3, Destroyer:2)
 
 #[starknet::interface]
 pub trait IBoardCommit<T> {
     fn commit_board(
         ref self: T,
         game_id: felt252,
-        commitment: felt252,
-        rules_hash: felt252
+        commitment: felt252
         // Note: proof parameter removed for MVP - will add back with real ZK
     );
 }
@@ -27,8 +27,7 @@ pub mod board_commit {
         fn commit_board(
             ref self: ContractState,
             game_id: felt252,
-            commitment: felt252,
-            rules_hash: felt252
+            commitment: felt252
         ) {
             let mut world = self.world_default();
             let caller = get_caller_address();
@@ -44,33 +43,24 @@ pub mod board_commit {
             errors::require(g.board_size == BOARD_SIZE, 'BAD_BOARD_SIZE');
 
             // Mock verification (always passes for MVP - will add real ZK later)
+            // When real ZK is added: verify proof that board has exactly 5 ships
+            // with sizes [5,4,3,3,2], no overlaps, within bounds
 
             // Each player can only commit once
             let prior = get_opt_board_commit(world, game_id, caller);
             errors::require(prior.is_none(), 'ALREADY_COMMITTED');
 
-            // Lock rules to game on first commit
-            let mut g2 = g;
-            if g2.rules_hash == 0 {
-                g2.rules_hash = rules_hash;
-                world.write_model(@g2);
-            }
-            errors::require(
-                g2.rules_hash == 0 || g2.rules_hash == rules_hash,
-                'RULES_MISMATCH'
-            );
-
             // Store commitment
-            let board_commit = BoardCommit { game_id, player: caller, commitment, rules_hash };
+            let board_commit = BoardCommit { game_id, player: caller, commitment };
             world.write_model(@board_commit);
 
             // If both players have now committed, update last_action
             let bc1 = get_opt_board_commit(world, game_id, g.p1);
             let bc2 = get_opt_board_commit(world, game_id, g.p2);
             if bc1.is_some() && bc2.is_some() {
-                let mut g3 = g2;
-                g3.last_action = get_block_timestamp();
-                world.write_model(@g3);
+                let mut g2 = g;
+                g2.last_action = get_block_timestamp();
+                world.write_model(@g2);
 
                 // TODO: Emit BoardsReady event
             }

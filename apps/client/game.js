@@ -509,8 +509,7 @@ async function commitBoard() {
     if (!currentGameId) return;
   }
 
-  const commitment = '0x' + '2'.repeat(64); // Mock commitment  
-  const rulesHash = '0x' + 'a'.repeat(64); // Mock rules hash
+  const commitment = '0x' + '2'.repeat(64); // Mock commitment (will be real ZK commitment later)
 
   try {
     logGameState('Board Commit Attempt', { gameId: currentGameId, commitment });
@@ -522,7 +521,7 @@ async function commitBoard() {
     const tx = await account.execute({
       contractAddress: getContractAddress('battleship-board_commit'),
       entrypoint: 'commit_board',
-      calldata: [currentGameId, commitment, rulesHash], // No proof parameter!
+      calldata: [currentGameId, commitment], // No proof or rules_hash (rules are hardcoded)
     });
 
     logGameState('Board Commit TX Sent', { tx: tx.transaction_hash });
@@ -662,7 +661,6 @@ async function applyProof() {
   console.log(`🎯 Defender applying proof for shot at (${x}, ${y}): ${wasHit ? 'HIT' : 'MISS'} (result=${result})`);
   
   const nullifier = '0x' + Math.random().toString(16).substring(2).padStart(64, '0'); // Random nullifier
-  const rulesHash = '0x' + 'a'.repeat(64); // Mock rules hash
 
   try {
     logGameState('Apply Proof Attempt', { x, y, result, gameId: currentGameId });
@@ -670,7 +668,7 @@ async function applyProof() {
     const tx = await account.execute({
       contractAddress: getContractAddress('battleship-proof_verify'),
       entrypoint: 'apply_shot_proof',
-      calldata: [currentGameId, x, y, result, nullifier, rulesHash], // No proof parameter!
+      calldata: [currentGameId, x, y, result, nullifier], // No proof or rules_hash (rules are hardcoded)
     });
 
     logGameState('Apply Proof TX Sent', { x, y, result, tx: tx.transaction_hash });

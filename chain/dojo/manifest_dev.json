@@ -1479,8 +1479,8 @@
   },
   "contracts": [
     {
-      "address": "0x3adc25ebec1dff2afc48f10830e361cd321cdd63ec7fa0804f3dfbb093ef8fd",
-      "class_hash": "0x12c08f5509150110fabe2ec7278a66027232eb19335330442e8451cc3bc3f16",
+      "address": "0x53cd23a39323d808429864d7af2ad028de594e9e164289b6ed0431b6cd94da9",
+      "class_hash": "0x606b496d4e55aded90e72c24c73c25930042c172b78ed6aed73fb839dd3a774",
       "abi": [
         {
           "type": "impl",
@@ -1551,10 +1551,6 @@
                 },
                 {
                   "name": "commitment",
-                  "type": "core::felt252"
-                },
-                {
-                  "name": "rules_hash",
                   "type": "core::felt252"
                 }
               ],
@@ -1687,8 +1683,8 @@
       ]
     },
     {
-      "address": "0x266c5489ec31d288cc35f865f1643b3867445037b11d08c0f5d5b407340130c",
-      "class_hash": "0x51348ca0cbef0670284cc078e345482e0e5928dccd94ef8cddb6175593c2ee0",
+      "address": "0x2734226a9fe34a0bdb71d5c03b43b0eff99abd3eb2fd67ac348e489210d2a34",
+      "class_hash": "0x5b0e30e535cce5d72c5068f3dcb2bc0db3993f54e8dc349c5ade886e9339d14",
       "abi": [
         {
           "type": "impl",
@@ -1921,8 +1917,8 @@
       ]
     },
     {
-      "address": "0x463381bea3a1c7253ee883a67e9a847c8f75d69516e4cde56e353c57a0a641d",
-      "class_hash": "0x2829eb2d62cc4961e64b93c6e158d6593b3e09c83b44f603a247b4b3b7b3680",
+      "address": "0x71bc950c48470289eff4c6326f0a0e7de9109762b9671766935aba81f20750b",
+      "class_hash": "0x340fde534802ece77258bbbe6b75a1732495d79c55df210e7467591e1945f6e",
       "abi": [
         {
           "type": "impl",
@@ -2173,8 +2169,8 @@
       ]
     },
     {
-      "address": "0x4a3951b0d55ee2a6f6f3884c55ece644c304ffdae7b7b08e2bcface3d2a3d49",
-      "class_hash": "0x478ef991036fc9c84163185eace796cf8836ca1215c9a985f6a88934a798af0",
+      "address": "0x268d9be8fb374c9205ff92f1509d9173a751830228a1dbba38373cdacacff39",
+      "class_hash": "0x283c810781009eb453a9e36b3d8654f7d2a67d0ece909d89a5b23fa5969eadd",
       "abi": [
         {
           "type": "impl",
@@ -2398,8 +2394,8 @@
       ]
     },
     {
-      "address": "0x3fe71030ed839b54e452a40a82e1d19ada3dff8c3d9d2e771094f64ecb9760c",
-      "class_hash": "0x1bf50487dae9892bc0c54e752d62b68dd82f0da3fafd7e879f737d17e4c6867",
+      "address": "0x22ebb6fd6a02a126d4a3d2bf5aeb13f6fbe8765e41cadc20a3fbabe22b7b909",
+      "class_hash": "0x4e99e41882e7f4647128efab9d4c35ec1691df643d4f3d8539f4802252fe2ac",
       "abi": [
         {
           "type": "impl",
@@ -2606,8 +2602,8 @@
       ]
     },
     {
-      "address": "0x5a654180ea8ee046abf9b8f4408a7a5b24e517c26e9ebeb0de866cb2fc78632",
-      "class_hash": "0x55ec88aa7339726c1b26dfc3b5dcf9d49c2567a5d21a9ad5bfdb295fe1ec18b",
+      "address": "0x785e1b552be77e55aa6a61234508dc3237680028f7ca9ed925b933c1551a1ff",
+      "class_hash": "0x5ebf71c0f895d2e0bb308739d9182193696ace7031a3c0dded7dc0ded9d88ec",
       "abi": [
         {
           "type": "impl",
@@ -2690,10 +2686,6 @@
                 },
                 {
                   "name": "nullifier",
-                  "type": "core::felt252"
-                },
-                {
-                  "name": "rules_hash",
                   "type": "core::felt252"
                 }
               ],
@@ -2826,8 +2818,8 @@
       ]
     },
     {
-      "address": "0x2245952b293d13be623960ce03d1354eeff01b7177d5f75bfd98b781da726aa",
-      "class_hash": "0x6bd586222feaba04296bed1271a1876a7283e2db00d4abd6d4ddd66ec9646df",
+      "address": "0x2db21df6cbca17f8cb2a5aa7fc5ed0548c8d2575d807486fde8eec517fb6e66",
+      "class_hash": "0x4ebf7ba694ffa5af1f8f8a8402c6df521742d4d4ff91c8311fb8db9da122790",
       "abi": [
         {
           "type": "impl",
@@ -3062,7 +3054,7 @@
     },
     {
       "members": [],
-      "class_hash": "0x3420ea4af5f009e503ee5bdfced0327efa25b2543bc81a3b1f6e4fa9b32573e",
+      "class_hash": "0x127a88d1c28bb3f2d84c98fe5aab61825eb0e93c8f0a31bb046199752dc8ccf",
       "tag": "battleship-BoardCommit",
       "selector": "0x45d6fb6039feb14dc9c2208083df11937517df3afc1423d7f62c2dd8d9e6f62"
     },
@@ -3080,7 +3072,7 @@
     },
     {
       "members": [],
-      "class_hash": "0x79de1aa5a644e267055bcc6f67295ee6fbf13ed899a7fe1fe7a4d522a42c28c",
+      "class_hash": "0x6d8e0651a884b7e9ce83461894dd8863b82505650666c5ed9688cbf83396ef8",
       "tag": "battleship-Game",
       "selector": "0x19ecd3fc5cf87c5826aef821184416576619d378a70559193caa360c8020123"
     },

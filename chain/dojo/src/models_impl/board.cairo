@@ -1,6 +1,7 @@
 use starknet::ContractAddress;
 
 // Board commitment (ZK proof of valid placement)
+// Rules are hardcoded: 10x10 board, 5 ships (Carrier:5, Battleship:4, Cruiser:3, Submarine:3, Destroyer:2)
 #[derive(Copy, Drop, Serde)]
 #[dojo::model]
 pub struct BoardCommit {
@@ -9,7 +10,6 @@ pub struct BoardCommit {
     #[key]
     pub player: ContractAddress,
     pub commitment: felt252,
-    pub rules_hash: felt252,
 }
 
 // Cell hit tracking (prevents double-counting)

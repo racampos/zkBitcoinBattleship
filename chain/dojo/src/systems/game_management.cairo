@@ -45,7 +45,6 @@ pub mod game_management {
                 status: GameStatus::Created, // u8 constant
                 turn_player: zero_ca,
                 board_size,
-                rules_hash: 0,
                 turn_no: 0,
                 last_action: get_block_timestamp(),
                 winner: zero_ca,

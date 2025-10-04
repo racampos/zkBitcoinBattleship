@@ -40,12 +40,6 @@ pub fn get_opponent(
     }
 }
 
-// Get the locked rules hash for a game
-pub fn get_game_rules_hash(world: WorldStorage, game_id: felt252) -> felt252 {
-    let g: Game = world.read_model(game_id);
-    g.rules_hash
-}
-
 // Determine who we're waiting on (for timeout logic)
 pub fn expected_offender(world: WorldStorage, game_id: felt252) -> ContractAddress {
     let g: Game = world.read_model(game_id);

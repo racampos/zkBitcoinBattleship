@@ -9,6 +9,7 @@ pub mod GameStatus {
 }
 
 // Main game state
+// Rules are hardcoded: 10x10 board, 5 ships (Carrier:5, Battleship:4, Cruiser:3, Submarine:3, Destroyer:2)
 #[derive(Copy, Drop, Serde)]
 #[dojo::model]
 pub struct Game {
@@ -19,7 +20,6 @@ pub struct Game {
     pub status: u8, // Use u8 instead of enum for Dojo storage
     pub turn_player: ContractAddress,
     pub board_size: u8,
-    pub rules_hash: felt252,
     pub turn_no: u32,
     pub last_action: u64,
     pub winner: ContractAddress,

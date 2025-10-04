@@ -1,5 +1,6 @@
 // proof_verify.cairo - Shot proof verification and application
 // Currently using MOCK verifier - will be replaced with Garaga verifier
+// Rules are hardcoded: 10x10 board, 5 ships (Carrier:5, Battleship:4, Cruiser:3, Submarine:3, Destroyer:2)
 
 #[starknet::interface]
 pub trait IProofVerify<T> {
@@ -9,8 +10,7 @@ pub trait IProofVerify<T> {
         x: u8,
         y: u8,
         result: u8,
-        nullifier: felt252,
-        rules_hash: felt252
+        nullifier: felt252
         // Note: proof parameter removed for MVP - will add back with real ZK
     );
 }
@@ -24,7 +24,7 @@ pub mod proof_verify {
     use crate::helpers::errors;
     use crate::helpers::get_opt::get_opt_nullifier;
     use crate::helpers::game_helpers::{
-        get_defender_address, get_attacker_address, get_game_rules_hash, apply_hit_and_check_win,
+        get_defender_address, get_attacker_address, apply_hit_and_check_win,
         finalize_win
     };
 
@@ -36,8 +36,7 @@ pub mod proof_verify {
             x: u8,
             y: u8,
             result: u8,
-            nullifier: felt252,
-            rules_hash: felt252
+            nullifier: felt252
         ) {
             let mut world = self.world_default();
             let g: Game = world.read_model(game_id);
@@ -62,10 +61,7 @@ pub mod proof_verify {
 
             // Mock verification (always passes for MVP - will add real ZK later)
             // In production: verify ZK proof that defender's board has ship/miss at (x,y)
-
-            // Lock rules to game
-            let game_rules_hash = get_game_rules_hash(world, game_id);
-            errors::require(rules_hash == game_rules_hash, 'RULES_CHANGED');
+            // Rules are hardcoded: 10x10, 5 ships [5,4,3,3,2], no overlaps
 
             // Nullifier replay guard
             errors::require(nullifier != 0, 'BAD_NULLIFIER');

@@ -578,6 +578,10 @@ async function commitBoard() {
 }
 
 async function fireShot() {
+  // Disable button IMMEDIATELY to prevent double-clicks
+  const fireButton = document.getElementById('fire-shot-button');
+  fireButton.disabled = true;
+  
   // Convert A-J, 1-10 to 0-9, 0-9 for internal use
   const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
   const rowInput = document.getElementById('shot-row').value.toUpperCase();
@@ -588,15 +592,12 @@ async function fireShot() {
   
   if (y === -1 || x < 0 || x > 9) {
     alert('Invalid coordinates! Row must be A-J, Column must be 1-10');
+    fireButton.disabled = false; // Re-enable on validation error
     return;
   }
 
   try {
     logGameState('Fire Shot Attempt', { x, y, gameId: currentGameId });
-    
-    // Disable button immediately
-    const fireButton = document.getElementById('fire-shot-button');
-    fireButton.disabled = true;
     
     const tx = await account.execute({
       contractAddress: getContractAddress('battleship-gameplay'),
@@ -809,6 +810,10 @@ async function refreshGameState() {
                     winner
                     last_action
                   }
+                  ... on battleship_BoardCommit {
+                    player
+                    commitment
+                  }
                 }
               } 
             } 
@@ -822,6 +827,24 @@ async function refreshGameState() {
 
     // Extract Game data and update UI
     if (result.data?.entities?.edges) {
+      // First, collect all BoardCommit models across all edges
+      const allBoardCommits = [];
+      result.data.entities.edges.forEach(edge => {
+        if (edge.node?.models) {
+          edge.node.models.forEach(m => {
+            if (m.__typename === 'battleship_BoardCommit') {
+              allBoardCommits.push(m);
+            }
+          });
+        }
+      });
+      
+      console.log('📋 Board commits found:', allBoardCommits.map(bc => ({ 
+        player: bc.player, 
+        commitment: bc.commitment?.substring(0, 10) + '...' 
+      })));
+      
+      // Now process Game models
       result.data.entities.edges.forEach(edge => {
         if (edge.node.models) {
           edge.node.models.forEach(model => {
@@ -857,10 +880,38 @@ async function refreshGameState() {
                 myAddress: account.address
               });
               
+              // Check if both boards are committed (from collected board commits)
+              const p1Committed = allBoardCommits.find(bc => 
+                bc.player?.toLowerCase() === model.p1?.toLowerCase()
+              );
+              const p2Committed = allBoardCommits.find(bc => 
+                bc.player?.toLowerCase() === model.p2?.toLowerCase()
+              );
+              const bothBoardsCommitted = p1Committed && p2Committed;
+              
+              // Log board commit status for debugging
+              if (model.status === 1) {
+                logGameState('Board Commit Check', {
+                  p1Committed: !!p1Committed,
+                  p2Committed: !!p2Committed,
+                  bothCommitted: bothBoardsCommitted,
+                  totalCommits: allBoardCommits.length
+                });
+              }
+              
               // ALWAYS sync button states to actual game state (no optimistic updates)
+              console.log('🔍 Checking button state:', { 
+                status: model.status, 
+                isMyTurn, 
+                bothBoardsCommitted,
+                turnPlayer: model.turn_player,
+                myAddress: account.address 
+              });
+              
               if (model.status === 1) { // Started
-                if (isMyTurn) {
-                  // My turn to attack - enable coordinate inputs
+                if (isMyTurn && bothBoardsCommitted) {
+                  // My turn to attack - enable coordinate inputs (only if both boards committed)
+                  console.log('✅ ENABLING Fire Shot button');
                   document.getElementById('fire-shot-button').disabled = false;
                   document.getElementById('fire-shot-button').style.display = 'inline-block';
                   document.getElementById('pending-shot-display').style.display = 'none'; // Hide banner with Apply Proof
@@ -869,6 +920,16 @@ async function refreshGameState() {
                   document.getElementById('random-coords-button').disabled = false;
                   document.getElementById('game-status').textContent = `🎯 Your turn! (Turn ${model.turn_no})`;
                   logGameState('Button State', { fire: 'enabled', apply: 'in-banner', reason: 'My turn to attack' });
+                } else if (isMyTurn && !bothBoardsCommitted) {
+                  // My turn but boards not committed yet
+                  document.getElementById('fire-shot-button').disabled = true;
+                  document.getElementById('fire-shot-button').style.display = 'inline-block';
+                  document.getElementById('pending-shot-display').style.display = 'none';
+                  document.getElementById('shot-row').disabled = true;
+                  document.getElementById('shot-col').disabled = true;
+                  document.getElementById('random-coords-button').disabled = true;
+                  document.getElementById('game-status').textContent = `⏳ Waiting for both players to commit boards...`;
+                  logGameState('Button State', { fire: 'disabled', apply: 'hidden', reason: 'Boards not committed yet' });
                 } else if (isP1 || isP2) {
                   // Opponent's turn - I defend, disable coordinate inputs (they're set by opponent's shot)
                   document.getElementById('fire-shot-button').style.display = 'none'; // Hide Fire Shot

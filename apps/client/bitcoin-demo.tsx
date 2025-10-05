@@ -57,6 +57,8 @@ function BitcoinDemo() {
   const [swapStatus, setSwapStatus] = useState<SwapStatus>(SwapStatus.IDLE);
   const [swapError, setSwapError] = useState<string | null>(null);
   const [quoteData, setQuoteData] = useState<any>(null);
+  const [swapInstance, setSwapInstance] = useState<any>(null);
+  const [lightningInvoice, setLightningInvoice] = useState<string | null>(null);
 
   // Services
   const xverseService = XverseService.getInstance();
@@ -86,8 +88,8 @@ function BitcoinDemo() {
       setSwapStatus(SwapStatus.QUOTING);
       setSwapError(null);
 
-      const amount = 10000n; // 10k sats for testing
-      
+      const amount = 1000n; // 1k sats for testing (~$0.60)
+
       const quote = await atomiqService.getQuote(
         SwapDirection.BTC_TO_STRK,
         amount
@@ -97,6 +99,58 @@ function BitcoinDemo() {
       setSwapStatus(SwapStatus.QUOTE_READY);
     } catch (error: any) {
       console.error("Quote failed:", error);
+      setSwapError(error.message);
+      setSwapStatus(SwapStatus.FAILED);
+    }
+  };
+
+  // Start the swap (create Lightning invoice)
+  const handleStartSwap = async () => {
+    try {
+      setSwapStatus(SwapStatus.COMMITTING);
+      setSwapError(null);
+
+      // For demo: use dummy Starknet address (in production, use real Starknet wallet)
+      const DUMMY_STARKNET_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000001";
+
+      console.log("🚀 Creating swap...");
+      
+      // Create swap (line 287-294 from official example)
+      const swap = await atomiqService.createDepositSwap(
+        1000n, // amount (1k sats ~$0.60)
+        DUMMY_STARKNET_ADDRESS // Starknet destination
+      );
+
+      // Get Lightning invoice (line 300 from official example)
+      const invoice = (swap as any).getAddress();
+      console.log("⚡ Lightning invoice:", invoice);
+
+      setSwapInstance(swap);
+      setLightningInvoice(invoice);
+      setSwapStatus(SwapStatus.AWAITING_PAYMENT);
+
+      // Monitor payment (line 302-308 from official example)
+      console.log("👀 Waiting for Lightning payment...");
+      const paid = await (swap as any).waitForPayment();
+      
+      if (!paid) {
+        console.log("❌ Payment not received - quote expired");
+        setSwapError("Lightning payment not received in time");
+        setSwapStatus(SwapStatus.EXPIRED);
+        return;
+      }
+
+      console.log("✅ Payment received!");
+      setSwapStatus(SwapStatus.PAYMENT_RECEIVED);
+
+      // TODO: Claim on Starknet (needs real Starknet account)
+      // await swap.commit(starknetSigner);
+      // await swap.claim(starknetSigner);
+      
+      console.log("⚠️ Claim step requires Starknet wallet integration");
+      
+    } catch (error: any) {
+      console.error("Swap failed:", error);
       setSwapError(error.message);
       setSwapStatus(SwapStatus.FAILED);
     }
@@ -244,7 +298,7 @@ function BitcoinDemo() {
             >
               {swapStatus === SwapStatus.QUOTING
                 ? "Getting Quote..."
-                : "Get Quote (10k sats → STRK)"}
+                : "Get Quote (1k sats → STRK)"}
             </button>
 
             {swapError && (
@@ -389,36 +443,98 @@ function BitcoinDemo() {
                   </span>
                 </div>
 
-                {quoteData.invoice && (
-                  <div
+                {/* Start Swap Button */}
+                <div style={{ marginTop: "20px", textAlign: "center" }}>
+                  <button
+                    onClick={handleStartSwap}
+                    disabled={swapStatus !== SwapStatus.QUOTE_READY}
                     style={{
-                      marginTop: "15px",
-                      padding: "12px",
-                      background: "#0a0a0a",
+                      padding: "12px 32px",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      backgroundColor: "#10b981",
+                      color: "white",
+                      border: "none",
                       borderRadius: "6px",
+                      cursor: swapStatus === SwapStatus.QUOTE_READY ? "pointer" : "not-allowed",
+                      opacity: swapStatus === SwapStatus.QUOTE_READY ? 1 : 0.5,
                     }}
                   >
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#888",
-                        marginBottom: "6px",
-                      }}
-                    >
-                      Lightning Invoice:
-                    </div>
-                    <div
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "10px",
-                        wordBreak: "break-all",
-                      }}
-                    >
-                      {quoteData.invoice}
-                    </div>
-                  </div>
-                )}
+                    🚀 Start Swap
+                  </button>
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* Lightning Invoice Display */}
+          {lightningInvoice && (
+            <div
+              style={{
+                background: "#1a1a1a",
+                border: "1px solid #FF9800",
+                borderRadius: "8px",
+                padding: "24px",
+                marginBottom: "20px",
+              }}
+            >
+              <h2 style={{ margin: "0 0 20px 0", fontSize: "20px", color: "#FF9800" }}>
+                ⚡ Pay Lightning Invoice
+              </h2>
+              
+              {/* Status */}
+              <div style={{ marginBottom: "20px", padding: "12px", background: "#0a0a0a", borderRadius: "6px" }}>
+                <strong>Status:</strong> {swapStatus === SwapStatus.AWAITING_PAYMENT ? "⏳ Waiting for payment..." : 
+                  swapStatus === SwapStatus.PAYMENT_RECEIVED ? "✅ Payment received!" : swapStatus}
+              </div>
+
+              {/* Invoice Text */}
+              <div style={{ marginBottom: "20px" }}>
+                <div style={{ fontSize: "12px", color: "#888", marginBottom: "8px" }}>
+                  Lightning Invoice:
+                </div>
+                <div
+                  style={{
+                    fontFamily: "monospace",
+                    fontSize: "11px",
+                    wordBreak: "break-all",
+                    background: "#0a0a0a",
+                    padding: "12px",
+                    borderRadius: "6px",
+                  }}
+                >
+                  {lightningInvoice}
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div style={{ fontSize: "14px", color: "#ccc", marginTop: "15px" }}>
+                💡 Open your Lightning wallet (e.g., <a href="https://wallet.cashu.me/" target="_blank" style={{ color: "#FF9800" }}>Cashu</a>) and paste this invoice to pay
+              </div>
+            </div>
+          )}
+
+          {/* Payment Received */}
+          {swapStatus === SwapStatus.PAYMENT_RECEIVED && (
+            <div
+              style={{
+                background: "#1a1a1a",
+                border: "1px solid #10b981",
+                borderRadius: "8px",
+                padding: "24px",
+                marginBottom: "20px",
+                textAlign: "center",
+              }}
+            >
+              <h2 style={{ margin: "0 0 15px 0", fontSize: "24px", color: "#10b981" }}>
+                ✅ Payment Received!
+              </h2>
+              <p style={{ color: "#ccc", marginBottom: "15px" }}>
+                Your Lightning payment was received successfully.
+              </p>
+              <p style={{ color: "#FFC107", fontSize: "14px" }}>
+                ⚠️ Next step: Claim on Starknet (requires Starknet wallet integration)
+              </p>
             </div>
           )}
 

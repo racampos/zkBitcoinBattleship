@@ -8,5 +8,9 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  define: {
+    // Polyfill for Node.js globals required by some packages (e.g., Atomiq SDK)
+    global: 'globalThis',
+  },
 });
 

@@ -1,7 +1,9 @@
 // Atomiq swap service for BTC ↔ STRK swaps
+// Browser-optimized configuration (NodeJS example uses RpcProvider object)
 
 import { SwapperFactory, type Swap, BitcoinNetwork } from "@atomiqlabs/sdk";
 import { StarknetInitializer } from "@atomiqlabs/chain-starknet";
+import { RpcProvider } from "starknet";
 import type { Account } from "starknet";
 import type {
   SwapQuote,
@@ -28,9 +30,12 @@ export class AtomiqService {
 
   /**
    * Initialize Atomiq SDK
+   * BROWSER MODE: Let SDK create RpcProvider internally
    */
   async initialize() {
     if (this.initialized) return;
+
+    console.log("🔧 Initializing Atomiq SDK (browser mode)...");
 
     const Factory = new SwapperFactory([StarknetInitializer] as const);
     this.factory = Factory;
@@ -40,17 +45,39 @@ export class AtomiqService {
         ? BitcoinNetwork.MAINNET
         : BitcoinNetwork.TESTNET;
 
-    this.swapper = Factory.newSwapper({
-      chains: {
-        STARKNET: {
-          rpcUrl: import.meta.env.VITE_STARKNET_RPC_URL,
-        },
-      },
-      bitcoinNetwork,
-    });
+    console.log("  Bitcoin Network:", bitcoinNetwork);
+    console.log("  Starknet RPC:", import.meta.env.VITE_STARKNET_RPC_URL);
 
-    this.initialized = true;
-    console.log("Atomiq SDK initialized:", { bitcoinNetwork });
+    // Create RpcProvider like official example (lines 60-62)
+    const starknetRpc = new RpcProvider({
+      nodeUrl: import.meta.env.VITE_STARKNET_RPC_URL,
+    });
+    
+    console.log("  Created RpcProvider");
+
+    try {
+      // Pass RpcProvider object like official example (line 113)
+      this.swapper = Factory.newSwapper({
+        chains: {
+          STARKNET: {
+            rpcUrl: starknetRpc, // ← RpcProvider object, not string!
+          },
+        },
+        bitcoinNetwork,
+      });
+
+      console.log("  Swapper created, calling init()...");
+
+      // CRITICAL: Initialize swapper (from official example line 131)
+      await this.swapper.init();
+
+      this.initialized = true;
+      console.log("✅ Atomiq SDK initialized successfully");
+    } catch (error: any) {
+      console.error("❌ SDK initialization failed:", error);
+      console.error("  Stack:", error.stack);
+      throw error;
+    }
   }
 
   /**
@@ -64,13 +91,16 @@ export class AtomiqService {
 
     const fromToken =
       direction === "btc_to_strk"
-        ? this.factory.Tokens.BITCOIN.BTCLN // Lightning Network
-        : this.factory.Tokens.STARKNET.STRK;
+        ? (this.factory as any).Tokens.BITCOIN.BTCLN // Lightning Network
+        : (this.factory as any).Tokens.STARKNET.STRK;
 
     const toToken =
       direction === "btc_to_strk"
-        ? this.factory.Tokens.STARKNET.STRK
-        : this.factory.Tokens.BITCOIN.BTCLN;
+        ? (this.factory as any).Tokens.STARKNET.STRK
+        : (this.factory as any).Tokens.BITCOIN.BTCLN;
+
+    // Dummy Starknet address for quote (will be replaced with real address during actual swap)
+    const DUMMY_STARKNET_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
     // Get swap preview
     const swap = await this.swapper.swap(
@@ -78,25 +108,61 @@ export class AtomiqService {
       toToken,
       amount,
       true, // exactIn
-      undefined, // source address (not needed for Lightning)
-      undefined // dest address (will be provided later)
+      undefined, // source address (not needed for Lightning quotes)
+      direction === "btc_to_strk" ? DUMMY_STARKNET_ADDRESS : undefined // dest address required for BTC->STRK
     );
 
-    const priceInfo = swap.getPriceInfo();
-    const fee = swap.getFee();
+    // Extract swap details - returns objects with rawAmount property
+    const inputData = swap.getInput();   // {rawAmount: 10000n, amount: '0.00010000', ...}
+    const outputData = swap.getOutput(); // {rawAmount: 81889376020138340590n, ...}
+    
+    console.log("🔍 Debug - Raw SDK Response:");
+    console.log("  Input:", inputData);
+    console.log("  Output:", outputData);
+    
+    // Get fee breakdown (official example line 203-205)
+    const feeBreakdown = swap.getFeeBreakdown();
+    console.log("  Fee breakdown:", feeBreakdown);
+    
+    // Fee structure: feeItem.fee.amountInSrcToken.rawAmount
+    const totalFee = feeBreakdown.reduce((sum, feeItem) => {
+      return sum + (feeItem.fee.amountInSrcToken as any).rawAmount;
+    }, 0n);
+
+    // Use rawAmount directly - it's already a bigint!
+    const inputAmount = (inputData as any).rawAmount;
+    const outputAmount = (outputData as any).rawAmount;
+
+    console.log("📊 Quote Details:");
+    console.log("  Input (raw):", inputAmount.toString());
+    console.log("  Output (raw):", outputAmount.toString());
+    console.log("  Fee (raw):", totalFee.toString());
+
+    // Calculate rate: STRK per sat (accounting for decimals)
+    // For BTC -> STRK:
+    //   inputAmount is in sats (base unit, no decimals)
+    //   outputAmount is in wei (18 decimals)
+    //   rate = (outputAmount / 10^18) / inputAmount = outputAmount / (inputAmount * 10^18)
+    const rate = direction === "btc_to_strk"
+      ? Number(outputAmount) / Number(inputAmount) / 1e18  // STRK/sat
+      : Number(outputAmount) / Number(inputAmount) * 1e18; // sats/STRK
+
+    console.log("  Rate:", rate.toFixed(10), direction === "btc_to_strk" ? "STRK/sat" : "sats/STRK");
 
     return {
       direction,
-      inputAmount: amount,
-      outputAmount: priceInfo.output,
+      inputAmount: inputAmount,
+      outputAmount: outputAmount,
+      fromAmount: inputAmount, // Alias for demo compatibility
+      toAmount: outputAmount, // Alias for demo compatibility
       inputToken: fromToken.symbol,
       outputToken: toToken.symbol,
-      rate: Number(priceInfo.output) / Number(amount),
-      fee: fee,
+      rate: rate,
+      fee: totalFee,
       expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-      minOutput: priceInfo.minOutput || 0n,
-      maxInput: priceInfo.maxInput || BigInt(Number.MAX_SAFE_INTEGER),
-    };
+      minOutput: 0n, // SDK doesn't expose this in simple mode
+      maxInput: BigInt(Number.MAX_SAFE_INTEGER),
+    } as SwapQuote;
   }
 
   /**
@@ -104,26 +170,37 @@ export class AtomiqService {
    */
   async createDepositSwap(
     amount: bigint,
-    starknetAddress: string
-  ): Promise<{ swap: Swap; invoice: string; qrData: string }> {
+    starknetAddress: string,
+    callbacks?: SwapMonitorCallbacks
+  ): Promise<Swap> {
     await this.initialize();
     if (!this.swapper || !this.factory) {
       throw new Error("Atomiq SDK not initialized");
     }
 
+    const fromToken = (this.factory as any).Tokens.BITCOIN.BTCLN;
+    const toToken = (this.factory as any).Tokens.STARKNET.STRK;
+
+    // Create swap
     const swap = await this.swapper.swap(
-      this.factory.Tokens.BITCOIN.BTCLN,
-      this.factory.Tokens.STARKNET.STRK,
+      fromToken,
+      toToken,
       amount,
-      true,
-      undefined,
-      starknetAddress
+      true, // exactIn
+      undefined, // BTC source (Lightning invoice will be generated)
+      starknetAddress // Starknet destination
     );
 
-    const invoice = swap.getAddress(); // BOLT11 invoice
-    const qrData = swap.getHyperlink(); // QR-friendly format
+    // Monitor payment
+    if (callbacks?.onPaymentReceived) {
+      swap.waitForPayment().then((paid) => {
+        if (paid && callbacks.onPaymentReceived) {
+          callbacks.onPaymentReceived();
+        }
+      });
+    }
 
-    return { swap, invoice, qrData };
+    return swap;
   }
 
   /**
@@ -131,132 +208,90 @@ export class AtomiqService {
    */
   async createWithdrawalSwap(
     amount: bigint,
-    lightningAddress: string,
-    starknetAccount: Account
+    starknetAccount: Account,
+    lightningInvoice: string,
+    callbacks?: SwapMonitorCallbacks
   ): Promise<Swap> {
     await this.initialize();
     if (!this.swapper || !this.factory) {
       throw new Error("Atomiq SDK not initialized");
     }
 
+    const fromToken = (this.factory as any).Tokens.STARKNET.STRK;
+    const toToken = (this.factory as any).Tokens.BITCOIN.BTCLN;
+
+    // Create swap
     const swap = await this.swapper.swap(
-      this.factory.Tokens.STARKNET.STRK,
-      this.factory.Tokens.BITCOIN.BTCLN,
+      fromToken,
+      toToken,
       amount,
-      true,
-      undefined,
-      lightningAddress
+      true, // exactIn
+      starknetAccount.address, // Starknet source
+      lightningInvoice // Lightning destination
     );
 
-    // Commit STRK to Atomiq vault on Starknet
-    await swap.commit(starknetAccount);
+    // Commit the swap on Starknet
+    const commitTx = await swap.commit(starknetAccount);
+    console.log("Starknet commit transaction:", commitTx);
+
+    // Monitor payout
+    if (callbacks?.onPaymentReceived) {
+      swap.waitForPayment().then((paid) => {
+        if (paid && callbacks.onPaymentReceived) {
+          callbacks.onPaymentReceived();
+        }
+      });
+    }
 
     return swap;
   }
 
   /**
-   * Monitor Lightning payment
+   * Get the Lightning invoice for a BTC deposit
    */
-  async waitForPayment(
-    swap: Swap,
-    callbacks?: SwapMonitorCallbacks
-  ): Promise<boolean> {
+  getInvoice(swap: Swap): string | null {
     try {
-      callbacks?.onStatusChange?.("awaiting_payment" as any);
-
-      const paid = await swap.waitForPayment();
-
-      if (paid) {
-        callbacks?.onPaymentReceived?.();
-        return true;
-      } else {
-        callbacks?.onError?.(
-          new Error("Payment not received before expiration")
-        );
-        return false;
-      }
+      return swap.getAddress(); // For Lightning, this returns the invoice
     } catch (error) {
-      callbacks?.onError?.(error as Error);
+      console.error("Failed to get invoice:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Wait for Bitcoin payment
+   */
+  async waitForPayment(swap: Swap, timeoutMs: number = 600000): Promise<boolean> {
+    try {
+      return await swap.waitForPayment(timeoutMs);
+    } catch (error) {
+      console.error("Payment wait failed:", error);
       return false;
     }
   }
 
   /**
-   * Claim funds on Starknet after payment
+   * Claim swap on Starknet after Bitcoin payment received
    */
-  async claimFunds(
-    swap: Swap,
-    starknetAccount: Account,
-    callbacks?: SwapMonitorCallbacks
-  ): Promise<boolean> {
-    try {
-      callbacks?.onStatusChange?.("claiming" as any);
-
-      // Wait for auto-claim or manually claim
-      try {
-        const timeoutSignal = AbortSignal.timeout(30000); // 30 seconds
-        await swap.waitTillClaimedOrFronted(timeoutSignal);
-      } catch {
-        // Auto-claim didn't happen, manually claim
-        await swap.claim(starknetAccount);
-      }
-
-      callbacks?.onClaimed?.();
-      return true;
-    } catch (error) {
-      callbacks?.onError?.(error as Error);
-      return false;
-    }
+  async claimSwap(swap: Swap, starknetAccount: Account): Promise<string> {
+    const tx = await swap.claim(starknetAccount);
+    console.log("Claim transaction:", tx);
+    return tx as string;
   }
 
   /**
-   * Monitor withdrawal (Starknet tx → Bitcoin payout)
+   * Refund swap if expired
    */
-  async waitForWithdrawal(
-    swap: Swap,
-    callbacks?: SwapMonitorCallbacks
-  ): Promise<boolean> {
-    try {
-      // Wait for Starknet tx to be confirmed (commit phase)
-      callbacks?.onStatusChange?.("committing" as any);
-      // SDK handles this internally after commit()
-
-      // Wait for Bitcoin Lightning payout
-      callbacks?.onStatusChange?.("awaiting_payment" as any);
-      const paid = await swap.waitForPayment();
-
-      if (paid) {
-        callbacks?.onClaimed?.();
-        return true;
-      } else {
-        callbacks?.onError?.(new Error("Bitcoin payout failed"));
-        return false;
-      }
-    } catch (error) {
-      callbacks?.onError?.(error as Error);
-      return false;
-    }
+  async refundSwap(swap: Swap, starknetAccount: Account): Promise<string> {
+    const tx = await swap.refund(starknetAccount);
+    console.log("Refund transaction:", tx);
+    return tx as string;
   }
 
   /**
    * Get swap status
    */
   getSwapStatus(swap: Swap): string {
-    // SDK provides swap.state enum
     return swap.state || "unknown";
   }
-
-  /**
-   * Refund swap if something went wrong
-   */
-  async refundSwap(swap: Swap, account: Account): Promise<boolean> {
-    try {
-      await swap.refund(account);
-      return true;
-    } catch (error) {
-      console.error("Refund failed:", error);
-      return false;
-    }
-  }
 }
-

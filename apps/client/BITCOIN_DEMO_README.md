@@ -16,14 +16,16 @@ pnpm install
 Create a `.env` file in `apps/client/`:
 
 ```env
-# Bitcoin Network (testnet, mainnet, testnet4, signet)
+# Bitcoin Network: Use "testnet" for Bitcoin testnet (Xverse Testnet4)
+# Based on official Atomiq example: use "testnet" not "testnet4"
 VITE_BITCOIN_NETWORK=testnet
 
 # Atomiq Environment (testnet, mainnet)
 VITE_ATOMIQ_ENV=testnet
 
 # Starknet RPC URL (for Atomiq SDK)
-VITE_STARKNET_RPC_URL=https://starknet-sepolia.infura.io/v3/YOUR_INFURA_KEY
+# Using Blast API public RPC (same as official Atomiq example)
+VITE_STARKNET_RPC_URL=https://starknet-sepolia.public.blastapi.io/rpc/v0_8
 ```
 
 **Get a free Starknet RPC key from:**
@@ -38,7 +40,11 @@ Download and install the [Xverse browser extension](https://www.xverse.app/):
 - Chrome/Brave: [Chrome Web Store](https://chromewebstore.google.com/detail/xverse-wallet/idnnbdplmphpflfnlkomgpfbpcgelopg)
 - Firefox: [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/xverse-wallet/)
 
-**Important:** Switch Xverse to **Bitcoin Testnet** mode in settings!
+**Important:**
+
+- Switch Xverse to **Testnet** mode in settings (any testnet option should work)
+- The SDK uses `BitcoinNetwork.TESTNET` regardless of specific testnet version
+- This matches the official Atomiq example configuration
 
 ### 4. Run the Demo
 

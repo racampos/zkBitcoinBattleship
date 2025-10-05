@@ -1,0 +1,37 @@
+# Cursor Rules for BitcoinShip Project
+
+## CRITICAL: Testing Before Commits
+
+**NEVER COMMIT CODE WITHOUT USER TESTING FIRST**
+
+Rules:
+
+1. After making code changes, ALWAYS wait for the user to test them
+2. NEVER run `git commit` until the user explicitly confirms the changes work
+3. If the user reports an error, fix it and wait for testing again
+4. Only commit when the user says "this works" or "commit this" or similar
+5. If unsure whether to commit, ASK the user first
+
+Exceptions:
+
+- Documentation-only changes (README, markdown files with no code impact)
+- The user explicitly says "commit this" or "go ahead and commit"
+
+## Git Workflow
+
+1. Make changes
+2. Show/explain changes to user
+3. **WAIT FOR USER TO TEST**
+4. User confirms it works or reports issues
+5. If issues, go back to step 1
+6. If confirmed working, THEN commit with user permission
+
+## Commit Protocol
+
+Before running `git commit`:
+
+- ✅ User has tested the changes
+- ✅ User confirmed it works OR gave explicit permission to commit
+- ❌ NEVER commit "fixes" that haven't been verified
+
+This is a HARD RULE. No exceptions except documentation.

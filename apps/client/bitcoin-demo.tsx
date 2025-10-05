@@ -22,13 +22,29 @@ console.log(
   "  Starknet RPC:",
   import.meta.env.VITE_STARKNET_RPC_URL || "Not configured"
 );
+
+// Validate RPC URL
+const rpcUrl = import.meta.env.VITE_STARKNET_RPC_URL;
+if (rpcUrl && rpcUrl.includes("undefined")) {
+  console.error("");
+  console.error("❌ ERROR: Your VITE_STARKNET_RPC_URL contains 'undefined'!");
+  console.error("   Current value:", rpcUrl);
+  console.error("");
+  console.error("   Fix your .env file. It should be ONE line:");
+  console.error("   VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY");
+  console.error("   (Note: /v2/ not just / for Alchemy URLs)");
+  console.error("");
+}
+
 console.log("");
 console.log("💡 If you see errors, make sure to create .env file with:");
 console.log("  VITE_BITCOIN_NETWORK=testnet");
 console.log("  VITE_ATOMIQ_ENV=testnet");
 console.log(
-  "  VITE_STARKNET_RPC_URL=https://starknet-sepolia.infura.io/v3/YOUR_KEY"
+  "  VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY"
 );
+console.log("  (For Alchemy: use /v2/ not just /)");
+console.log("");
 
 // Simple demo app component
 function BitcoinDemo() {
@@ -71,6 +87,7 @@ function BitcoinDemo() {
       setSwapError(null);
 
       const amount = 10000n; // 10k sats for testing
+      
       const quote = await atomiqService.getQuote(
         SwapDirection.BTC_TO_STRK,
         amount
@@ -79,6 +96,7 @@ function BitcoinDemo() {
       setQuoteData(quote);
       setSwapStatus(SwapStatus.QUOTE_READY);
     } catch (error: any) {
+      console.error("Quote failed:", error);
       setSwapError(error.message);
       setSwapStatus(SwapStatus.FAILED);
     }

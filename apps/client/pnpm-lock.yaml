@@ -7,7 +7,7 @@ settings:
 dependencies:
   '@atomiqlabs/chain-starknet':
     specifier: ^5.1.5
-    version: 5.1.5(starknet@8.5.4)
+    version: 5.1.5(starknet@7.6.4)
   '@atomiqlabs/sdk':
     specifier: ^6.0.3
     version: 6.0.3(@noble/curves@1.9.7)
@@ -19,7 +19,7 @@ dependencies:
     version: 1.7.1(typescript@5.4.5)
   '@dojoengine/sdk':
     specifier: ^1.7.2
-    version: 1.7.6(@tanstack/react-query@5.90.2)(@types/react-dom@18.3.7)(@types/react@18.3.25)(get-starknet-core@4.0.0)(react-dom@19.2.0)(react@19.2.0)(starknet@8.5.4)(typescript@5.4.5)
+    version: 1.7.6(@tanstack/react-query@5.90.2)(@types/react-dom@18.3.7)(@types/react@18.3.25)(get-starknet-core@4.0.0)(react-dom@19.2.0)(react@19.2.0)(starknet@7.6.4)(typescript@5.4.5)
   '@dojoengine/torii-client':
     specifier: 1.7.2
     version: 1.7.2
@@ -36,8 +36,8 @@ dependencies:
     specifier: ^4.1.1
     version: 4.1.1(typescript@5.4.5)
   starknet:
-    specifier: ^8.5.2
-    version: 8.5.4
+    specifier: '7'
+    version: 7.6.4
   zustand:
     specifier: ^5.0.8
     version: 5.0.8(@types/react@18.3.25)(immer@10.1.3)(react@19.2.0)
@@ -90,7 +90,7 @@ packages:
       safe-buffer: 5.2.1
     dev: false
 
-  /@atomiqlabs/chain-starknet@5.1.5(starknet@8.5.4):
+  /@atomiqlabs/chain-starknet@5.1.5(starknet@7.6.4):
     resolution: {integrity: sha512-cUAtEHeAbWnq/qE0nTpqd0/TQD+iqiToaFuaybRjg9Mxw3u4JyM5M1TENBg1B9uIFBBQjYrIes7b9h5/kylw1Q==}
     peerDependencies:
       starknet: ^7.5.0
@@ -100,7 +100,7 @@ packages:
       '@scure/btc-signer': 1.6.0
       abi-wan-kanabi: 2.2.4
       buffer: 6.0.3
-      starknet: 8.5.4
+      starknet: 7.6.4
     dev: false
 
   /@atomiqlabs/sdk-lib@15.0.15(@noble/curves@1.9.7):
@@ -478,7 +478,7 @@ packages:
       - zod
     dev: false
 
-  /@dojoengine/sdk@1.7.6(@tanstack/react-query@5.90.2)(@types/react-dom@18.3.7)(@types/react@18.3.25)(get-starknet-core@4.0.0)(react-dom@19.2.0)(react@19.2.0)(starknet@8.5.4)(typescript@5.4.5):
+  /@dojoengine/sdk@1.7.6(@tanstack/react-query@5.90.2)(@types/react-dom@18.3.7)(@types/react@18.3.25)(get-starknet-core@4.0.0)(react-dom@19.2.0)(react@19.2.0)(starknet@7.6.4)(typescript@5.4.5):
     resolution: {integrity: sha512-jHBiGorcsT/ypOoKPDWwWE/D5etSQFXV8bgpIc01n7XsvPLAecWaXJzfURVBmYDnFMYp0SobXUZq+wSxwwAsLg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
@@ -491,12 +491,12 @@ packages:
     dependencies:
       '@dojoengine/core': 1.7.4(typescript@5.4.5)
       '@dojoengine/grpc': 1.7.5
-      '@dojoengine/state': 1.7.3(@types/react@18.3.25)(react@19.2.0)(starknet@8.5.4)(typescript@5.4.5)
+      '@dojoengine/state': 1.7.3(@types/react@18.3.25)(react@19.2.0)(starknet@7.6.4)(typescript@5.4.5)
       '@dojoengine/torii-client': 1.7.3
       '@dojoengine/torii-wasm': 1.7.3
-      '@dojoengine/utils': 1.7.2(starknet@8.5.4)(typescript@5.4.5)
+      '@dojoengine/utils': 1.7.2(starknet@7.6.4)(typescript@5.4.5)
       '@starknet-react/chains': 5.0.3
-      '@starknet-react/core': 5.0.3(get-starknet-core@4.0.0)(react@19.2.0)(starknet@8.5.4)(typescript@5.4.5)
+      '@starknet-react/core': 5.0.3(get-starknet-core@4.0.0)(react@19.2.0)(starknet@7.6.4)(typescript@5.4.5)
       '@tanstack/react-query': 5.90.2(react@19.2.0)
       '@types/react': 18.3.25
       '@types/react-dom': 18.3.7(@types/react@18.3.25)
@@ -505,7 +505,7 @@ packages:
       neverthrow: 8.2.0
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
-      starknet: 8.5.4
+      starknet: 7.6.4
       zustand: 4.5.7(@types/react@18.3.25)(immer@10.1.3)(react@19.2.0)
     transitivePeerDependencies:
       - bufferutil
@@ -517,7 +517,7 @@ packages:
       - zod
     dev: false
 
-  /@dojoengine/state@1.7.3(@types/react@18.3.25)(react@19.2.0)(starknet@8.5.4)(typescript@5.4.5):
+  /@dojoengine/state@1.7.3(@types/react@18.3.25)(react@19.2.0)(starknet@7.6.4)(typescript@5.4.5):
     resolution: {integrity: sha512-R5UlBdZI22Ow/P3L//xMEbGwD1hckybHDYGjPVI6vf3kh+tVl7BB9e6376qy2HyaRL7CbHefeRdeSl+EoKQ3Bg==}
     peerDependencies:
       starknet: ^8.1.2
@@ -525,7 +525,7 @@ packages:
       '@dojoengine/recs': 2.0.13(typescript@5.4.5)(zod@3.25.76)
       '@dojoengine/torii-client': 1.7.3
       immer: 10.1.3
-      starknet: 8.5.4
+      starknet: 7.6.4
       zustand: 5.0.8(@types/react@18.3.25)(immer@10.1.3)(react@19.2.0)
     transitivePeerDependencies:
       - '@types/react'
@@ -557,7 +557,7 @@ packages:
     resolution: {integrity: sha512-6XPZUEJXNAsbIotr9HV0PeXqDH/tBxLhqHyc7eZ2hSoOpsig4d7sBQu2eG1W3Qx8iMsH2ZqiV9e9fek6dg8BFQ==}
     dev: false
 
-  /@dojoengine/utils@1.7.2(starknet@8.5.4)(typescript@5.4.5):
+  /@dojoengine/utils@1.7.2(starknet@7.6.4)(typescript@5.4.5):
     resolution: {integrity: sha512-BLO+juzLyKXV/8r/VBx4w6V9hYzh+hk0JmW+QYCDoDdLsz243Ywkr3y90QPNxVtfn4MsgsNxAwVm2CyIwpNuAA==}
     peerDependencies:
       starknet: ^8.1.2
@@ -566,7 +566,7 @@ packages:
       '@latticexyz/utils': 2.2.23
       mathjs: 12.4.3
       micro-starknet: 0.2.3
-      starknet: 8.5.4
+      starknet: 7.6.4
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -1654,6 +1654,10 @@ packages:
     resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
     dev: false
 
+  /@scure/base@1.2.1:
+    resolution: {integrity: sha512-DGmGtC8Tt63J5GfHgfl5CuAXh96VF/LD8K9Hr/Gv0J2lAoRGlPOMpqMpMbCTOoOJMZCk2Xt+DskdDyn6dEFdzQ==}
+    dev: false
+
   /@scure/base@1.2.6:
     resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
     dev: false
@@ -1737,7 +1741,7 @@ packages:
     resolution: {integrity: sha512-TxP391OTWgaqujT9Hu1Siljye54IHjEXrgkUuhMfxzf9sCu5q42ZzZgu9hLm0NcJgg9Fx2t75J0WB6eYmQ26fw==}
     dev: false
 
-  /@starknet-react/core@5.0.3(get-starknet-core@4.0.0)(react@19.2.0)(starknet@8.5.4)(typescript@5.4.5):
+  /@starknet-react/core@5.0.3(get-starknet-core@4.0.0)(react@19.2.0)(starknet@7.6.4)(typescript@5.4.5):
     resolution: {integrity: sha512-BxtcYL+SPqqDo1cpzfNYcYmSY4Ifjz1O5vq5vDdjx2iHEvHYzxBMjnyacJ+JsdRlQiuLNRGInooC/yzFkMrHAQ==}
     peerDependencies:
       get-starknet-core: ^4.0.0
@@ -1751,7 +1755,7 @@ packages:
       eventemitter3: 5.0.1
       get-starknet-core: 4.0.0
       react: 19.2.0
-      starknet: 8.5.4
+      starknet: 7.6.4
       viem: 2.37.9(typescript@5.4.5)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
@@ -3687,7 +3691,7 @@ packages:
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
-      '@noble/curves': 1.9.2
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/bip32': 1.7.0
       '@scure/bip39': 1.6.0
@@ -4083,6 +4087,22 @@ packages:
   /split2@4.2.0:
     resolution: {integrity: sha512-UcjcJOWknrNkF6PLX83qcHM6KHgVKNkV62Y8a5uYDVv9ydGQVwAHMKqHdJje1VTWpljG0WYpCDhrCdAOYH4TWg==}
     engines: {node: '>= 10.x'}
+    dev: false
+
+  /starknet@7.6.4:
+    resolution: {integrity: sha512-FB20IaLCDbh/XomkB+19f5jmNxG+RzNdRO7QUhm7nfH81UPIt2C/MyWAlHCYkbv2wznSEb73wpxbp9tytokTgQ==}
+    engines: {node: '>=22'}
+    dependencies:
+      '@noble/curves': 1.7.0
+      '@noble/hashes': 1.6.0
+      '@scure/base': 1.2.1
+      '@scure/starknet': 1.1.0
+      '@starknet-io/starknet-types-07': /@starknet-io/types-js@0.7.10
+      '@starknet-io/starknet-types-08': /@starknet-io/types-js@0.8.4
+      abi-wan-kanabi: 2.2.4
+      lossless-json: 4.2.0
+      pako: 2.1.0
+      ts-mixer: 6.0.4
     dev: false
 
   /starknet@8.5.4:

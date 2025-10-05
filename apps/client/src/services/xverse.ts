@@ -49,9 +49,10 @@ export class XverseService {
       console.log("Xverse connected:", response);
 
       // Response format from v4:
-      // { status: 'success', result: { addresses: [...] } }
+      // { status: 'success', result: [...addresses...] }
+      // result is the addresses array directly
       if (response.status === "success") {
-        return response.result as XverseConnectResponse;
+        return { addresses: response.result } as XverseConnectResponse;
       } else {
         throw new Error("Failed to connect to Xverse");
       }
@@ -75,7 +76,8 @@ export class XverseService {
       } as GetAccountsOptions);
 
       if (response.status === "success") {
-        const addresses = (response.result as any).addresses;
+        // response.result is the addresses array directly
+        const addresses = response.result as any[];
         const paymentAddress = addresses.find(
           (addr: any) => addr.purpose === "payment"
         );

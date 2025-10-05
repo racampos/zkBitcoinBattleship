@@ -25,6 +25,8 @@ export interface SwapQuote {
   direction: SwapDirection;
   inputAmount: bigint;
   outputAmount: bigint;
+  fromAmount?: bigint; // Alias for inputAmount (demo compatibility)
+  toAmount?: bigint; // Alias for outputAmount (demo compatibility)
   inputToken: string;
   outputToken: string;
   rate: number;

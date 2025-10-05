@@ -16,11 +16,14 @@
     "@dojoengine/sdk": "^1.7.2",
     "@dojoengine/torii-client": "1.7.2",
     "qrcode.react": "^4.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "sats-connect": "^4.1.1",
     "starknet": "^8.5.2",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.4",
     "vite": "^7.1.4",
     "vite-plugin-mkcert": "^1.17.8",
     "vite-plugin-wasm": "^3.5.0"

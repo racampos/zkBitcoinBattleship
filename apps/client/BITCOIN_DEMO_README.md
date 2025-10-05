@@ -27,12 +27,14 @@ VITE_STARKNET_RPC_URL=https://starknet-sepolia.infura.io/v3/YOUR_INFURA_KEY
 ```
 
 **Get a free Starknet RPC key from:**
+
 - [Infura](https://www.infura.io/) - Create account → Create API key → Select Starknet Sepolia
 - [Alchemy](https://www.alchemy.com/) - Similar process
 
 ### 3. Install Xverse Wallet
 
 Download and install the [Xverse browser extension](https://www.xverse.app/):
+
 - Chrome/Brave: [Chrome Web Store](https://chromewebstore.google.com/detail/xverse-wallet/idnnbdplmphpflfnlkomgpfbpcgelopg)
 - Firefox: [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/xverse-wallet/)
 
@@ -51,13 +53,15 @@ Then open: **https://localhost:3000/bitcoin-demo.html**
 ## 🧪 What You Can Test
 
 ### ✅ Current Features
+
 1. **Xverse Connection**: Connect your Bitcoin wallet
 2. **Atomiq Quote**: Get a swap quote (BTC → STRK)
 3. **Environment Display**: See configured networks
 
 ### 🚧 Coming Soon (Phase 6-7)
+
 - Full deposit flow with Lightning invoice
-- QR code display for mobile wallets  
+- QR code display for mobile wallets
 - Withdrawal flow (STRK → BTC)
 - Game escrow integration
 - Balance tracking
@@ -78,20 +82,24 @@ Then open: **https://localhost:3000/bitcoin-demo.html**
 ## 🐛 Troubleshooting
 
 ### Error: "Xverse not found"
+
 - Make sure Xverse extension is installed
 - Refresh the page after installing
 - Check that Xverse is enabled in your browser extensions
 
 ### Error: "Failed to initialize Atomiq SDK"
+
 - Verify `VITE_STARKNET_RPC_URL` is set correctly in `.env`
 - Test your RPC URL: `curl -X POST YOUR_RPC_URL -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"starknet_chainId","params":[],"id":1}'`
 - Expected response should include `"0x534e5f5345504f4c4941"` (Sepolia chain ID)
 
 ### Error: "User cancelled connection"
+
 - This is normal - just try connecting again
 - Make sure you approve the connection in Xverse popup
 
 ### Quote takes a long time
+
 - Atomiq SDK is initializing (first time is slow)
 - Check your internet connection
 - Verify you're on testnet (mainnet may have issues)
@@ -99,12 +107,14 @@ Then open: **https://localhost:3000/bitcoin-demo.html**
 ## 📊 What Gets Tested
 
 ### Services Layer ✅
+
 - `XverseService.connect()` - Wallet connection
-- `XverseService.getBitcoinAddress()` - Address retrieval  
+- `XverseService.getBitcoinAddress()` - Address retrieval
 - `AtomiqService.initialize()` - SDK initialization
 - `AtomiqService.getQuote()` - Quote fetching
 
 ### NOT Tested Yet ⏳
+
 - `XverseService.signMessage()` - Message signing
 - `AtomiqService.startLightningDeposit()` - Full deposit flow
 - `AtomiqService.startLightningWithdrawal()` - Withdrawal flow
@@ -125,17 +135,20 @@ Once basic connection and quoting work:
 ## 🌐 Network Information
 
 ### Bitcoin Testnet
+
 - Network: `testnet3`
 - Get testnet BTC: [Bitcoin Testnet Faucet](https://testnet-faucet.mempool.co/)
 - Minimum swap: 1,000 sats
 - Block explorer: [Mempool.space Testnet](https://mempool.space/testnet)
 
 ### Starknet Sepolia
+
 - Network: `Sepolia Testnet`
 - Get testnet STRK: [Starknet Faucet](https://faucet.goerli.starknet.io/) (may need Twitter verification)
 - Block explorer: [Voyager Sepolia](https://sepolia.voyager.online/)
 
 ### Atomiq
+
 - Docs: [Atomiq Documentation](https://docs.atomiq.io/)
 - Status: [Status Page](https://status.atomiq.io/)
 - Support: [Discord](https://discord.gg/atomiq)
@@ -151,6 +164,7 @@ Once basic connection and quoting work:
 ## 📞 Need Help?
 
 Check console logs for detailed error messages. Most issues are:
+
 1. Missing environment variables
 2. Xverse not on testnet
 3. Invalid RPC URL
@@ -159,4 +173,3 @@ Check console logs for detailed error messages. Most issues are:
 ---
 
 **Happy Testing! 🚀**
-

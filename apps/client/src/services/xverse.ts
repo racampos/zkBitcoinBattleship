@@ -1,10 +1,27 @@
-// Xverse wallet integration service using Sats Connect
+// Xverse wallet integration service using Sats Connect v4+
 
-import { connect, signMessage, getAddress } from "sats-connect";
+import { request } from "sats-connect";
 import type {
   BitcoinAddress,
   XverseConnectResponse,
 } from "./types/bitcoin.types";
+
+// Sats Connect v4 API types
+enum AddressPurpose {
+  Payment = "payment",
+  Ordinals = "ordinals",
+  Stacks = "stacks",
+}
+
+type GetAccountsOptions = {
+  purposes: AddressPurpose[];
+  message: string;
+};
+
+type SignMessageOptions = {
+  address: string;
+  message: string;
+};
 
 export class XverseService {
   private static instance: XverseService;
@@ -20,105 +37,93 @@ export class XverseService {
 
   /**
    * Connect to Xverse wallet and get Bitcoin addresses
+   * Uses sats-connect v4 API
    */
   async connect(): Promise<XverseConnectResponse> {
-    return new Promise((resolve, reject) => {
-      connect({
-        onFinish: (response) => {
-          console.log("Xverse connected:", response);
-          resolve(response as XverseConnectResponse);
-        },
-        onCancel: () => {
-          reject(new Error("User cancelled Xverse connection"));
-        },
-        payload: {
-          purposes: ["payment"], // We only need payment address for swaps
-          message: "Connect your Bitcoin wallet to BitcoinShip",
-          network: {
-            type:
-              import.meta.env.VITE_BITCOIN_NETWORK === "mainnet"
-                ? "Mainnet"
-                : "Testnet",
-          },
-        },
-      });
-    });
+    try {
+      const response = await request("getAccounts", {
+        purposes: [AddressPurpose.Payment, AddressPurpose.Ordinals],
+        message: "Connect your Bitcoin wallet to BitcoinShip",
+      } as GetAccountsOptions);
+
+      console.log("Xverse connected:", response);
+
+      // Response format from v4:
+      // { status: 'success', result: { addresses: [...] } }
+      if (response.status === "success") {
+        return response.result as XverseConnectResponse;
+      } else {
+        throw new Error("Failed to connect to Xverse");
+      }
+    } catch (error: any) {
+      if (error.message?.includes("User rejected")) {
+        throw new Error("User cancelled Xverse connection");
+      }
+      throw error;
+    }
   }
 
   /**
-   * Get current Bitcoin address (if already connected)
+   * Get Bitcoin payment address
+   * Note: In v4, we use getAccounts instead of getAddress
    */
-  async getAddress(): Promise<BitcoinAddress | null> {
-    return new Promise((resolve) => {
-      getAddress({
-        onFinish: (response) => {
-          const paymentAddress = response.addresses.find(
-            (addr) => addr.purpose === "payment"
-          );
-          resolve((paymentAddress as BitcoinAddress) || null);
-        },
-        onCancel: () => resolve(null),
-        payload: {
-          purposes: ["payment"],
-          message: "Get Bitcoin address",
-          network: {
-            type:
-              import.meta.env.VITE_BITCOIN_NETWORK === "mainnet"
-                ? "Mainnet"
-                : "Testnet",
-          },
-        },
-      });
-    });
+  async getBitcoinAddress(): Promise<BitcoinAddress | null> {
+    try {
+      const response = await request("getAccounts", {
+        purposes: [AddressPurpose.Payment],
+        message: "Get Bitcoin address",
+      } as GetAccountsOptions);
+
+      if (response.status === "success") {
+        const addresses = (response.result as any).addresses;
+        const paymentAddress = addresses.find(
+          (addr: any) => addr.purpose === "payment"
+        );
+        return (paymentAddress as BitcoinAddress) || null;
+      }
+      return null;
+    } catch (error) {
+      console.error("Failed to get Bitcoin address:", error);
+      return null;
+    }
   }
 
   /**
-   * Sign a message to bind Bitcoin address to Starknet address
+   * Sign a message with Bitcoin wallet
    */
-  async bindToStarknet(
+  async signMessage(message: string, btcAddress: string): Promise<string> {
+    try {
+      const response = await request("signMessage", {
+        address: btcAddress,
+        message,
+      } as SignMessageOptions);
+
+      if (response.status === "success") {
+        return (response.result as any).signature;
+      } else {
+        throw new Error("Failed to sign message");
+      }
+    } catch (error: any) {
+      if (error.message?.includes("User rejected")) {
+        throw new Error("User cancelled message signing");
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Bind Bitcoin address to Starknet address
+   */
+  async bindAddresses(
     btcAddress: string,
     starknetAddress: string
   ): Promise<string> {
     const message = `Bind Bitcoin address ${btcAddress} to Starknet address ${starknetAddress} for BitcoinShip`;
+    const signature = await this.signMessage(message, btcAddress);
 
-    return new Promise((resolve, reject) => {
-      signMessage({
-        onFinish: (response) => {
-          console.log("Message signed:", response);
-          resolve(response as string);
-        },
-        onCancel: () => {
-          reject(new Error("User cancelled message signing"));
-        },
-        payload: {
-          message,
-          address: btcAddress,
-          network: {
-            type:
-              import.meta.env.VITE_BITCOIN_NETWORK === "mainnet"
-                ? "Mainnet"
-                : "Testnet",
-          },
-        },
-      });
-    });
-  }
-
-  /**
-   * Verify signed message (optional - for server-side verification)
-   */
-  async verifyBinding(
-    btcAddress: string,
-    starknetAddress: string,
-    signature: string
-  ): Promise<boolean> {
-    // This would typically be done server-side
     // For now, we just store the binding locally
-    const expectedMessage = `Bind Bitcoin address ${btcAddress} to Starknet address ${starknetAddress} for BitcoinShip`;
-
     // In production, use a Bitcoin signature verification library
     // For demo, we trust the signature since it came from Xverse
-    return true;
+    return signature;
   }
 }
-

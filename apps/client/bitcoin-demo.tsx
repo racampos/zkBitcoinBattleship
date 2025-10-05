@@ -8,6 +8,28 @@ import { AtomiqService } from "./src/services/atomiq";
 import { SwapDirection, SwapStatus } from "./src/services/types/swap.types";
 import type { BitcoinAddress } from "./src/services/types/bitcoin.types";
 
+// Log environment on load
+console.log("🔧 Bitcoin Demo Environment:");
+console.log(
+  "  Bitcoin Network:",
+  import.meta.env.VITE_BITCOIN_NETWORK || "testnet (default)"
+);
+console.log(
+  "  Atomiq Mode:",
+  import.meta.env.VITE_ATOMIQ_ENV || "testnet (default)"
+);
+console.log(
+  "  Starknet RPC:",
+  import.meta.env.VITE_STARKNET_RPC_URL || "Not configured"
+);
+console.log("");
+console.log("💡 If you see errors, make sure to create .env file with:");
+console.log("  VITE_BITCOIN_NETWORK=testnet");
+console.log("  VITE_ATOMIQ_ENV=testnet");
+console.log(
+  "  VITE_STARKNET_RPC_URL=https://starknet-sepolia.infura.io/v3/YOUR_KEY"
+);
+
 // Simple demo app component
 function BitcoinDemo() {
   // Bitcoin wallet state

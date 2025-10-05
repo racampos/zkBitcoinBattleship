@@ -166,7 +166,7 @@ export class AtomiqService {
   }
 
   /**
-   * Create Lightning deposit swap (BTC → STRK)
+   * Create Lightning deposit swap (BTC-LN → STRK)
    */
   async createDepositSwap(
     amount: bigint,
@@ -199,6 +199,36 @@ export class AtomiqService {
         }
       });
     }
+
+    return swap;
+  }
+
+  /**
+   * Create on-chain Bitcoin deposit swap (BTC → STRK)
+   * Official example lines 135-142
+   */
+  async createOnChainDepositSwap(
+    amount: bigint,
+    bitcoinAddress: string,
+    starknetAddress: string
+  ): Promise<Swap> {
+    await this.initialize();
+    if (!this.swapper || !this.factory) {
+      throw new Error("Atomiq SDK not initialized");
+    }
+
+    const fromToken = (this.factory as any).Tokens.BITCOIN.BTC; // On-chain BTC
+    const toToken = (this.factory as any).Tokens.STARKNET.STRK;
+
+    // Create swap (line 135-142 from official example)
+    const swap = await this.swapper.swap(
+      fromToken,
+      toToken,
+      amount,
+      true, // exactIn
+      bitcoinAddress, // Source Bitcoin address
+      starknetAddress // Destination Starknet address
+    );
 
     return swap;
   }

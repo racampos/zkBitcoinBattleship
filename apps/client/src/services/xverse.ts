@@ -128,4 +128,33 @@ export class XverseService {
     // For demo, we trust the signature since it came from Xverse
     return signature;
   }
+
+  /**
+   * Signs a PSBT (Partially Signed Bitcoin Transaction) with Xverse wallet.
+   * Official example line 155
+   * @param {string} psbt The PSBT to sign (base64 or hex)
+   * @param {any} signInputs Input configuration for signing
+   * @returns {Promise<string>} The signed PSBT
+   */
+  async signPsbt(psbt: string, signInputs: any): Promise<string> {
+    try {
+      const response = await request("signPsbt", {
+        psbt,
+        signInputs,
+        broadcast: false, // Don't broadcast, we'll submit via SDK
+      });
+
+      if (response.status === "success") {
+        console.log("✅ PSBT signed successfully");
+        return (response.result as any).psbt;
+      } else {
+        throw new Error("Failed to sign PSBT");
+      }
+    } catch (error: any) {
+      if (error.message?.includes("User rejected") || error.message?.includes("User cancelled")) {
+        throw new Error("User cancelled PSBT signing");
+      }
+      throw error;
+    }
+  }
 }

@@ -104,8 +104,8 @@ function BitcoinDemo() {
     }
   };
 
-  // Start the swap (create Lightning invoice)
-  const handleStartSwap = async () => {
+  // Start Lightning swap (Lightning Network → STRK)
+  const handleStartLightningSwap = async () => {
     try {
       setSwapStatus(SwapStatus.COMMITTING);
       setSwapError(null);
@@ -113,7 +113,7 @@ function BitcoinDemo() {
       // For demo: use dummy Starknet address (in production, use real Starknet wallet)
       const DUMMY_STARKNET_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-      console.log("🚀 Creating swap...");
+      console.log("⚡ Creating Lightning swap...");
       
       // Create swap (line 287-294 from official example)
       const swap = await atomiqService.createDepositSwap(
@@ -150,7 +150,76 @@ function BitcoinDemo() {
       console.log("⚠️ Claim step requires Starknet wallet integration");
       
     } catch (error: any) {
-      console.error("Swap failed:", error);
+      console.error("Lightning swap failed:", error);
+      setSwapError(error.message);
+      setSwapStatus(SwapStatus.FAILED);
+    }
+  };
+
+  // Start on-chain swap (On-chain BTC → STRK using Xverse)
+  const handleStartOnChainSwap = async () => {
+    try {
+      if (!btcAddress || !btcPublicKey) {
+        throw new Error("Xverse wallet not connected");
+      }
+
+      setSwapStatus(SwapStatus.COMMITTING);
+      setSwapError(null);
+
+      // For demo: use dummy Starknet address
+      const DUMMY_STARKNET_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000001";
+
+      console.log("₿ Creating on-chain BTC swap...");
+
+      // Create swap for on-chain BTC (line 135-142 from official example)
+      const swap = await atomiqService.createOnChainDepositSwap(
+        3000n, // 3k sats for on-chain (higher due to BTC fees)
+        btcAddress, // Source Bitcoin address from Xverse
+        DUMMY_STARKNET_ADDRESS // Destination Starknet address
+      );
+
+      console.log("📝 Getting PSBT for signing...");
+
+      // Get funded PSBT (line 149-153 from official example)
+      const { psbt, signInputs } = await (swap as any).getFundedPsbt({
+        address: btcAddress,
+        publicKey: btcPublicKey,
+      });
+
+      console.log("✍️ Requesting Xverse signature...");
+
+      // Sign with Xverse (line 155 from official example)
+      const signedPsbt = await xverseService.signPsbt(psbt, signInputs);
+
+      console.log("📤 Submitting signed transaction...");
+
+      // Submit signed PSBT (line 156 from official example)
+      const btcTxId = await (swap as any).submitPsbt(signedPsbt);
+      console.log("✅ Bitcoin transaction broadcasted:", btcTxId);
+
+      setSwapInstance(swap);
+      setSwapStatus(SwapStatus.AWAITING_PAYMENT);
+
+      // Monitor confirmations (line 159-177 from official example)
+      console.log("⏳ Waiting for Bitcoin confirmations...");
+      await (swap as any).waitTillExecuted(
+        undefined,
+        5,
+        (txId: string, confirmations: number, targetConfirmations: number, txEtaMs: number) => {
+          if (txId && txEtaMs !== -1) {
+            console.log(
+              `⏳ Transaction ${confirmations}/${targetConfirmations} confirmations - ETA: ${Math.round(txEtaMs / 1000)}s`
+            );
+          }
+        }
+      );
+
+      console.log("✅ Swap completed!");
+      console.log("📊 Starknet tx:", (swap as any).getOutputTxId());
+      setSwapStatus(SwapStatus.COMPLETED);
+
+    } catch (error: any) {
+      console.error("On-chain swap failed:", error);
       setSwapError(error.message);
       setSwapStatus(SwapStatus.FAILED);
     }
@@ -230,6 +299,9 @@ function BitcoinDemo() {
               >
                 Connect Xverse Wallet
               </button>
+              <div style={{ marginTop: "8px", fontSize: "12px", color: "#888", textAlign: "center" }}>
+                💡 Optional for Lightning swaps, required for on-chain BTC swaps
+              </div>
             ) : (
               <div>
                 <div
@@ -443,25 +515,57 @@ function BitcoinDemo() {
                   </span>
                 </div>
 
-                {/* Start Swap Button */}
-                <div style={{ marginTop: "20px", textAlign: "center" }}>
-                  <button
-                    onClick={handleStartSwap}
-                    disabled={swapStatus !== SwapStatus.QUOTE_READY}
-                    style={{
-                      padding: "12px 32px",
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      backgroundColor: "#10b981",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: swapStatus === SwapStatus.QUOTE_READY ? "pointer" : "not-allowed",
-                      opacity: swapStatus === SwapStatus.QUOTE_READY ? 1 : 0.5,
-                    }}
-                  >
-                    🚀 Start Swap
-                  </button>
+                {/* Start Swap Buttons */}
+                <div style={{ marginTop: "20px" }}>
+                  <div style={{ marginBottom: "12px", fontSize: "14px", color: "#888", textAlign: "center" }}>
+                    Choose swap method:
+                  </div>
+                  <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                    {/* Lightning Swap */}
+                    <button
+                      onClick={handleStartLightningSwap}
+                      disabled={swapStatus !== SwapStatus.QUOTE_READY}
+                      style={{
+                        flex: 1,
+                        padding: "12px 24px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        backgroundColor: "#FF9800",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: swapStatus === SwapStatus.QUOTE_READY ? "pointer" : "not-allowed",
+                        opacity: swapStatus === SwapStatus.QUOTE_READY ? 1 : 0.5,
+                      }}
+                      title="Instant, low fees (~4 sats). No Xverse needed."
+                    >
+                      ⚡ Lightning Swap
+                    </button>
+
+                    {/* On-Chain Swap */}
+                    <button
+                      onClick={handleStartOnChainSwap}
+                      disabled={swapStatus !== SwapStatus.QUOTE_READY || !btcConnected}
+                      style={{
+                        flex: 1,
+                        padding: "12px 24px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        backgroundColor: "#2196F3",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: swapStatus === SwapStatus.QUOTE_READY && btcConnected ? "pointer" : "not-allowed",
+                        opacity: swapStatus === SwapStatus.QUOTE_READY && btcConnected ? 1 : 0.5,
+                      }}
+                      title="Uses Xverse wallet. Higher fees (~50 sats). Requires confirmations."
+                    >
+                      ₿ On-Chain Swap
+                    </button>
+                  </div>
+                  <div style={{ marginTop: "8px", fontSize: "12px", color: "#666", textAlign: "center" }}>
+                    <div>⚡ Lightning: Instant, 1k sats | ₿ On-Chain: 3k sats, uses Xverse</div>
+                  </div>
                 </div>
               </div>
             </div>

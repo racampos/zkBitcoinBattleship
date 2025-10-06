@@ -10,7 +10,7 @@ import { useGameStore } from "../store/gameStore";
 import { useDojo } from "../dojo/DojoContext";
 
 export function useGameContracts(account: Account | null) {
-  const { setGameId, setError, setIsLoading } = useGameStore();
+  const { gameId, setGameId, setError, setIsLoading } = useGameStore();
   const { sdk } = useDojo();
   const [txHash, setTxHash] = useState<string | null>(null);
 
@@ -33,8 +33,6 @@ export function useGameContracts(account: Account | null) {
       const randomNonce = Math.floor(Math.random() * 1000000).toString();
       const zeroAddress = "0x0";
       const boardSize = "10";
-
-      console.log("  Using nonce:", randomNonce);
 
       // Call create_game contract
       const tx = await account.execute({
@@ -68,27 +66,18 @@ export function useGameContracts(account: Account | null) {
       const data = await response.json();
       const receipt = data.result;
 
-      console.log("🔍 Receipt status:", receipt?.execution_status);
-      console.log("🔍 Number of events:", receipt?.events?.length);
-
       if (receipt && receipt.execution_status === "REVERTED") {
-        console.error("❌ Transaction REVERTED!");
-        console.error("   Revert reason:", receipt.revert_reason);
+        console.error("❌ Transaction REVERTED:", receipt.revert_reason);
         setError(`Transaction reverted: ${receipt.revert_reason || "Unknown reason"}`);
         return null;
       }
 
       if (receipt && receipt.execution_status === "SUCCEEDED") {
-        // Log all events to debug
-        console.log("🔍 All events:", receipt.events);
-        
         // Look for Game model update event (contains game_id)
         // Game model selector hash: 0x19ecd3fc...
         const gameEvent = receipt.events?.find(
           (e: any) => e.keys && e.keys.length > 2 && e.keys[1]?.includes("19ecd3fc")
         );
-
-        console.log("🔍 Game event found:", gameEvent);
 
         // Game ID is in data[1] (field value)
         const gameId = gameEvent?.data?.[1];
@@ -165,18 +154,22 @@ export function useGameContracts(account: Account | null) {
       return;
     }
 
+    if (!gameId) {
+      setError("No active game");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-      console.log("🛡️ Committing board...");
 
       const tx = await account.execute({
         contractAddress: CONTRACTS.boardCommit.address,
         entrypoint: "commit_board",
-        calldata: [boardHash],
+        calldata: [gameId, boardHash],
       });
 
-      console.log("📤 Transaction sent:", tx.transaction_hash);
+      console.log("📤 Board commit tx:", tx.transaction_hash);
       await account.waitForTransaction(tx.transaction_hash, {
         retryInterval: 1000,
       });

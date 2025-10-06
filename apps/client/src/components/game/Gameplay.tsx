@@ -3,17 +3,36 @@
  * Handles firing shots and tracking opponent's board
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGameStore } from "../../store/gameStore";
+import { useGameContracts } from "../../hooks/useGameContracts";
+import { BoardDisplay } from "./BoardDisplay";
+import { createEmptyBoard } from "../../utils/boardUtils";
 
 export function Gameplay() {
-  const { opponentBoard, isMyTurn } = useGameStore();
+  const { account, opponentBoard, setOpponentBoard, isMyTurn } = useGameStore();
+  const { fireShot } = useGameContracts(account);
   const [shotRow, setShotRow] = useState("A");
   const [shotCol, setShotCol] = useState(1);
 
+  // Initialize opponent board if not set
+  useEffect(() => {
+    if (!opponentBoard) {
+      setOpponentBoard(createEmptyBoard());
+    }
+  }, [opponentBoard, setOpponentBoard]);
+
   const handleFireShot = async () => {
-    // TODO: Implement fire shot logic
-    console.log(`🎯 Firing at ${shotRow}${shotCol}`);
+    const row = shotRow.charCodeAt(0) - 65; // A=0, B=1, etc.
+    const col = shotCol - 1; // 1-indexed to 0-indexed
+
+    console.log(`🎯 Firing at ${shotRow}${shotCol} (${row}, ${col})`);
+
+    try {
+      await fireShot(row, col);
+    } catch (error) {
+      // Error handled in hook
+    }
   };
 
   const handleRandomCoords = () => {
@@ -27,16 +46,13 @@ export function Gameplay() {
     <div className="section">
       <h2>🎯 Attack Board</h2>
 
-      <div className="board-container">
-        {opponentBoard ? (
-          <div>
-            {/* TODO: Render attack board */}
-            <pre>Attack board rendering coming soon...</pre>
-          </div>
-        ) : (
-          <div>Loading...</div>
-        )}
-      </div>
+      {opponentBoard ? (
+        <>
+          <BoardDisplay board={opponentBoard} title="Track Your Shots" />
+        </>
+      ) : (
+        <div className="status-box">Initializing...</div>
+      )}
 
       <div style={{ display: "flex", gap: "15px", alignItems: "center", marginTop: "15px" }}>
         <label>

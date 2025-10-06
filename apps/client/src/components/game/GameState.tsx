@@ -14,12 +14,13 @@ export function GameState() {
   }
 
   const statusMap: Record<number, string> = {
-    0: "Created",
-    1: "Coin Flip",
-    2: "Board Setup",
-    3: "Active",
-    4: "Finished",
+    0: "⏳ Waiting for Player 2",
+    1: "🎮 In Progress",
+    2: "🏁 Game Over",
   };
+
+  const isPlayer1 = amIPlayer1();
+  const myTurn = gameData.current_turn === (isPlayer1 ? gameData.player_1 : gameData.player_2);
 
   return (
     <div className="section">
@@ -28,30 +29,45 @@ export function GameState() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "15px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "12px",
         }}
       >
         <div className="status-box">
-          <strong>Status:</strong> {statusMap[gameData.status] || "Unknown"}
+          <strong>Status:</strong><br />
+          {statusMap[gameData.status] || "❓ Unknown"}
         </div>
-        <div className="status-box">
-          <strong>Turn:</strong> {gameData.current_turn === gameData.player_1 ? "Player 1" : "Player 2"}
+        
+        <div className={`status-box ${myTurn ? 'success' : ''}`}>
+          <strong>Turn:</strong><br />
+          {myTurn ? "🟢 Your Turn!" : "⏸️ Opponent's Turn"}
         </div>
+        
         <div className="status-box">
-          <strong>You are:</strong> {amIPlayer1() ? "Player 1" : "Player 2"}
+          <strong>Your Role:</strong><br />
+          {isPlayer1 ? "Player 1" : "Player 2"}
         </div>
+        
         <div className="status-box">
-          <strong>Your Hits:</strong> {amIPlayer1() ? gameData.p1_hits : gameData.p2_hits}
+          <strong>Your Hits:</strong><br />
+          {isPlayer1 ? gameData.p1_hits : gameData.p2_hits}
         </div>
+        
         <div className="status-box">
-          <strong>Opponent Hits:</strong> {amIPlayer1() ? gameData.p2_hits : gameData.p1_hits}
+          <strong>Opponent Hits:</strong><br />
+          {isPlayer1 ? gameData.p2_hits : gameData.p1_hits}
         </div>
       </div>
 
-      <div className="status-box info" style={{ marginTop: "15px", fontSize: "11px" }}>
-        💡 Game ID: {gameData.game_id}
-      </div>
+      {gameData.status === 1 && (
+        <div className="status-box" style={{ marginTop: "12px", fontSize: "13px" }}>
+          {myTurn ? (
+            <>🎯 <strong>Your turn!</strong> Fire a shot at your opponent's board below.</>
+          ) : (
+            <>⏳ <strong>Waiting for opponent...</strong> They're taking their shot.</>
+          )}
+        </div>
+      )}
     </div>
   );
 }

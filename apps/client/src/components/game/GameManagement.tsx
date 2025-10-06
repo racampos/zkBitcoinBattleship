@@ -5,54 +5,31 @@
 
 import React, { useState } from "react";
 import { useGameStore } from "../../store/gameStore";
+import { useGameContracts } from "../../hooks/useGameContracts";
 
 export function GameManagement() {
-  const { account, gameId, setGameId, setError, isLoading, setIsLoading } = useGameStore();
+  const { account, gameId, setGameId, isLoading, error } = useGameStore();
+  const { createGame, joinGame } = useGameContracts(account);
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [joinGameId, setJoinGameId] = useState("");
 
   const handleCreateGame = async () => {
-    if (!account) return;
-
     try {
-      setIsLoading(true);
-      setError(null);
-
-      // TODO: Call create_game contract
-      console.log("🎲 Creating game...");
-
-      // Placeholder - Replace with actual contract call
-      const mockGameId = `game_${Date.now()}`;
-      setGameId(mockGameId);
-
-      console.log("✅ Game created:", mockGameId);
-    } catch (error: any) {
-      console.error("Failed to create game:", error);
-      setError(`Failed to create game: ${error.message}`);
-    } finally {
-      setIsLoading(false);
+      await createGame();
+    } catch (error) {
+      // Error is already handled in the hook
     }
   };
 
   const handleJoinGame = async () => {
-    if (!account || !joinGameId) return;
+    if (!joinGameId) return;
 
     try {
-      setIsLoading(true);
-      setError(null);
-
-      // TODO: Call join_game contract
-      console.log("🎮 Joining game:", joinGameId);
-
-      setGameId(joinGameId);
+      await joinGame(joinGameId);
       setShowJoinInput(false);
-
-      console.log("✅ Joined game:", joinGameId);
-    } catch (error: any) {
-      console.error("Failed to join game:", error);
-      setError(`Failed to join game: ${error.message}`);
-    } finally {
-      setIsLoading(false);
+      setJoinGameId("");
+    } catch (error) {
+      // Error is already handled in the hook
     }
   };
 
@@ -112,7 +89,11 @@ export function GameManagement() {
         </div>
       )}
 
-      <div className="status-box">No game created</div>
+      {error ? (
+        <div className="status-box error">{error}</div>
+      ) : (
+        <div className="status-box">No game created</div>
+      )}
     </div>
   );
 }

@@ -2,16 +2,21 @@
  * Main App Component for ZK Battleship
  */
 
-import React, { useState } from "react";
+import React from "react";
+import { DojoProvider } from "./dojo/DojoContext";
 import { WalletConnection } from "./components/game/WalletConnection";
 import { GameManagement } from "./components/game/GameManagement";
 import { BoardSetup } from "./components/game/BoardSetup";
 import { Gameplay } from "./components/game/Gameplay";
 import { GameState } from "./components/game/GameState";
 import { useGameStore } from "./store/gameStore";
+import { useGameState } from "./hooks/useGameState";
 
-export default function App() {
+function GameApp() {
   const { account, gameId } = useGameStore();
+
+  // Subscribe to game state updates
+  useGameState(gameId);
 
   return (
     <div className="app-container">
@@ -54,5 +59,13 @@ export default function App() {
         </p>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <DojoProvider>
+      <GameApp />
+    </DojoProvider>
   );
 }

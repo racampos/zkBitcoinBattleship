@@ -6,7 +6,7 @@ import wasm from 'vite-plugin-wasm';
 export default defineConfig({
   plugins: [react(), mkcert(), wasm()],
   server: {
-    port: 3000,
+    port: 4000,
   },
   define: {
     // Polyfill for Node.js globals required by some packages (e.g., Atomiq SDK)

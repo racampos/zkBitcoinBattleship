@@ -1,0 +1,58 @@
+/**
+ * Main App Component for ZK Battleship
+ */
+
+import React, { useState } from "react";
+import { WalletConnection } from "./components/game/WalletConnection";
+import { GameManagement } from "./components/game/GameManagement";
+import { BoardSetup } from "./components/game/BoardSetup";
+import { Gameplay } from "./components/game/Gameplay";
+import { GameState } from "./components/game/GameState";
+import { useGameStore } from "./store/gameStore";
+
+export default function App() {
+  const { account, gameId } = useGameStore();
+
+  return (
+    <div className="app-container">
+      <header className="app-header">
+        <h1>⚔️ ZK Battleship on Starknet</h1>
+        <p className="subtitle">Privacy-preserving on-chain battleship powered by ZK proofs</p>
+      </header>
+
+      <main className="app-main">
+        {/* Wallet Connection */}
+        <WalletConnection />
+
+        {/* Game Management - Create/Join Game */}
+        {account && <GameManagement />}
+
+        {/* Board Setup - Place Ships */}
+        {account && gameId && <BoardSetup />}
+
+        {/* Gameplay - Fire Shots */}
+        {account && gameId && <Gameplay />}
+
+        {/* Game State Display */}
+        {account && gameId && <GameState />}
+      </main>
+
+      <footer className="app-footer">
+        <p>
+          Built with{" "}
+          <a href="https://docs.dojoengine.org/" target="_blank" rel="noopener noreferrer">
+            Dojo
+          </a>
+          ,{" "}
+          <a href="https://www.starknet.io/" target="_blank" rel="noopener noreferrer">
+            Starknet
+          </a>
+          , and{" "}
+          <a href="https://noir-lang.org/" target="_blank" rel="noopener noreferrer">
+            Noir
+          </a>
+        </p>
+      </footer>
+    </div>
+  );
+}

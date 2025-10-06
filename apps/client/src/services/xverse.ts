@@ -132,25 +132,49 @@ export class XverseService {
   /**
    * Signs a PSBT (Partially Signed Bitcoin Transaction) with Xverse wallet.
    * Official example line 155
-   * @param {string} psbt The PSBT to sign (base64 or hex)
+   * @param {string} psbt The PSBT to sign (base64 or hex string)
    * @param {any} signInputs Input configuration for signing
    * @returns {Promise<string>} The signed PSBT
    */
   async signPsbt(psbt: string, signInputs: any): Promise<string> {
     try {
-      const response = await request("signPsbt", {
+      console.log("🔧 Xverse signPsbt called with:");
+      console.log("  PSBT type:", typeof psbt);
+      console.log("  PSBT preview:", psbt.substring(0, 100) + "...");
+      console.log("  signInputs:", signInputs);
+      console.log("  signInputs (JSON):", JSON.stringify(signInputs, null, 2));
+      
+      const requestParams = {
         psbt,
         signInputs,
         broadcast: false, // Don't broadcast, we'll submit via SDK
-      });
+      };
+      console.log("  Full request params:", JSON.stringify(requestParams, (key, value) => {
+        if (key === 'psbt') return value.substring(0, 50) + '...';
+        return value;
+      }, 2));
+      
+      const response = await request("signPsbt", requestParams);
+
+      console.log("📥 Xverse response:", response);
 
       if (response.status === "success") {
         console.log("✅ PSBT signed successfully");
-        return (response.result as any).psbt;
+        const signedPsbt = (response.result as any).psbt;
+        console.log("  Signed PSBT type:", typeof signedPsbt);
+        console.log("  Signed PSBT preview:", typeof signedPsbt === 'string' ? signedPsbt.substring(0, 100) + "..." : signedPsbt);
+        return signedPsbt;
       } else {
-        throw new Error("Failed to sign PSBT");
+        // Log full error details from Xverse
+        console.error("❌ Xverse returned error:");
+        console.error("   Full error object:", JSON.stringify(response.error, null, 2));
+        throw new Error(`Failed to sign PSBT: ${response.error?.message || JSON.stringify(response.error)}`);
       }
     } catch (error: any) {
+      console.error("❌ Xverse signPsbt error:", error);
+      console.error("   Error message:", error.message);
+      console.error("   Error type:", error.constructor.name);
+      
       if (error.message?.includes("User rejected") || error.message?.includes("User cancelled")) {
         throw new Error("User cancelled PSBT signing");
       }

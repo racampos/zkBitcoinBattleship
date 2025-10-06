@@ -7,6 +7,8 @@ import { XverseService } from "./src/services/xverse";
 import { AtomiqService } from "./src/services/atomiq";
 import { SwapDirection, SwapStatus } from "./src/services/types/swap.types";
 import type { BitcoinAddress } from "./src/services/types/bitcoin.types";
+import { serializePSBT } from "./src/utils/psbt-serializer";
+import { Transaction } from "@scure/btc-signer";
 
 // Log environment on load
 console.log("🔧 Bitcoin Demo Environment:");
@@ -31,7 +33,7 @@ if (rpcUrl && rpcUrl.includes("undefined")) {
   console.error("   Current value:", rpcUrl);
   console.error("");
   console.error("   Fix your .env file. It should be ONE line:");
-  console.error("   VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY");
+  console.error("   VITE_STARKNET_RPC_URL=https://starknet-mainnet.g.alchemy.com/v2/YOUR_KEY");
   console.error("   (Note: /v2/ not just / for Alchemy URLs)");
   console.error("");
 }
@@ -39,9 +41,9 @@ if (rpcUrl && rpcUrl.includes("undefined")) {
 console.log("");
 console.log("💡 If you see errors, make sure to create .env file with:");
 console.log("  VITE_BITCOIN_NETWORK=testnet");
-console.log("  VITE_ATOMIQ_ENV=testnet");
+console.log("  VITE_ATOMIQ_ENV=mainnet");
 console.log(
-  "  VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY"
+  "  VITE_STARKNET_RPC_URL=https://starknet-mainnet.g.alchemy.com/v2/YOUR_KEY"
 );
 console.log("  (For Alchemy: use /v2/ not just /)");
 console.log("");
@@ -59,6 +61,8 @@ function BitcoinDemo() {
   const [quoteData, setQuoteData] = useState<any>(null);
   const [swapInstance, setSwapInstance] = useState<any>(null);
   const [lightningInvoice, setLightningInvoice] = useState<string | null>(null);
+  const [swapAmount, setSwapAmount] = useState<string>("3000"); // Amount in sats
+  const [starknetAddress, setStarknetAddress] = useState<string>(""); // Destination Starknet address
 
   // Services
   const xverseService = XverseService.getInstance();
@@ -88,7 +92,7 @@ function BitcoinDemo() {
       setSwapStatus(SwapStatus.QUOTING);
       setSwapError(null);
 
-      const amount = 1000n; // 1k sats for testing (~$0.60)
+      const amount = BigInt(swapAmount); // User-specified amount in sats
 
       const quote = await atomiqService.getQuote(
         SwapDirection.BTC_TO_STRK,
@@ -110,15 +114,17 @@ function BitcoinDemo() {
       setSwapStatus(SwapStatus.COMMITTING);
       setSwapError(null);
 
-      // For demo: use dummy Starknet address (in production, use real Starknet wallet)
-      const DUMMY_STARKNET_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000001";
+      if (!starknetAddress) {
+        throw new Error("Please enter your Starknet address");
+      }
 
       console.log("⚡ Creating Lightning swap...");
+      console.log("  Destination:", starknetAddress);
       
       // Create swap (line 287-294 from official example)
       const swap = await atomiqService.createDepositSwap(
-        1000n, // amount (1k sats ~$0.60)
-        DUMMY_STARKNET_ADDRESS // Starknet destination
+        BigInt(swapAmount), // User-specified amount in sats
+        starknetAddress // Real Starknet destination address
       );
 
       // Get Lightning invoice (line 300 from official example)
@@ -166,16 +172,19 @@ function BitcoinDemo() {
       setSwapStatus(SwapStatus.COMMITTING);
       setSwapError(null);
 
-      // For demo: use dummy Starknet address
-      const DUMMY_STARKNET_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000001";
+      if (!starknetAddress) {
+        throw new Error("Please enter your Starknet address");
+      }
 
       console.log("₿ Creating on-chain BTC swap...");
+      console.log("  Source BTC:", btcAddress);
+      console.log("  Destination STRK:", starknetAddress);
 
       // Create swap for on-chain BTC (line 135-142 from official example)
       const swap = await atomiqService.createOnChainDepositSwap(
-        3000n, // 3k sats for on-chain (higher due to BTC fees)
+        BigInt(swapAmount), // User-specified amount in sats
         btcAddress, // Source Bitcoin address from Xverse
-        DUMMY_STARKNET_ADDRESS // Destination Starknet address
+        starknetAddress // Real Starknet destination address
       );
 
       console.log("📝 Getting PSBT for signing...");
@@ -186,15 +195,41 @@ function BitcoinDemo() {
         publicKey: btcPublicKey,
       });
 
+      console.log("🔍 Debug PSBT data:");
+      console.log("  PSBT type:", typeof psbt);
+      console.log("  PSBT object:", psbt);
+      console.log("  signInputs:", signInputs);
+
+      // Convert PSBT object to base64 string using helper
+      const psbtString = serializePSBT(psbt);
+
+      console.log("  Serialized PSBT (preview):", psbtString.substring(0, 100) + "...");
+      
+      // Convert signInputs from [1, 2] to Xverse format { "address": [1, 2] }
+      // signInputs should be an object where keys are addresses and values are arrays of input indices
+      const xverseSignInputs = {
+        [btcAddress]: Array.isArray(signInputs) ? signInputs : [signInputs]
+      };
+      
+      console.log("  Xverse signInputs:", xverseSignInputs);
+      console.log("  Xverse signInputs (JSON):", JSON.stringify(xverseSignInputs, null, 2));
       console.log("✍️ Requesting Xverse signature...");
 
       // Sign with Xverse (line 155 from official example)
-      const signedPsbt = await xverseService.signPsbt(psbt, signInputs);
+      const signedPsbtBase64 = await xverseService.signPsbt(psbtString, xverseSignInputs);
 
       console.log("📤 Submitting signed transaction...");
+      console.log("  Signed PSBT (base64):", typeof signedPsbtBase64, signedPsbtBase64.substring(0, 100) + "...");
+      
+      // Deserialize the base64 PSBT string back into a Transaction object
+      // Atomiq SDK expects a Transaction object with toBytes() method
+      console.log("  Deserializing PSBT from base64...");
+      const signedPsbtBytes = Uint8Array.from(atob(signedPsbtBase64), c => c.charCodeAt(0));
+      const signedPsbtTx = Transaction.fromPSBT(signedPsbtBytes);
+      console.log("  Deserialized PSBT transaction:", signedPsbtTx);
 
       // Submit signed PSBT (line 156 from official example)
-      const btcTxId = await (swap as any).submitPsbt(signedPsbt);
+      const btcTxId = await (swap as any).submitPsbt(signedPsbtTx);
       console.log("✅ Bitcoin transaction broadcasted:", btcTxId);
 
       setSwapInstance(swap);
@@ -283,25 +318,27 @@ function BitcoinDemo() {
             </h2>
 
             {!btcConnected ? (
-              <button
-                onClick={handleConnectXverse}
-                style={{
-                  width: "100%",
-                  padding: "16px",
-                  fontSize: "16px",
-                  background: "#f97316",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                }}
-              >
-                Connect Xverse Wallet
-              </button>
-              <div style={{ marginTop: "8px", fontSize: "12px", color: "#888", textAlign: "center" }}>
-                💡 Optional for Lightning swaps, required for on-chain BTC swaps
-              </div>
+              <>
+                <button
+                  onClick={handleConnectXverse}
+                  style={{
+                    width: "100%",
+                    padding: "16px",
+                    fontSize: "16px",
+                    background: "#f97316",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                  }}
+                >
+                  Connect Xverse Wallet
+                </button>
+                <div style={{ marginTop: "8px", fontSize: "12px", color: "#888", textAlign: "center" }}>
+                  💡 Optional for Lightning swaps, required for on-chain BTC swaps
+                </div>
+              </>
             ) : (
               <div>
                 <div
@@ -340,6 +377,58 @@ function BitcoinDemo() {
             )}
           </div>
 
+          {/* Starknet Address */}
+          <div
+            style={{
+              background: "#1a1a1a",
+              border: "1px solid #333",
+              borderRadius: "8px",
+              padding: "24px",
+              marginBottom: "20px",
+            }}
+          >
+            <h2 style={{ margin: "0 0 20px 0", fontSize: "20px" }}>
+              2. Enter Starknet Address
+            </h2>
+            <div style={{ marginBottom: "12px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  color: "#888",
+                  marginBottom: "8px",
+                }}
+              >
+                Destination Address (Mainnet):
+              </label>
+              <input
+                type="text"
+                value={starknetAddress}
+                onChange={(e) => setStarknetAddress(e.target.value)}
+                placeholder="0x..."
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "14px",
+                  background: "#0a0a0a",
+                  color: "#fff",
+                  border: starknetAddress ? "1px solid #10b981" : "1px solid #444",
+                  borderRadius: "6px",
+                  fontFamily: "monospace",
+                }}
+              />
+              <div style={{ fontSize: "12px", color: "#888", marginTop: "6px" }}>
+                💡 STRK tokens will be sent to this address (Starknet Mainnet)
+              </div>
+              {starknetAddress && (
+                <div style={{ fontSize: "12px", color: "#10b981", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>✅</span>
+                  <span>Address entered</span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Get Quote */}
           <div
             style={{
@@ -351,27 +440,70 @@ function BitcoinDemo() {
             }}
           >
             <h2 style={{ margin: "0 0 20px 0", fontSize: "20px" }}>
-              2. Get Swap Quote
+              3. Get Swap Quote
             </h2>
+            
+            {/* Amount Input */}
+            <div style={{ marginBottom: "15px" }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "14px",
+                  color: "#888",
+                  marginBottom: "8px",
+                }}
+              >
+                Amount (sats):
+              </label>
+              <input
+                type="number"
+                value={swapAmount}
+                onChange={(e) => setSwapAmount(e.target.value)}
+                disabled={swapStatus === SwapStatus.QUOTING}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  fontSize: "16px",
+                  background: "#0a0a0a",
+                  color: "#fff",
+                  border: "1px solid #444",
+                  borderRadius: "6px",
+                  fontFamily: "monospace",
+                }}
+                placeholder="Enter amount in sats"
+                min="1000"
+                step="1000"
+              />
+              <div style={{ fontSize: "12px", color: "#666", marginTop: "6px" }}>
+                💡 Try different amounts to find minimum (e.g., 3000, 5000, 10000)
+              </div>
+            </div>
+
             <button
               onClick={handleGetQuote}
-              disabled={!btcConnected || swapStatus === SwapStatus.QUOTING}
+              disabled={!btcConnected || !starknetAddress || swapStatus === SwapStatus.QUOTING}
               style={{
                 width: "100%",
                 padding: "16px",
                 fontSize: "16px",
-                background: btcConnected ? "#3b82f6" : "#555",
+                background: (btcConnected && starknetAddress) ? "#3b82f6" : "#555",
                 color: "#fff",
                 border: "none",
                 borderRadius: "8px",
-                cursor: btcConnected ? "pointer" : "not-allowed",
+                cursor: (btcConnected && starknetAddress) ? "pointer" : "not-allowed",
                 fontWeight: "600",
               }}
             >
               {swapStatus === SwapStatus.QUOTING
                 ? "Getting Quote..."
-                : "Get Quote (1k sats → STRK)"}
+                : `Get Quote (${Number(swapAmount).toLocaleString()} sats → STRK)`}
             </button>
+            
+            {!starknetAddress && btcConnected && (
+              <div style={{ marginTop: "12px", fontSize: "13px", color: "#FFC107", textAlign: "center" }}>
+                ⚠️ Please enter your Starknet address first
+              </div>
+            )}
 
             {swapError && (
               <div
@@ -524,7 +656,7 @@ function BitcoinDemo() {
                     {/* Lightning Swap */}
                     <button
                       onClick={handleStartLightningSwap}
-                      disabled={swapStatus !== SwapStatus.QUOTE_READY}
+                      disabled={swapStatus !== SwapStatus.QUOTE_READY || !starknetAddress}
                       style={{
                         flex: 1,
                         padding: "12px 24px",
@@ -534,8 +666,8 @@ function BitcoinDemo() {
                         color: "white",
                         border: "none",
                         borderRadius: "6px",
-                        cursor: swapStatus === SwapStatus.QUOTE_READY ? "pointer" : "not-allowed",
-                        opacity: swapStatus === SwapStatus.QUOTE_READY ? 1 : 0.5,
+                        cursor: (swapStatus === SwapStatus.QUOTE_READY && starknetAddress) ? "pointer" : "not-allowed",
+                        opacity: (swapStatus === SwapStatus.QUOTE_READY && starknetAddress) ? 1 : 0.5,
                       }}
                       title="Instant, low fees (~4 sats). No Xverse needed."
                     >
@@ -545,7 +677,7 @@ function BitcoinDemo() {
                     {/* On-Chain Swap */}
                     <button
                       onClick={handleStartOnChainSwap}
-                      disabled={swapStatus !== SwapStatus.QUOTE_READY || !btcConnected}
+                      disabled={swapStatus !== SwapStatus.QUOTE_READY || !btcConnected || !starknetAddress}
                       style={{
                         flex: 1,
                         padding: "12px 24px",
@@ -555,8 +687,8 @@ function BitcoinDemo() {
                         color: "white",
                         border: "none",
                         borderRadius: "6px",
-                        cursor: swapStatus === SwapStatus.QUOTE_READY && btcConnected ? "pointer" : "not-allowed",
-                        opacity: swapStatus === SwapStatus.QUOTE_READY && btcConnected ? 1 : 0.5,
+                        cursor: (swapStatus === SwapStatus.QUOTE_READY && btcConnected && starknetAddress) ? "pointer" : "not-allowed",
+                        opacity: (swapStatus === SwapStatus.QUOTE_READY && btcConnected && starknetAddress) ? 1 : 0.5,
                       }}
                       title="Uses Xverse wallet. Higher fees (~50 sats). Requires confirmations."
                     >
@@ -564,7 +696,7 @@ function BitcoinDemo() {
                     </button>
                   </div>
                   <div style={{ marginTop: "8px", fontSize: "12px", color: "#666", textAlign: "center" }}>
-                    <div>⚡ Lightning: Instant, 1k sats | ₿ On-Chain: 3k sats, uses Xverse</div>
+                    <div>Both swaps use {Number(swapAmount).toLocaleString()} sats</div>
                   </div>
                 </div>
               </div>

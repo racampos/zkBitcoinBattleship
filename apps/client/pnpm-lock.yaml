@@ -23,6 +23,9 @@ dependencies:
   '@dojoengine/torii-client':
     specifier: 1.7.2
     version: 1.7.2
+  '@scure/btc-signer':
+    specifier: ^2.0.1
+    version: 2.0.1
   qrcode.react:
     specifier: ^4.2.0
     version: 4.2.0(react@19.2.0)
@@ -1016,6 +1019,13 @@ packages:
       '@noble/hashes': 1.8.0
     dev: false
 
+  /@noble/curves@2.0.1:
+    resolution: {integrity: sha512-vs1Az2OOTBiP4q0pwjW5aF0xp9n4MxVrmkFBxc6EKZc6ddYx5gaZiAsZoq0uRRXWbi3AT/sBqn05eRPtn1JCPw==}
+    engines: {node: '>= 20.19.0'}
+    dependencies:
+      '@noble/hashes': 2.0.1
+    dev: false
+
   /@noble/hashes@1.3.0:
     resolution: {integrity: sha512-ilHEACi9DwqJB0pw7kv+Apvh50jiiSyR/cQ3y4W7lOR5mhvn/50FLUfsnfJz0BDZtl/RR16kXvptiv6q1msYZg==}
     dev: false
@@ -1058,6 +1068,11 @@ packages:
   /@noble/hashes@1.8.0:
     resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
     engines: {node: ^14.21.3 || >=16}
+    dev: false
+
+  /@noble/hashes@2.0.1:
+    resolution: {integrity: sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw==}
+    engines: {node: '>= 20.19.0'}
     dev: false
 
   /@noble/secp256k1@1.7.2:
@@ -1149,19 +1164,6 @@ packages:
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
     dev: false
 
-  /@reown/appkit-common@1.8.1(typescript@5.4.5):
-    resolution: {integrity: sha512-VhhMnmD7aUAHGgCLbkrlM3Ek99aIMZiduPqExNe/6L/sORrPPoChnBqjVEBP2g4bErVU2BFIFhxo5oIVuP0fTg==}
-    dependencies:
-      big.js: 6.2.2
-      dayjs: 1.11.13
-      viem: 2.37.9(typescript@5.4.5)(zod@3.25.76)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-      - zod
-    dev: false
-
   /@reown/appkit-common@1.8.1(typescript@5.4.5)(zod@3.22.4):
     resolution: {integrity: sha512-VhhMnmD7aUAHGgCLbkrlM3Ek99aIMZiduPqExNe/6L/sORrPPoChnBqjVEBP2g4bErVU2BFIFhxo5oIVuP0fTg==}
     dependencies:
@@ -1178,11 +1180,11 @@ packages:
   /@reown/appkit-controllers@1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-k720RMJbXhTFrSsAZrvgu+WAF3Sk8d5iHXo1wKmfNXxzpXeF7f5DlWijye/r7nMVXQGbtZFkjTm54ti7+5UfjQ==}
     dependencies:
-      '@reown/appkit-common': 1.8.1(typescript@5.4.5)
+      '@reown/appkit-common': 1.8.1(typescript@5.4.5)(zod@3.22.4)
       '@reown/appkit-wallet': 1.8.1(typescript@5.4.5)
       '@walletconnect/universal-provider': 2.21.7(typescript@5.4.5)
       valtio: 2.1.5(@types/react@18.3.25)(react@19.2.0)
-      viem: 2.37.9(typescript@5.4.5)(zod@3.25.76)
+      viem: 2.37.9(typescript@5.4.5)(zod@3.22.4)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -1215,7 +1217,7 @@ packages:
   /@reown/appkit-pay@1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-5NM01g0ygtiGsPUR9N/GaBwyAtZir1Bg+iHZLUNrWOOS36dycEv2bOY1YvrCNgC9sWkQIMr4wiyukiybk3BANQ==}
     dependencies:
-      '@reown/appkit-common': 1.8.1(typescript@5.4.5)
+      '@reown/appkit-common': 1.8.1(typescript@5.4.5)(zod@3.22.4)
       '@reown/appkit-controllers': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-ui': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-utils': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)(valtio@2.1.5)
@@ -1259,7 +1261,7 @@ packages:
   /@reown/appkit-scaffold-ui@1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)(valtio@2.1.5):
     resolution: {integrity: sha512-NrjlEU69+yePbJKrnFl7k7cynl0nthQ4E84POL3TVyuLh894KjSzfHkqmP603R49sYVzuczP3JxMRjsrXXQ2vw==}
     dependencies:
-      '@reown/appkit-common': 1.8.1(typescript@5.4.5)
+      '@reown/appkit-common': 1.8.1(typescript@5.4.5)(zod@3.22.4)
       '@reown/appkit-controllers': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-ui': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-utils': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)(valtio@2.1.5)
@@ -1299,7 +1301,7 @@ packages:
     resolution: {integrity: sha512-iWY1zufKj+gDjQ7zxgnFBj+qJ+9gvN0mJWt5r0P1HYemiIV3VP7HUTxgOqTqTW3ggs4RzQy2sVY0Pli7V6m+1Q==}
     dependencies:
       '@phosphor-icons/webcomponents': 2.1.5
-      '@reown/appkit-common': 1.8.1(typescript@5.4.5)
+      '@reown/appkit-common': 1.8.1(typescript@5.4.5)(zod@3.22.4)
       '@reown/appkit-controllers': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-wallet': 1.8.1(typescript@5.4.5)
       lit: 3.3.0
@@ -1338,7 +1340,7 @@ packages:
     peerDependencies:
       valtio: 2.1.5
     dependencies:
-      '@reown/appkit-common': 1.8.1(typescript@5.4.5)
+      '@reown/appkit-common': 1.8.1(typescript@5.4.5)(zod@3.22.4)
       '@reown/appkit-controllers': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-polyfills': 1.8.1
       '@reown/appkit-wallet': 1.8.1(typescript@5.4.5)
@@ -1346,7 +1348,7 @@ packages:
       '@walletconnect/logger': 2.1.2
       '@walletconnect/universal-provider': 2.21.7(typescript@5.4.5)
       valtio: 2.1.5(@types/react@18.3.25)(react@19.2.0)
-      viem: 2.37.9(typescript@5.4.5)(zod@3.25.76)
+      viem: 2.37.9(typescript@5.4.5)(zod@3.22.4)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -1393,7 +1395,7 @@ packages:
     resolution: {integrity: sha512-6asyPS7uHWNgTlMH2P4IqQVZKSW9NGb7XNA+nMLpHV2dMmXn0D+tpY0j4477DC/ekNCFK2bieVk4WsYgyd6jHg==}
     requiresBuild: true
     dependencies:
-      '@reown/appkit-common': 1.8.1(typescript@5.4.5)
+      '@reown/appkit-common': 1.8.1(typescript@5.4.5)(zod@3.22.4)
       '@reown/appkit-controllers': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-pay': 1.8.1(@types/react@18.3.25)(react@19.2.0)(typescript@5.4.5)
       '@reown/appkit-polyfills': 1.8.1
@@ -1405,7 +1407,7 @@ packages:
       bs58: 6.0.0
       semver: 7.7.2
       valtio: 2.1.5(@types/react@18.3.25)(react@19.2.0)
-      viem: 2.37.9(typescript@5.4.5)(zod@3.25.76)
+      viem: 2.37.9(typescript@5.4.5)(zod@3.22.4)
     optionalDependencies:
       '@lit/react': 1.0.8(@types/react@18.3.25)
     transitivePeerDependencies:
@@ -1662,6 +1664,10 @@ packages:
     resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
     dev: false
 
+  /@scure/base@2.0.0:
+    resolution: {integrity: sha512-3E1kpuZginKkek01ovG8krQ0Z44E3DHPjc5S2rjJw9lZn3KSQOs8S7wqikF/AH7iRanHypj85uGyxk0XAyC37w==}
+    dev: false
+
   /@scure/bip32@1.3.2:
     resolution: {integrity: sha512-N1ZhksgwD3OBlwTv3R6KFEcPojl/W4ElJOeCZdi+vuI5QmTFwLq3OFf2zd2ROpKvxFdgZ6hUpb0dx9bVNEwYCA==}
     dependencies:
@@ -1708,6 +1714,15 @@ packages:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
       micro-packed: 0.7.3
+    dev: false
+
+  /@scure/btc-signer@2.0.1:
+    resolution: {integrity: sha512-vk5a/16BbSFZkhh1JIJ0+4H9nceZVo5WzKvJGGWiPp3sQOExeW+L53z3dI6u0adTPoE8ZbL+XEb6hEGzVZSvvQ==}
+    dependencies:
+      '@noble/curves': 2.0.1
+      '@noble/hashes': 2.0.1
+      '@scure/base': 2.0.0
+      micro-packed: 0.8.0
     dev: false
 
   /@scure/starknet@1.1.0:
@@ -1894,7 +1909,7 @@ packages:
       '@turnkey/crypto': 2.3.1
       '@turnkey/encoding': 0.4.0
     optionalDependencies:
-      viem: 2.37.9(typescript@5.4.5)(zod@3.25.76)
+      viem: 2.37.9(typescript@5.4.5)(zod@3.22.4)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -3552,6 +3567,13 @@ packages:
     resolution: {integrity: sha512-2Milxs+WNC00TRlem41oRswvw31146GiSaoCT7s3Xi2gMUglW5QBeqlQaZeHr5tJx9nm3i57LNXPqxOOaWtTYg==}
     dependencies:
       '@scure/base': 1.2.6
+    dev: false
+
+  /micro-packed@0.8.0:
+    resolution: {integrity: sha512-AKb8znIvg9sooythbXzyFeChEY0SkW0C6iXECpy/ls0e5BtwXO45J9wD9SLzBztnS4XmF/5kwZknsq+jyynd/A==}
+    engines: {node: '>= 20.19.0'}
+    dependencies:
+      '@scure/base': 2.0.0
     dev: false
 
   /micro-sol-signer@0.5.0:

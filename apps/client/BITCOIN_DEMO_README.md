@@ -16,21 +16,20 @@ pnpm install
 Create a `.env` file in `apps/client/`:
 
 ```env
-# Bitcoin Network: Use "testnet" for Bitcoin testnet (Xverse Testnet4)
-# Based on official Atomiq example: use "testnet" not "testnet4"
-VITE_BITCOIN_NETWORK=testnet
+# Bitcoin Network: Use "mainnet" for real BTC swaps
+VITE_BITCOIN_NETWORK=mainnet
 
 # Atomiq Environment (testnet, mainnet)
-VITE_ATOMIQ_ENV=testnet
+VITE_ATOMIQ_ENV=mainnet
 
 # Starknet RPC URL (for Atomiq SDK)
-# Using Blast API public RPC (same as official Atomiq example)
-VITE_STARKNET_RPC_URL=https://starknet-sepolia.public.blastapi.io/rpc/v0_8
+# Get free key from Alchemy or Infura for Starknet Mainnet
+VITE_STARKNET_RPC_URL=https://starknet-mainnet.g.alchemy.com/v2/YOUR_KEY
 ```
 
 **Get a free Starknet RPC key from:**
 
-- [Infura](https://www.infura.io/) - Create account → Create API key → Select Starknet Sepolia
+- [Infura](https://www.infura.io/) - Create account → Create API key → Select Starknet Mainnet
 - [Alchemy](https://www.alchemy.com/) - Similar process
 
 ### 3. Install Xverse Wallet
@@ -42,9 +41,9 @@ Download and install the [Xverse browser extension](https://www.xverse.app/):
 
 **Important:**
 
-- Switch Xverse to **Testnet** mode in settings (any testnet option should work)
-- The SDK uses `BitcoinNetwork.TESTNET` regardless of specific testnet version
-- This matches the official Atomiq example configuration
+- Keep Xverse on **Mainnet** mode (default)
+- You'll be using real BTC for swaps
+- Minimum on-chain swap: ~10,000 sats (~$6)
 
 ### 4. Run the Demo
 
@@ -97,7 +96,7 @@ Then open: **https://localhost:3000/bitcoin-demo.html**
 
 - Verify `VITE_STARKNET_RPC_URL` is set correctly in `.env`
 - Test your RPC URL: `curl -X POST YOUR_RPC_URL -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"starknet_chainId","params":[],"id":1}'`
-- Expected response should include `"0x534e5f5345504f4c4941"` (Sepolia chain ID)
+- Expected response should include `"0x534e5f4d41494e"` (Mainnet chain ID)
 
 ### Error: "User cancelled connection"
 

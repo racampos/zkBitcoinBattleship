@@ -15,6 +15,7 @@
     "@dojoengine/core": "1.7.1",
     "@dojoengine/sdk": "^1.7.2",
     "@dojoengine/torii-client": "1.7.2",
+    "@scure/btc-signer": "^2.0.1",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

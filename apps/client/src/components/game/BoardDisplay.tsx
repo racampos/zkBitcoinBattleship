@@ -21,6 +21,8 @@ export function BoardDisplay({ board, title }: BoardDisplayProps) {
       return <span style={{ color: "#F44336", fontWeight: "bold" }}>X</span>; // Hit (red)
     } else if (cell === 3) {
       return <span style={{ color: "#2196F3" }}>o</span>; // Miss (blue)
+    } else if (cell === 4) {
+      return <span style={{ color: "#FFA726", fontWeight: "bold" }}>?</span>; // Pending shot (orange)
     } else {
       return <span style={{ color: "#555" }}>·</span>; // Water (gray)
     }

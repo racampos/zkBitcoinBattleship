@@ -194,15 +194,21 @@ export function useGameContracts(account: Account | null) {
       return;
     }
 
+    const gameId = useGameStore.getState().gameId;
+    if (!gameId) {
+      setError("No active game");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-      console.log(`🎯 Firing shot at (${row}, ${col})...`);
+      console.log(`🎯 Firing shot at (${row}, ${col}) in game ${gameId}...`);
 
       const tx = await account.execute({
         contractAddress: CONTRACTS.gameplay.address,
         entrypoint: "fire_shot",
-        calldata: [row, col],
+        calldata: [gameId, row, col],
       });
 
       console.log("📤 Transaction sent:", tx.transaction_hash);

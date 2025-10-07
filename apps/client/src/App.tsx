@@ -11,12 +11,18 @@ import { Gameplay } from "./components/game/Gameplay";
 import { GameState } from "./components/game/GameState";
 import { useGameStore } from "./store/gameStore";
 import { useGameState } from "./hooks/useGameState";
+import { useShotTracking } from "./hooks/useShotTracking";
 
 function GameApp() {
-  const { account, gameId } = useGameStore();
+  // Use proper Zustand selectors for stable references
+  const account = useGameStore((s) => s.account);
+  const gameId = useGameStore((s) => s.gameId);
 
   // Subscribe to game state updates
   useGameState(gameId);
+  
+  // Track shots and update boards
+  useShotTracking();
 
   return (
     <div className="app-container">

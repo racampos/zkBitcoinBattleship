@@ -11,7 +11,7 @@ import { BoardDisplay } from "./BoardDisplay";
 import { generateRandomBoard, calculateBoardHash } from "../../utils/boardUtils";
 
 export function BoardSetup() {
-  const { account, myBoard, setMyBoard, isLoading } = useGameStore();
+  const { account, myBoard, setMyBoard, setOriginalBoard, isLoading } = useGameStore();
   const { commitBoard } = useGameContracts(account);
   const { isCommitted, isChecking } = useBoardCommitStatus();
 
@@ -21,8 +21,9 @@ export function BoardSetup() {
       console.log("🎲 Generating random board...");
       const board = generateRandomBoard();
       setMyBoard(board);
+      setOriginalBoard(board.map(row => [...row])); // Deep copy for original
     }
-  }, [myBoard, setMyBoard]);
+  }, [myBoard, setMyBoard, setOriginalBoard]);
 
   const handleCommitBoard = async () => {
     if (!myBoard) return;
@@ -41,6 +42,7 @@ export function BoardSetup() {
     console.log("🔄 Regenerating board...");
     const board = generateRandomBoard();
     setMyBoard(board);
+    setOriginalBoard(board.map(row => [...row])); // Deep copy for original
   };
 
   return (

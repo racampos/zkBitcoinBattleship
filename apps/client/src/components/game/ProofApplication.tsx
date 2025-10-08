@@ -8,7 +8,7 @@ import { useGameStore } from "../../store/gameStore";
 import { useGameContracts } from "../../hooks/useGameContracts";
 
 export function ProofApplication() {
-  const { account, gameData, myBoard } = useGameStore();
+  const { account, gameData, originalBoard } = useGameStore();
   const { applyProof, isLoading } = useGameContracts(account);
 
   // Check if there's a pending shot against me
@@ -17,20 +17,20 @@ export function ProofApplication() {
   // Only show if there's a pending shot and it's NOT my turn (I'm the defender)
   const showApplyProof = pendingShot && gameData?.current_turn !== account?.address;
 
-  if (!showApplyProof || !myBoard) {
+  if (!showApplyProof || !originalBoard) {
     return null;
   }
 
   const handleApplyProof = async () => {
-    if (!pendingShot || !myBoard) return;
+    if (!pendingShot || !originalBoard) return;
 
     const { row, col } = pendingShot;
     
-    // Check if the shot hit a ship on MY board (defender's perspective)
-    const wasHit = myBoard[row][col] === 1;
+    // Check if the shot hit a ship on ORIGINAL board (with ships, not modified by shots)
+    const wasHit = originalBoard[row][col] === 1;
     const result = wasHit ? 1 : 0; // 1 = hit, 0 = miss
     
-    console.log(`🛡️ Applying proof for shot at (${row}, ${col}): ${wasHit ? 'HIT' : 'MISS'}`);
+    console.log(`🛡️ Applying proof for shot at (${row}, ${col}): ${wasHit ? 'HIT' : 'MISS'} (original cell value: ${originalBoard[row][col]})`);
 
     try {
       await applyProof(row, col, result);

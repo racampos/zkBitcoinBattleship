@@ -33,9 +33,11 @@ interface GameStore {
   setGameData: (data: GameData | null) => void;
 
   // Board State
-  myBoard: number[][] | null;
-  opponentBoard: number[][] | null; // Track hits/misses
+  myBoard: number[][] | null; // Defense board showing shots received
+  originalBoard: number[][] | null; // Original ship layout (never modified)
+  opponentBoard: number[][] | null; // Attack board tracking hits/misses
   setMyBoard: (board: number[][] | null) => void;
+  setOriginalBoard: (board: number[][] | null) => void;
   setOpponentBoard: (board: number[][] | null) => void;
 
   // UI State
@@ -56,6 +58,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameId: null,
   gameData: null,
   myBoard: null,
+  originalBoard: null,
   opponentBoard: null,
   isLoading: false,
   error: null,
@@ -65,6 +68,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setGameId: (gameId) => set({ gameId }),
   setGameData: (gameData) => set({ gameData }),
   setMyBoard: (myBoard) => set({ myBoard }),
+  setOriginalBoard: (originalBoard) => set({ originalBoard }),
   setOpponentBoard: (opponentBoard) => set({ opponentBoard }),
   setIsLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
@@ -75,6 +79,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameId: null,
       gameData: null,
       myBoard: null,
+      originalBoard: null,
       opponentBoard: null,
       error: null,
     }),

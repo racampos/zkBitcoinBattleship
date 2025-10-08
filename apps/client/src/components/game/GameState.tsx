@@ -7,7 +7,7 @@ import React from "react";
 import { useGameStore } from "../../store/gameStore";
 
 export function GameState() {
-  const { gameData, amIPlayer1 } = useGameStore();
+  const { gameData, amIPlayer1, account } = useGameStore();
 
   if (!gameData) {
     return null;
@@ -21,10 +21,46 @@ export function GameState() {
 
   const isPlayer1 = amIPlayer1();
   const myTurn = gameData.current_turn === (isPlayer1 ? gameData.player_1 : gameData.player_2);
+  
+  // Determine winner (player with 17 hits wins - all 5 ships sunk)
+  const isGameOver = gameData.status === 2;
+  const p1Won = gameData.p1_hits >= 17;
+  const p2Won = gameData.p2_hits >= 17;
+  const iWon = (isPlayer1 && p1Won) || (!isPlayer1 && p2Won);
 
   return (
     <div className="section">
       <h2>📊 Game State</h2>
+
+      {/* Winner Announcement - Only show when game is over */}
+      {isGameOver && (
+        <div 
+          className="status-box" 
+          style={{ 
+            marginBottom: "20px",
+            padding: "20px",
+            background: iWon ? "linear-gradient(135deg, #1a4d1a 0%, #2d5a2d 100%)" : "linear-gradient(135deg, #4d1a1a 0%, #5a2d2d 100%)",
+            borderColor: iWon ? "#4CAF50" : "#F44336",
+            borderWidth: "3px",
+            fontSize: "20px",
+            fontWeight: "bold",
+            textAlign: "center" as const,
+            animation: "pulse 2s infinite"
+          }}
+        >
+          {iWon ? (
+            <>🎉 <span style={{ color: "#4CAF50" }}>VICTORY!</span> 🎉<br />
+            <span style={{ fontSize: "14px", fontWeight: "normal", marginTop: "8px", display: "block" }}>
+              You sank all enemy ships!
+            </span></>
+          ) : (
+            <>💥 <span style={{ color: "#F44336" }}>DEFEAT</span> 💥<br />
+            <span style={{ fontSize: "14px", fontWeight: "normal", marginTop: "8px", display: "block" }}>
+              All your ships have been sunk!
+            </span></>
+          )}
+        </div>
+      )}
 
       <div
         style={{
@@ -38,10 +74,13 @@ export function GameState() {
           {statusMap[gameData.status] || "❓ Unknown"}
         </div>
         
-        <div className={`status-box ${myTurn ? 'success' : ''}`}>
-          <strong>Turn:</strong><br />
-          {myTurn ? "🟢 Your Turn!" : "⏸️ Opponent's Turn"}
-        </div>
+        {/* Only show turn info if game is active */}
+        {!isGameOver && (
+          <div className={`status-box ${myTurn ? 'success' : ''}`}>
+            <strong>Turn:</strong><br />
+            {myTurn ? "🟢 Your Turn!" : "⏸️ Opponent's Turn"}
+          </div>
+        )}
         
         <div className="status-box">
           <strong>Your Role:</strong><br />

@@ -44,12 +44,20 @@ export function useGameContracts(account: Account | null) {
       console.log("📤 Transaction sent:", tx.transaction_hash);
       setTxHash(tx.transaction_hash);
 
-      // Wait for transaction
-      await account.waitForTransaction(tx.transaction_hash, {
-        retryInterval: 1000,
-      });
+      // Wait for transaction with timeout
+      console.log("⏳ Waiting for transaction confirmation...");
+      try {
+        await account.waitForTransaction(tx.transaction_hash, {
+          retryInterval: 1000,
+          successStates: ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1"],
+        });
+        console.log("✅ Transaction confirmed!");
+      } catch (waitError: any) {
+        console.error("❌ Error waiting for transaction:", waitError);
+        throw new Error(`Transaction wait failed: ${waitError.message}`);
+      }
 
-      console.log("✅ Transaction confirmed! Extracting game_id from receipt...");
+      console.log("📋 Extracting game_id from receipt...");
 
       // Fetch transaction receipt to extract game_id from events
       const response = await fetch("http://localhost:5050", {

@@ -10,11 +10,13 @@ import { BoardDisplay } from "./BoardDisplay";
 import { createEmptyBoard } from "../../utils/boardUtils";
 
 export function Gameplay() {
-  const { account, opponentBoard, setOpponentBoard, isMyTurn } = useGameStore();
+  const { account, gameData, opponentBoard, setOpponentBoard, isMyTurn } = useGameStore();
   const { fireShot } = useGameContracts(account);
   const [shotRow, setShotRow] = useState("A");
   const [shotCol, setShotCol] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  
+  const isGameOver = gameData?.status === 2;
 
   // Initialize opponent board if not set
   useEffect(() => {
@@ -133,13 +135,13 @@ export function Gameplay() {
           />
         </label>
 
-        <button onClick={handleRandomCoords} className="secondary">
+        <button onClick={handleRandomCoords} disabled={isGameOver} className="secondary">
           🎲 Random
         </button>
 
         <button 
           onClick={handleFireShot} 
-          disabled={!isMyTurn() || isAlreadyFired()} 
+          disabled={isGameOver || !isMyTurn() || isAlreadyFired()} 
           className="danger"
         >
           🔥 Fire Shot
@@ -153,11 +155,13 @@ export function Gameplay() {
       )}
 
       <div className="status-box">
-        {!isMyTurn() 
-          ? "Waiting for opponent..." 
-          : isAlreadyFired() 
-            ? `⚠️ Already fired at ${shotRow}${shotCol} - choose a different position`
-            : "Your turn! Select coordinates and fire"}
+        {isGameOver 
+          ? "🏁 Game Over - No more shots can be fired" 
+          : !isMyTurn() 
+            ? "Waiting for opponent..." 
+            : isAlreadyFired() 
+              ? `⚠️ Already fired at ${shotRow}${shotCol} - choose a different position`
+              : "Your turn! Select coordinates and fire"}
       </div>
     </div>
   );

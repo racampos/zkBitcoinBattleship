@@ -14,6 +14,7 @@ export function Gameplay() {
   const { fireShot } = useGameContracts(account);
   const [shotRow, setShotRow] = useState("A");
   const [shotCol, setShotCol] = useState(1);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize opponent board if not set
   useEffect(() => {
@@ -22,10 +23,28 @@ export function Gameplay() {
     }
   }, [opponentBoard, setOpponentBoard]);
 
+  // Check if current coordinates have already been fired at
+  const isAlreadyFired = () => {
+    if (!opponentBoard) return false;
+    const row = shotRow.charCodeAt(0) - 65;
+    const col = shotCol - 1;
+    if (row < 0 || row > 9 || col < 0 || col > 9) return false;
+    // Cell values: 0 = water (not fired), 1 = ship (shouldn't exist on opponent board), 
+    // 2 = hit, 3 = miss, 4 = pending
+    return opponentBoard[row][col] > 0;
+  };
+
   const handleFireShot = async () => {
     const row = shotRow.charCodeAt(0) - 65; // A=0, B=1, etc.
     const col = shotCol - 1; // 1-indexed to 0-indexed
 
+    // Check if already fired at this position
+    if (opponentBoard && opponentBoard[row][col] > 0) {
+      setError(`❌ You've already fired at ${shotRow}${shotCol}!`);
+      return;
+    }
+
+    setError(null);
     console.log(`🎯 Firing at ${shotRow}${shotCol} (${row}, ${col})`);
 
     try {
@@ -36,10 +55,28 @@ export function Gameplay() {
   };
 
   const handleRandomCoords = () => {
-    const randomRow = String.fromCharCode(65 + Math.floor(Math.random() * 10)); // A-J
-    const randomCol = Math.floor(Math.random() * 10) + 1; // 1-10
-    setShotRow(randomRow);
-    setShotCol(randomCol);
+    if (!opponentBoard) return;
+
+    // Find all unfired positions
+    const unfiredPositions: Array<{ row: number; col: number }> = [];
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 10; c++) {
+        if (opponentBoard[r][c] === 0) {
+          unfiredPositions.push({ row: r, col: c });
+        }
+      }
+    }
+
+    if (unfiredPositions.length === 0) {
+      setError("❌ All positions have been fired at!");
+      return;
+    }
+
+    // Pick random unfired position
+    const randomPos = unfiredPositions[Math.floor(Math.random() * unfiredPositions.length)];
+    setShotRow(String.fromCharCode(65 + randomPos.row));
+    setShotCol(randomPos.col + 1);
+    setError(null);
   };
 
   return (
@@ -100,13 +137,27 @@ export function Gameplay() {
           🎲 Random
         </button>
 
-        <button onClick={handleFireShot} disabled={!isMyTurn()} className="danger">
+        <button 
+          onClick={handleFireShot} 
+          disabled={!isMyTurn() || isAlreadyFired()} 
+          className="danger"
+        >
           🔥 Fire Shot
         </button>
       </div>
 
+      {error && (
+        <div className="status-box" style={{ background: "#3a1a1a", borderColor: "#8B0000", color: "#FF5722" }}>
+          {error}
+        </div>
+      )}
+
       <div className="status-box">
-        {isMyTurn() ? "Your turn!" : "Waiting for opponent..."}
+        {!isMyTurn() 
+          ? "Waiting for opponent..." 
+          : isAlreadyFired() 
+            ? `⚠️ Already fired at ${shotRow}${shotCol} - choose a different position`
+            : "Your turn! Select coordinates and fire"}
       </div>
     </div>
   );

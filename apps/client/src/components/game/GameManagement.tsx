@@ -3,7 +3,7 @@
  * Handles creating and joining games
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGameStore } from "../../store/gameStore";
 import { useGameContracts } from "../../hooks/useGameContracts";
 
@@ -12,6 +12,24 @@ export function GameManagement() {
   const { createGame, joinGame } = useGameContracts(account);
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [joinGameId, setJoinGameId] = useState("");
+
+  // Check for game ID in URL and auto-join
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameIdFromUrl = urlParams.get('game');
+    
+    if (gameIdFromUrl && !gameId) {
+      console.log('🔗 Game ID from URL:', gameIdFromUrl);
+      setJoinGameId(gameIdFromUrl);
+      setShowJoinInput(true);
+      // Auto-join after a short delay to ensure UI is ready
+      setTimeout(() => {
+        if (account) {
+          joinGame(gameIdFromUrl);
+        }
+      }, 500);
+    }
+  }, [account, gameId, joinGame]);
 
   const handleCreateGame = async () => {
     try {

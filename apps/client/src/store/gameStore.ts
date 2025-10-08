@@ -82,6 +82,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isMyTurn: () => {
     const { gameData, account } = get();
     if (!gameData || !account) return false;
+    
+    // Check if both players have committed their boards
+    const bothBoardsCommitted = 
+      gameData.p1_board_hash !== "0x0" && 
+      gameData.p2_board_hash !== "0x0";
+    
+    // Game must be active (status 1) and both boards committed
+    if (gameData.status !== 1 || !bothBoardsCommitted) return false;
+    
     return gameData.current_turn === account.address;
   },
 

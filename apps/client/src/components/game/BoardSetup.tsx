@@ -15,9 +15,9 @@ export function BoardSetup() {
   const { commitBoard } = useGameContracts(account);
   const { isCommitted, isChecking } = useBoardCommitStatus();
 
-  // Generate board on mount if not already generated
+  // Generate board on mount if not already generated or if it's empty (no ships)
   useEffect(() => {
-    if (!myBoard) {
+    if (!myBoard || myBoard.every(row => row.every(cell => cell === 0))) {
       console.log("🎲 Generating random board...");
       const board = generateRandomBoard();
       setMyBoard(board);

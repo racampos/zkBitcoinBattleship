@@ -227,11 +227,70 @@ export function useGameContracts(account: Account | null) {
     }
   };
 
+  /**
+   * Apply proof for opponent's shot (defender's action)
+   */
+  const applyProof = async (row: number, col: number, result: number) => {
+    if (!account) {
+      setError("Wallet not connected");
+      return;
+    }
+
+    const gameId = useGameStore.getState().gameId;
+    if (!gameId) {
+      setError("No active game");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log(`🛡️ Applying proof for shot at (${row}, ${col}): ${result === 1 ? 'HIT' : 'MISS'}`);
+
+      // Generate random nullifier
+      const nullifier = '0x' + Math.random().toString(16).substring(2).padStart(64, '0');
+
+      const tx = await account.execute({
+        contractAddress: CONTRACTS.proofVerify.address,
+        entrypoint: "apply_shot_proof",
+        calldata: [gameId, row, col, result, nullifier],
+      });
+
+      console.log("📤 Proof transaction sent:", tx.transaction_hash);
+      await account.waitForTransaction(tx.transaction_hash, {
+        retryInterval: 1000,
+      });
+
+      console.log("✅ Proof applied! Turn should flip now.");
+      
+      // Update board locally immediately (don't wait for CellHit from Torii)
+      const currentMyBoard = useGameStore.getState().myBoard;
+      if (currentMyBoard) {
+        const newBoard = currentMyBoard.map(r => [...r]);
+        // result: 1 = hit (2 on board), 0 = miss (3 on board)
+        newBoard[row][col] = result === 1 ? 2 : 3;
+        useGameStore.getState().setMyBoard(newBoard);
+        console.log(`📍 Updated defense board at (${row}, ${col}): ${result === 1 ? 'HIT' : 'MISS'}`);
+      }
+      
+      return tx.transaction_hash;
+    } catch (err: any) {
+      console.error("❌ Failed to apply proof:", err);
+      setError(err.message || "Failed to apply proof");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     createGame,
     joinGame,
     commitBoard,
     fireShot,
+    applyProof,
     txHash,
+    isLoading: useGameStore((s) => s.isLoading),
+    error: useGameStore((s) => s.error),
   };
 }

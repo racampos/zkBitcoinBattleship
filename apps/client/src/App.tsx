@@ -9,6 +9,7 @@ import { GameManagement } from "./components/game/GameManagement";
 import { BoardSetup } from "./components/game/BoardSetup";
 import { Gameplay } from "./components/game/Gameplay";
 import { GameState } from "./components/game/GameState";
+import { ProofApplication } from "./components/game/ProofApplication";
 import { useGameStore } from "./store/gameStore";
 import { useGameState } from "./hooks/useGameState";
 import { useShotTracking } from "./hooks/useShotTracking";
@@ -40,6 +41,9 @@ function GameApp() {
 
         {/* Board Setup - Place Ships */}
         {account && gameId && <BoardSetup />}
+
+        {/* Proof Application - Respond to opponent's shot */}
+        {account && gameId && <ProofApplication />}
 
         {/* Gameplay - Fire Shots */}
         {account && gameId && <Gameplay />}

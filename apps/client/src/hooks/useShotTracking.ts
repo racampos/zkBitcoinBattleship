@@ -60,62 +60,76 @@ export function useShotTracking() {
           
           const entities = result.data?.entities?.edges || [];
 
-        // Collect shots fired BY me (for opponent board)
-        const myShotsMap = new Map<string, number | null>();
+        // Collect all entity types first
+        const myAttackerShots = new Set<string>();
+        const allShots = new Map<string, number>();
+        const allCellHits = new Map<string, number>();
+        const allPendingShots: Array<{ x: number; y: number; turn_no: number }> = [];
 
-        // Collect shots fired AT me (for my defense board)
-        const defendingShotsMap = new Map<string, number | null>();
-
+        // First pass: Collect all entities
         entities.forEach((edge: any) => {
           edge.node?.models?.forEach((model: any) => {
             if (!model.game_id || model.game_id !== gameId) return;
 
-            // AttackerShot: Track my shots
             if (model.__typename === "battleship_AttackerShot") {
               if (model.attacker?.toLowerCase() === account.address.toLowerCase() && model.fired) {
-                const key = `${model.x},${model.y}`;
-                console.log(`🎯 MY shot at (${model.x}, ${model.y})`);
-                if (!myShotsMap.has(key)) {
-                  myShotsMap.set(key, null); // Will be updated by Shot entity
-                }
+                myAttackerShots.add(`${model.x},${model.y}`);
               }
             }
 
-            // Shot: Contains the result of a shot
             if (model.__typename === "battleship_Shot") {
-              const key = `${model.x},${model.y}`;
-              if (myShotsMap.has(key)) {
-                console.log(`✅ Shot result at (${model.x}, ${model.y}): ${model.result === 1 ? "HIT" : "MISS"}`);
-                myShotsMap.set(key, model.result); // result: 1 = hit, 0 = miss
-              }
+              allShots.set(`${model.x},${model.y}`, model.result);
             }
 
-            // CellHit: Shots fired at ME (after proof applied)
             if (model.__typename === "battleship_CellHit") {
               if (model.player?.toLowerCase() === account.address.toLowerCase()) {
-                const key = `${model.x},${model.y}`;
-                console.log(`🛡️ Shot AT ME at (${model.x}, ${model.y}): ${model.hit ? "HIT" : "MISS"}`);
-                defendingShotsMap.set(key, model.hit ? 1 : 0);
+                allCellHits.set(`${model.x},${model.y}`, model.hit ? 1 : 0);
               }
             }
 
-            // PendingShot: Shots fired at ME (before proof applied)
-            // These are shots fired by the opponent that are awaiting proof
             if (model.__typename === "battleship_PendingShot") {
-              // Skip if I am the shooter (this is MY shot, not a shot AT me)
-              if (model.shooter?.toLowerCase() === account.address.toLowerCase()) {
-                return;
-              }
-              
-              const key = `${model.x},${model.y}`;
-              // Only mark as pending if we haven't already processed the CellHit for this position
-              if (!defendingShotsMap.has(key)) {
-                console.log(`⏳ PENDING shot AT ME at (${model.x}, ${model.y}) - turn ${model.turn_no}`);
-                // Mark as "pending" (we'll use -1 to indicate pending, which we can style differently)
-                defendingShotsMap.set(key, -1);
+              if (model.shooter?.toLowerCase() !== account.address.toLowerCase()) {
+                allPendingShots.push({ x: model.x, y: model.y, turn_no: model.turn_no });
               }
             }
           });
+        });
+
+        // Second pass: Build final maps
+        const myShotsMap = new Map<string, number | null>();
+        const defendingShotsMap = new Map<string, number | null>();
+        let pendingShotCoords: { row: number; col: number } | null = null;
+
+        // MY shots (attacker board)
+        myAttackerShots.forEach((key) => {
+          if (allShots.has(key)) {
+            const result = allShots.get(key)!;
+            console.log(`✅ MY shot at ${key}: ${result === 1 ? "HIT" : "MISS"}`);
+            myShotsMap.set(key, result);
+          } else {
+            console.log(`🎯 MY shot at ${key} (pending result)`);
+            myShotsMap.set(key, null);
+          }
+        });
+
+        // Shots AT me (defense board)
+        // Priority: CellHit > PendingShot
+        console.log(`📊 Defense board: ${allCellHits.size} CellHits, ${allPendingShots.length} PendingShots`);
+        
+        allCellHits.forEach((hit, key) => {
+          console.log(`🛡️ Shot AT ME (resolved) at ${key}: ${hit === 1 ? "HIT" : "MISS"}`);
+          defendingShotsMap.set(key, hit);
+        });
+
+        allPendingShots.forEach((shot) => {
+          const key = `${shot.x},${shot.y}`;
+          if (!defendingShotsMap.has(key)) {
+            console.log(`⏳ PENDING shot AT ME at ${key}`);
+            defendingShotsMap.set(key, -1);
+            pendingShotCoords = { row: shot.x, col: shot.y };
+          } else {
+            console.log(`✅ Skipping PendingShot at ${key} (already resolved by CellHit)`);
+          }
         });
 
         // Update opponent board with MY shots
@@ -156,6 +170,15 @@ export function useShotTracking() {
             });
             setMyBoard(newMyBoard);
           }
+        }
+
+        // Update gameData with pending shot info
+        const currentGameData = useGameStore.getState().gameData;
+        if (currentGameData) {
+          useGameStore.getState().setGameData({
+            ...currentGameData,
+            pending_shot: pendingShotCoords || undefined,
+          });
         }
         } catch (error) {
           if (!cancelled) {

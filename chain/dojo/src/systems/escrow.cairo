@@ -10,12 +10,14 @@ pub trait IEscrow<T> {
 #[dojo::contract]
 pub mod escrow {
     use super::IEscrow;
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use dojo::model::ModelStorage;
     use crate::{Game, GameStatus, Escrow};
     use crate::helpers::errors;
     use crate::helpers::get_opt::get_opt_escrow;
     use crate::helpers::game_helpers::{transfer_token, settle_escrow_internal_for_winner};
+    use openzeppelin_token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+    use openzeppelin_security::ReentrancyGuardComponent;
 
     #[abi(embed_v0)]
     impl EscrowImpl of IEscrow<ContractState> {
@@ -36,9 +38,12 @@ pub mod escrow {
                 errors::require(existing_escrow.unwrap().token == token, 'TOKEN_MISMATCH');
             }
 
-            // TODO: Pull funds via transfer_from when ERC20 integration added
-            // let erc20 = IERC20Dispatcher { contract_address: token };
-            // erc20.transfer_from(caller, get_contract_address(), total);
+            // Pull funds from player to this contract via transfer_from
+            // Player must have approved this contract for at least `total` amount
+            let erc20 = IERC20Dispatcher { contract_address: token };
+            let this_contract = get_contract_address();
+            let success = erc20.transfer_from(caller, this_contract, total);
+            assert(success, 'TRANSFER_FROM_FAILED');
 
             let mut e = existing_escrow.unwrap_or(
                 Escrow {

@@ -1,6 +1,6 @@
 // game_helpers.cairo - Helper functions for game state and operations
 
-use starknet::ContractAddress;
+use starknet::{ContractAddress, get_contract_address};
 use dojo::world::WorldStorage;
 use dojo::model::ModelStorage;
 use core::poseidon::poseidon_hash_span;
@@ -9,6 +9,7 @@ use crate::helpers::constants::{COIN_TAG, TOTAL_SHIP_CELLS};
 use crate::helpers::get_opt::{
     get_opt_pending_shot, get_opt_cell_hit, get_opt_ship_alive_count, get_opt_escrow
 };
+use openzeppelin_token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
 // Get the current attacker (whose turn it is)
 pub fn get_attacker_address(world: WorldStorage, game_id: felt252) -> ContractAddress {
@@ -64,12 +65,11 @@ pub fn transfer_token(token: ContractAddress, to: ContractAddress, amount: u256)
     if amount == 0 {
         return;
     }
-    // Note: In production, use IERC20Dispatcher
-    // For now, this is a placeholder that would call:
-    // let erc20 = IERC20Dispatcher { contract_address: token };
-    // erc20.transfer(to, amount);
     
-    // TODO: Add OpenZeppelin ERC20 integration
+    // Transfer ERC20 tokens from this contract to recipient
+    let erc20 = IERC20Dispatcher { contract_address: token };
+    let success = erc20.transfer(to, amount);
+    assert(success, 'TOKEN_TRANSFER_FAILED');
 }
 
 // Settle escrow: pay stakes to winner (modifies escrow in place)

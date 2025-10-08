@@ -11,6 +11,7 @@ sierra-replace-ids = true
 starknet = "2.12.2"
 dojo = "1.7.0"
 dojo_cairo_macros = "1.7.0"
+openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", tag = "v0.20.0" }
 
 [[target.starknet-contract]]
 build-external-contracts = ["dojo::world::world_contract::world"]

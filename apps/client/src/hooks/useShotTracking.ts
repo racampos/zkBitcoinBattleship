@@ -104,31 +104,23 @@ export function useShotTracking() {
         myAttackerShots.forEach((key) => {
           if (allShots.has(key)) {
             const result = allShots.get(key)!;
-            console.log(`✅ MY shot at ${key}: ${result === 1 ? "HIT" : "MISS"}`);
             myShotsMap.set(key, result);
           } else {
-            console.log(`🎯 MY shot at ${key} (pending result)`);
             myShotsMap.set(key, null);
           }
         });
 
         // Shots AT me (defense board)
         // Priority: CellHit > PendingShot
-        console.log(`📊 Defense board: ${allCellHits.size} CellHits, ${allPendingShots.length} PendingShots`);
-        
         allCellHits.forEach((hit, key) => {
-          console.log(`🛡️ Shot AT ME (resolved) at ${key}: ${hit === 1 ? "HIT" : "MISS"}`);
           defendingShotsMap.set(key, hit);
         });
 
         allPendingShots.forEach((shot) => {
           const key = `${shot.x},${shot.y}`;
           if (!defendingShotsMap.has(key)) {
-            console.log(`⏳ PENDING shot AT ME at ${key}`);
             defendingShotsMap.set(key, -1);
             pendingShotCoords = { row: shot.x, col: shot.y };
-          } else {
-            console.log(`✅ Skipping PendingShot at ${key} (already resolved by CellHit)`);
           }
         });
 

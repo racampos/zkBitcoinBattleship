@@ -16,8 +16,7 @@ pub mod escrow {
     use crate::helpers::errors;
     use crate::helpers::get_opt::get_opt_escrow;
     use crate::helpers::game_helpers::{transfer_token, settle_escrow_internal_for_winner};
-    use openzeppelin_token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
-    use openzeppelin_security::ReentrancyGuardComponent;
+    use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
     #[abi(embed_v0)]
     impl EscrowImpl of IEscrow<ContractState> {

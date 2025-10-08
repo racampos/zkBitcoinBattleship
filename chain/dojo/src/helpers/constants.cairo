@@ -13,3 +13,10 @@ pub const COIN_TAG: felt252 = 0x434F494E; // "COIN" - Coin-flip commitment domai
 // Game parameters
 pub const TOTAL_SHIP_CELLS: u8 = 17; // Carrier(5) + Battleship(4) + Cruiser(3) + Submarine(3) + Destroyer(2)
 pub const BOARD_SIZE: u8 = 10; // 10×10 grid (hardcoded in circuits)
+
+// Bitcoin staking parameters
+// WBTC on Starknet mainnet (verified on Starkscan/Voyager)
+pub const WBTC_ADDRESS: felt252 = 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac;
+// 10,000 satoshis in WBTC (WBTC has 8 decimals, same as BTC)
+pub const STAKE_AMOUNT_SATS: u256 = 10000; // 0.0001 BTC
+pub const STAKING_TIMEOUT: u64 = 3600; // 1 hour to stake after P2 joins

@@ -5,11 +5,11 @@ use dojo::world::WorldStorage;
 use dojo::model::ModelStorage;
 use core::poseidon::poseidon_hash_span;
 use crate::{Game, GameStatus, Escrow, CellHit, ShipAliveCount};
-use crate::helpers::constants::{COIN_TAG, TOTAL_SHIP_CELLS};
+use crate::helpers::constants::{COIN_TAG, TOTAL_SHIP_CELLS, STAKE_AMOUNT_SATS};
 use crate::helpers::get_opt::{
     get_opt_pending_shot, get_opt_cell_hit, get_opt_ship_alive_count, get_opt_escrow
 };
-use openzeppelin_token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
 
 // Get the current attacker (whose turn it is)
 pub fn get_attacker_address(world: WorldStorage, game_id: felt252) -> ContractAddress {
@@ -58,6 +58,23 @@ pub fn coin_commit(game_id: felt252, player: ContractAddress, nonce: felt252) ->
     // Domain-separated: poseidon([COIN_TAG, game_id, player, nonce])
     let mut input = array![COIN_TAG, game_id, player.into(), nonce];
     poseidon_hash_span(input.span())
+}
+
+// Check if staking requirements are met for game to start
+// Returns true if game doesn't require staking OR both players have staked
+pub fn staking_requirements_met(world: WorldStorage, game_id: felt252) -> bool {
+    let escrow_opt = get_opt_escrow(world, game_id);
+    
+    // If no escrow exists, game is free (no staking required)
+    if escrow_opt.is_none() {
+        return true;
+    }
+    
+    let e = escrow_opt.unwrap();
+    
+    // Check if both players have staked the required amount
+    let both_staked = e.stake_p1 >= STAKE_AMOUNT_SATS && e.stake_p2 >= STAKE_AMOUNT_SATS;
+    both_staked
 }
 
 // Token transfer helper (from escrow/system contract to recipient)

@@ -21,6 +21,7 @@ pub mod board_commit {
     use crate::helpers::errors;
     use crate::helpers::constants::BOARD_SIZE;
     use crate::helpers::get_opt::get_opt_board_commit;
+    use crate::helpers::game_helpers::staking_requirements_met;
 
     #[abi(embed_v0)]
     impl BoardCommitImpl of IBoardCommit<ContractState> {
@@ -41,6 +42,13 @@ pub mod board_commit {
 
             // Guard: board size must be 10×10 (circuits hardcoded)
             errors::require(g.board_size == BOARD_SIZE, 'BAD_BOARD_SIZE');
+
+            // Guard: staking requirements must be met before committing
+            // If game has escrow, both players must have staked
+            errors::require(
+                staking_requirements_met(world, game_id),
+                'STAKING_NOT_COMPLETE'
+            );
 
             // Mock verification (always passes for MVP - will add real ZK later)
             // When real ZK is added: verify proof that board has exactly 5 ships

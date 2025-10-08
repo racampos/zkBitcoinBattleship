@@ -7,6 +7,7 @@ version = "1.0.0"
 dependencies = [
  "dojo",
  "dojo_cairo_macros",
+ "openzeppelin",
 ]
 
 [[package]]
@@ -23,3 +24,109 @@ name = "dojo_cairo_macros"
 version = "1.7.1"
 source = "registry+https://scarbs.xyz/"
 checksum = "sha256:18059a9ac9ec2c0c708baad382728a99970b621b1eaab780fd9a8ec2dc975c98"
+
+[[package]]
+name = "openzeppelin"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_finance",
+ "openzeppelin_governance",
+ "openzeppelin_introspection",
+ "openzeppelin_merkle_tree",
+ "openzeppelin_presets",
+ "openzeppelin_security",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_access"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+dependencies = [
+ "openzeppelin_introspection",
+]
+
+[[package]]
+name = "openzeppelin_account"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+dependencies = [
+ "openzeppelin_introspection",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_finance"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_token",
+]
+
+[[package]]
+name = "openzeppelin_governance"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_introspection"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+
+[[package]]
+name = "openzeppelin_merkle_tree"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+
+[[package]]
+name = "openzeppelin_presets"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_finance",
+ "openzeppelin_introspection",
+ "openzeppelin_token",
+ "openzeppelin_upgrades",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_security"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+
+[[package]]
+name = "openzeppelin_token"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+dependencies = [
+ "openzeppelin_access",
+ "openzeppelin_account",
+ "openzeppelin_introspection",
+ "openzeppelin_utils",
+]
+
+[[package]]
+name = "openzeppelin_upgrades"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"
+
+[[package]]
+name = "openzeppelin_utils"
+version = "0.20.0"
+source = "git+https://github.com/OpenZeppelin/cairo-contracts.git?tag=v0.20.0#7756fd1de2b4ebd239fa6e372d75535cea02e5e5"

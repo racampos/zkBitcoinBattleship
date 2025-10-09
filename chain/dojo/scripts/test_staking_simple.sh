@@ -77,13 +77,16 @@ if [ $? -eq 0 ]; then
     # Try to extract game ID
     sleep 2
     echo "Attempting to query game ID from Torii..."
+    # Query all games where P1 is our account and P2 is 0x0 (newly created, no P2 yet)
     GAME_ID=$(curl -s -X POST http://localhost:8081/graphql \
       -H "Content-Type: application/json" \
-      -d "{\"query\": \"{ entities(first: 1, order: {field: \\\"created_at\\\", direction: DESC}) { edges { node { models { __typename ... on battleship_Game { id p1 } } } } } }\"}" \
-      | jq -r ".data.entities.edges[0]?.node.models[]? | select(.__typename==\"battleship_Game\")? | .id" 2>/dev/null)
+      -d "{\"query\": \"{ entities { edges { node { models { __typename ... on battleship_Game { id p1 p2 } } } } } }\"}" \
+      | jq -r ".data.entities.edges[] | .node.models[] | select(.__typename==\"battleship_Game\" and .p1==\"$P1_ADDR\" and .p2==\"0x0\") | .id" 2>/dev/null \
+      | tail -1)
     
     if [ -n "$GAME_ID" ] && [ "$GAME_ID" != "null" ]; then
         echo "  Game ID: $GAME_ID"
+        echo -e "${GREEN}✅ Game ID extracted from Torii${NC}"
         
         echo ""
         echo -e "${YELLOW}Test 6: Stake WBTC for game${NC}"

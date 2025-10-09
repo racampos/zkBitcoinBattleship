@@ -93,11 +93,12 @@ check_success "Game created"
 sleep 2  # Wait for Torii to index
 
 echo "Querying game ID from Torii..."
+# Query games where P1 is our account and P2 is 0x0 (newly created)
 GAME_ID=$(curl -s -X POST http://localhost:8081/graphql \
   -H "Content-Type: application/json" \
-  -d "{\"query\": \"{ entities(first: 10) { edges { node { models { __typename ... on battleship_Game { id p1 p2 } } } } } }\"}" \
-  | jq -r ".data.entities.edges[] | select(.node.models[]? | select(.__typename==\"battleship_Game\")? | .p1==\"$P1_ADDR\") | .node.models[] | select(.__typename==\"battleship_Game\") | .id" \
-  | head -1)
+  -d "{\"query\": \"{ entities { edges { node { models { __typename ... on battleship_Game { id p1 p2 } } } } } }\"}" \
+  | jq -r ".data.entities.edges[] | .node.models[] | select(.__typename==\"battleship_Game\" and .p1==\"$P1_ADDR\" and .p2==\"0x0\") | .id" \
+  | tail -1)
 
 if [ -z "$GAME_ID" ]; then
     echo -e "${RED}❌ Failed to extract game ID${NC}"

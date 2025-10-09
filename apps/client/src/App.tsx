@@ -19,12 +19,16 @@ function GameApp() {
   // Use proper Zustand selectors for stable references
   const account = useGameStore((s) => s.account);
   const gameId = useGameStore((s) => s.gameId);
+  const gameData = useGameStore((s) => s.gameData);
 
   // Subscribe to game state updates
   useGameState(gameId);
   
   // Track shots and update boards
   useShotTracking();
+
+  // Hide staking component when game is finished
+  const isGameOver = gameData?.status === 2;
 
   return (
     <div className="app-container">
@@ -40,8 +44,8 @@ function GameApp() {
       {/* Game Management - Create/Join Game */}
       {account && <GameManagement />}
 
-      {/* Staking Flow - Approve and Stake WBTC */}
-      {account && gameId && <StakingFlow />}
+      {/* Staking Flow - Approve and Stake WBTC (hide when game ends) */}
+      {account && gameId && !isGameOver && <StakingFlow />}
 
       {/* Board Setup - Place Ships */}
       {account && gameId && <BoardSetup />}

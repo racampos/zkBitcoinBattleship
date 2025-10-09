@@ -10,6 +10,7 @@ use crate::helpers::get_opt::{
     get_opt_pending_shot, get_opt_cell_hit, get_opt_ship_alive_count, get_opt_escrow
 };
 use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
+use crate::systems::escrow::{IEscrowDispatcher, IEscrowDispatcherTrait};
 
 // Get the current attacker (whose turn it is)
 pub fn get_attacker_address(world: WorldStorage, game_id: felt252) -> ContractAddress {
@@ -150,29 +151,27 @@ pub fn apply_hit_and_check_win(
     alive.remaining_hits == 0
 }
 
-// Finalize win: set game status and auto-settle escrow
+// Finalize win: set game status and trigger escrow settlement
 pub fn finalize_win(mut world: WorldStorage, game_id: felt252, winner: ContractAddress) {
     let mut g: Game = world.read_model(game_id);
     g.status = GameStatus::Finished;
     g.winner = winner;
     world.write_model(@g);
 
-    // Auto-settle escrow (if it exists)
+    // Auto-settle escrow (if it exists) by calling the escrow contract
+    // This ensures tokens are transferred FROM the escrow contract (which holds them)
+    // instead of from this contract
     let e_opt = get_opt_escrow(world, game_id);
     if e_opt.is_some() {
-        let e = core::option::OptionTrait::unwrap(e_opt);
-
-        // Transfer stakes to winner
-        let mut e2 = settle_escrow_internal_for_winner(game_id, winner, e);
-
-        // Refund bonds to both players
-        transfer_token(e2.token, g.p1, e2.bond_p1);
-        transfer_token(e2.token, g.p2, e2.bond_p2);
-        e2.bond_p1 = 0;
-        e2.bond_p2 = 0;
-
-        world.write_model(@e2);
-        // TODO: Emit EscrowSettled event
+        // Get escrow contract address (hardcoded for now)
+        let escrow_contract: ContractAddress = 0x56c96bcab1bd80e736422a407f469e72bda9987a80a3b37bf63a523ea0944c4
+            .try_into()
+            .unwrap();
+        
+        let escrow_dispatcher = IEscrowDispatcher {
+            contract_address: escrow_contract
+        };
+        escrow_dispatcher.settle_escrow(game_id);
     }
 
     // TODO: Emit GameFinished event

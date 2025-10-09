@@ -21,6 +21,7 @@ pub mod systems {
     pub mod escrow;
     pub mod board_commit;
     pub mod proof_verify;
+    pub mod debug; // Testing only - remove before production!
 }
 
 // Helpers

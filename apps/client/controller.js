@@ -14,6 +14,7 @@ const proofVerify = manifest.contracts.find((c) => c.tag === 'battleship-proof_v
 const timeout = manifest.contracts.find((c) => c.tag === 'battleship-timeout');
 const escrow = manifest.contracts.find((c) => c.tag === 'battleship-escrow');
 const mockWbtc = manifest.contracts.find((c) => c.tag === 'battleship-mock_wbtc');
+const debug = manifest.contracts.find((c) => c.tag === 'battleship-debug');
 
 const controllerOpts = {
   chains: [{ rpcUrl: 'http://localhost:5050' }],
@@ -93,6 +94,14 @@ const controllerOpts = {
           { name: 'Approve', entrypoint: 'approve' },
           { name: 'Transfer', entrypoint: 'transfer' },
           { name: 'Mint', entrypoint: 'mint' },
+        ],
+      },
+      // Debug (for testing only - remove before production!)
+      [debug.address]: {
+        name: 'Debug',
+        description: 'Testing utilities',
+        methods: [
+          { name: 'Set Ship Alive Count', entrypoint: 'set_ship_alive_count' },
         ],
       },
     },

@@ -80,7 +80,16 @@ pub mod escrow {
             errors::require(g.status == GameStatus::Finished, 'GAME_NOT_FINISHED');
 
             let e: Escrow = world.read_model(game_id);
-            let e2 = settle_escrow_internal_for_winner(game_id, g.winner, e);
+            
+            // Transfer stakes to winner
+            let mut e2 = settle_escrow_internal_for_winner(game_id, g.winner, e);
+            
+            // Refund bonds to both players
+            transfer_token(e2.token, g.p1, e2.bond_p1);
+            transfer_token(e2.token, g.p2, e2.bond_p2);
+            e2.bond_p1 = 0;
+            e2.bond_p2 = 0;
+            
             world.write_model(@e2);
         }
 

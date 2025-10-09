@@ -13,6 +13,7 @@ const gameplay = manifest.contracts.find((c) => c.tag === 'battleship-gameplay')
 const proofVerify = manifest.contracts.find((c) => c.tag === 'battleship-proof_verify');
 const timeout = manifest.contracts.find((c) => c.tag === 'battleship-timeout');
 const escrow = manifest.contracts.find((c) => c.tag === 'battleship-escrow');
+const mockWbtc = manifest.contracts.find((c) => c.tag === 'battleship-mock_wbtc');
 
 const controllerOpts = {
   chains: [{ rpcUrl: 'http://localhost:5050' }],
@@ -82,6 +83,16 @@ const controllerOpts = {
           { name: 'Stake', entrypoint: 'stake_and_bond' },
           { name: 'Settle', entrypoint: 'settle_escrow' },
           { name: 'Refund', entrypoint: 'refund_bond' },
+        ],
+      },
+      // Mock WBTC (for local testing only)
+      [mockWbtc.address]: {
+        name: 'Mock WBTC',
+        description: 'Test Bitcoin token',
+        methods: [
+          { name: 'Approve', entrypoint: 'approve' },
+          { name: 'Transfer', entrypoint: 'transfer' },
+          { name: 'Mint', entrypoint: 'mint' },
         ],
       },
     },

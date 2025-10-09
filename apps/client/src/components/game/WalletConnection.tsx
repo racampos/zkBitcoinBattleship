@@ -8,7 +8,11 @@ import Controller from "@cartridge/controller";
 import { useGameStore } from "../../store/gameStore";
 import controllerOpts from "../../../controller.js";
 
+console.log("🎮 Initializing Cartridge Controller...");
+console.log("   Controller options:", controllerOpts);
+
 const controller = new Controller(controllerOpts);
+console.log("✅ Controller initialized:", controller);
 
 export function WalletConnection() {
   const { account, setAccount, setError } = useGameStore();
@@ -37,12 +41,24 @@ export function WalletConnection() {
     try {
       setIsConnecting(true);
       setError(null);
+      console.log("🔌 Attempting to connect to Cartridge Controller...");
+      
       const connectedAccount = await controller.connect();
+      
+      if (!connectedAccount) {
+        throw new Error("Controller returned undefined - connection failed");
+      }
+      
+      if (!connectedAccount.address) {
+        throw new Error("Connected account has no address");
+      }
+      
       setAccount(connectedAccount);
-      console.log("✅ Connected:", connectedAccount.address);
+      console.log("✅ Connected successfully!");
+      console.log("   Address:", connectedAccount.address);
     } catch (error: any) {
-      console.error("Failed to connect:", error);
-      setError(`Failed to connect: ${error.message}`);
+      console.error("❌ Failed to connect:", error);
+      setError(`Failed to connect: ${error.message || "Unknown error"}`);
     } finally {
       setIsConnecting(false);
     }

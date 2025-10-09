@@ -291,12 +291,64 @@ export function useGameContracts(account: Account | null) {
     }
   };
 
+  /**
+   * Stake WBTC for game
+   */
+  const stakeForGame = async (wbtcAddress: string, stakeAmount: bigint) => {
+    if (!account) {
+      setError("Wallet not connected");
+      return;
+    }
+
+    const gameId = useGameStore.getState().gameId;
+    if (!gameId) {
+      setError("No active game");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log(`💰 Staking ${stakeAmount} sats for game ${gameId}...`);
+
+      const tx = await account.execute({
+        contractAddress: CONTRACTS.escrow.address,
+        entrypoint: "stake_and_bond",
+        calldata: [
+          gameId,
+          wbtcAddress,
+          stakeAmount.toString(), // stake (u256 low)
+          "0", // stake (u256 high)
+          "0", // bond (u256 low)
+          "0", // bond (u256 high)
+        ],
+      });
+
+      console.log("📤 Staking transaction sent:", tx.transaction_hash);
+      setTxHash(tx.transaction_hash);
+
+      await account.waitForTransaction(tx.transaction_hash, {
+        retryInterval: 1000,
+      });
+
+      console.log("✅ Staking successful!");
+      return tx.transaction_hash;
+    } catch (err: any) {
+      console.error("❌ Failed to stake:", err);
+      setError(err.message || "Failed to stake WBTC");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     createGame,
     joinGame,
     commitBoard,
     fireShot,
     applyProof,
+    stakeForGame,
     txHash,
     isLoading: useGameStore((s) => s.isLoading),
     error: useGameStore((s) => s.error),

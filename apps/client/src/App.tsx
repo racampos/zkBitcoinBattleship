@@ -6,6 +6,7 @@ import React from "react";
 import { DojoProvider } from "./dojo/DojoContext";
 import { WalletConnection } from "./components/game/WalletConnection";
 import { GameManagement } from "./components/game/GameManagement";
+import { StakingFlow } from "./components/game/StakingFlow";
 import { BoardSetup } from "./components/game/BoardSetup";
 import { Gameplay } from "./components/game/Gameplay";
 import { GameState } from "./components/game/GameState";
@@ -36,11 +37,14 @@ function GameApp() {
         {/* Wallet Connection */}
         <WalletConnection />
 
-        {/* Game Management - Create/Join Game */}
-        {account && <GameManagement />}
+      {/* Game Management - Create/Join Game */}
+      {account && <GameManagement />}
 
-        {/* Board Setup - Place Ships */}
-        {account && gameId && <BoardSetup />}
+      {/* Staking Flow - Approve and Stake WBTC */}
+      {account && gameId && <StakingFlow />}
+
+      {/* Board Setup - Place Ships */}
+      {account && gameId && <BoardSetup />}
 
         {/* Proof Application - Respond to opponent's shot */}
         {account && gameId && <ProofApplication />}

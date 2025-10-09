@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useGameStore } from "../store/gameStore";
 
 interface StakingStatus {
-  required: boolean; // Is staking required for this game?
+  escrowExists: boolean; // Does an Escrow entity exist for this game?
   p1Staked: boolean; // Has P1 staked?
   p2Staked: boolean; // Has P2 staked?
   iHaveStaked: boolean; // Have I staked?
@@ -20,7 +20,7 @@ const STAKE_AMOUNT_SATS = 10000n;
 export function useStakingStatus(): StakingStatus {
   const { gameId, gameData, account, amIPlayer1 } = useGameStore();
   const [status, setStatus] = useState<StakingStatus>({
-    required: false,
+    escrowExists: false,
     p1Staked: false,
     p2Staked: false,
     iHaveStaked: false,
@@ -31,7 +31,7 @@ export function useStakingStatus(): StakingStatus {
   useEffect(() => {
     if (!gameId || !gameData || !account) {
       setStatus({
-        required: false,
+        escrowExists: false,
         p1Staked: false,
         p2Staked: false,
         iHaveStaked: false,
@@ -109,7 +109,7 @@ export function useStakingStatus(): StakingStatus {
           const bothStaked = p1Staked && p2Staked;
 
           setStatus({
-            required: escrowFound, // If escrow exists, staking is required
+            escrowExists: escrowFound,
             p1Staked,
             p2Staked,
             iHaveStaked,

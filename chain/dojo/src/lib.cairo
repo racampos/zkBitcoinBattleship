@@ -30,3 +30,6 @@ pub mod helpers {
     pub mod get_opt;
     pub mod game_helpers;
 }
+
+// Mock contracts for testing
+pub mod mock_wbtc;

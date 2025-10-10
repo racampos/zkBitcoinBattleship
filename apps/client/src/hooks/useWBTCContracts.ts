@@ -7,10 +7,11 @@ import { useState } from "react";
 import { Account } from "@cartridge/controller";
 import { useGameStore } from "../store/gameStore";
 import { CONTRACTS } from "../dojo/config";
+import { prepareV3Fees } from "../utils/feeHelper";
 
-// Mock WBTC address on Katana (from manifest)
-const MOCK_WBTC_ADDRESS = "0x066604cab8d009317131f7282b1c875311a41e3cac91af22858a92a0ddcfa0";
-const STAKE_AMOUNT_SATS = 10000n; // 10,000 satoshis
+// Real WBTC address on Starknet Mainnet
+const WBTC_ADDRESS = "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac";
+const STAKE_AMOUNT_SATS = 1000n; // 1,000 satoshis (~$1 USD)
 
 export function useWBTCContracts(account: Account | null) {
   const { setError, setIsLoading } = useGameStore();
@@ -19,7 +20,7 @@ export function useWBTCContracts(account: Account | null) {
   /**
    * Approve escrow contract to spend WBTC
    */
-  const approveWBTC = async () => {
+  const approveWBTC = async (amount: bigint = STAKE_AMOUNT_SATS) => {
     if (!account) {
       setError("Wallet not connected");
       return;
@@ -28,17 +29,27 @@ export function useWBTCContracts(account: Account | null) {
     try {
       setIsApproving(true);
       setError(null);
-      console.log(`💰 Approving escrow to spend ${STAKE_AMOUNT_SATS} sats...`);
+      console.log(`💰 Approving escrow to spend ${amount} sats...`);
 
-      const tx = await account.execute({
-        contractAddress: MOCK_WBTC_ADDRESS,
+      // ERC20 operations need explicit V3 fees with L1_DATA_GAS bounds
+      const calls = {
+        contractAddress: WBTC_ADDRESS,
         entrypoint: "approve",
         calldata: [
           CONTRACTS.escrow.address, // spender (escrow contract)
-          STAKE_AMOUNT_SATS.toString(), // amount (u256 low)
+          amount.toString(), // amount (u256 low)
           "0", // amount (u256 high)
         ],
+      };
+
+      const feeDetails = await prepareV3Fees(account, calls, {
+        tipPercent: 20, // Higher tip for token operations
+        l1GasMultiplier: 200, // 2x headroom for L1_DATA_GAS (events!)
+        l2GasMultiplier: 200,
+        lockNonce: true,
       });
+
+      const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Approval transaction sent:", tx.transaction_hash);
       await account.waitForTransaction(tx.transaction_hash, {
@@ -64,7 +75,7 @@ export function useWBTCContracts(account: Account | null) {
 
     try {
       const result = await account.callContract({
-        contractAddress: MOCK_WBTC_ADDRESS,
+        contractAddress: WBTC_ADDRESS,
         entrypoint: "allowance",
         calldata: [
           account.address, // owner
@@ -90,7 +101,7 @@ export function useWBTCContracts(account: Account | null) {
 
     try {
       const result = await account.callContract({
-        contractAddress: MOCK_WBTC_ADDRESS,
+        contractAddress: WBTC_ADDRESS,
         entrypoint: "balance_of",
         calldata: [account.address],
       });
@@ -111,7 +122,7 @@ export function useWBTCContracts(account: Account | null) {
     checkBalance,
     isApproving,
     STAKE_AMOUNT_SATS,
-    MOCK_WBTC_ADDRESS,
+    WBTC_ADDRESS,
   };
 }
 

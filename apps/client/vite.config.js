@@ -6,7 +6,21 @@ import wasm from 'vite-plugin-wasm';
 export default defineConfig({
   plugins: [react(), mkcert(), wasm()],
   server: {
-    port: 4000,
+    port: 3000, // Changed back to 3000 for React game
+    // Proxy Torii GraphQL requests to avoid CORS issues
+    proxy: {
+      '/torii-graphql': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/torii-graphql/, '/graphql'),
+      },
+      '/torii-grpc': {
+        target: 'http://localhost:50051',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/torii-grpc/, ''),
+        ws: true, // Enable WebSocket proxy for gRPC-Web
+      },
+    },
     // Aggressive cache busting for development
     hmr: {
       overlay: true,

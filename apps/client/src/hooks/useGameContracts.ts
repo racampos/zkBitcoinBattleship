@@ -8,6 +8,7 @@ import { ToriiQueryBuilder, KeysClause } from "@dojoengine/sdk";
 import { CONTRACTS, NAMESPACE } from "../dojo/config";
 import { useGameStore } from "../store/gameStore";
 import { useDojo } from "../dojo/DojoContext";
+import { prepareV3Fees } from "../utils/feeHelper";
 
 export function useGameContracts(account: Account | null) {
   const { gameId, setGameId, setError, setIsLoading } = useGameStore();
@@ -34,12 +35,15 @@ export function useGameContracts(account: Account | null) {
       const zeroAddress = "0x0";
       const boardSize = "10";
 
-      // Call create_game contract
-      const tx = await account.execute({
+      // Let Cartridge Controller handle fees automatically (it has a paymaster)
+      const calls = {
         contractAddress: CONTRACTS.gameManagement.address,
         entrypoint: "create_game",
         calldata: [zeroAddress, boardSize, randomNonce], // p2, board_size, nonce
-      });
+      };
+
+      // Don't pass fee details - let Cartridge's paymaster handle it
+      const tx = await account.execute(calls);
 
       console.log("📤 Transaction sent:", tx.transaction_hash);
       setTxHash(tx.transaction_hash);
@@ -60,7 +64,8 @@ export function useGameContracts(account: Account | null) {
       console.log("📋 Extracting game_id from receipt...");
 
       // Fetch transaction receipt to extract game_id from events
-      const response = await fetch("http://localhost:5050", {
+      const rpcUrl = import.meta.env.VITE_STARKNET_RPC_URL || "https://api.cartridge.gg/x/starknet/mainnet";
+      const response = await fetch(rpcUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -125,11 +130,10 @@ export function useGameContracts(account: Account | null) {
       setError(null);
       console.log("🎮 Joining game:", gameId);
 
-      // Call join_game contract
       const tx = await account.execute({
         contractAddress: CONTRACTS.gameManagement.address,
         entrypoint: "join_game",
-        calldata: [gameId], // game_id as parameter
+        calldata: [gameId],
       });
 
       console.log("📤 Transaction sent:", tx.transaction_hash);
@@ -311,7 +315,8 @@ export function useGameContracts(account: Account | null) {
       setError(null);
       console.log(`💰 Staking ${stakeAmount} sats for game ${gameId}...`);
 
-      const tx = await account.execute({
+      // Stake+bond involves ERC20 transfer_from - needs explicit V3 fees with L1_DATA_GAS!
+      const calls = {
         contractAddress: CONTRACTS.escrow.address,
         entrypoint: "stake_and_bond",
         calldata: [
@@ -322,7 +327,16 @@ export function useGameContracts(account: Account | null) {
           "0", // bond (u256 low)
           "0", // bond (u256 high)
         ],
+      };
+
+      const feeDetails = await prepareV3Fees(account, calls, {
+        tipPercent: 20, // Higher tip for token transfer operations
+        l1GasMultiplier: 200, // 2x headroom for L1_DATA_GAS (critical!)
+        l2GasMultiplier: 200,
+        lockNonce: true,
       });
+
+      const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Staking transaction sent:", tx.transaction_hash);
       setTxHash(tx.transaction_hash);

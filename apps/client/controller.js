@@ -1,11 +1,11 @@
 /**
- * Cartridge Controller configuration for ZK Battleship
+ * Cartridge Controller configuration for ZK Battleship - MAINNET
  * https://docs.cartridge.gg/controller/getting-started
  */
 
-import manifest from '../../chain/dojo/manifest_dev.json' assert { type: 'json' };
+import manifest from '../../chain/dojo/manifest_mainnet.json' assert { type: 'json' };
 
-// Find contract addresses from manifest
+// Find contract addresses from mainnet manifest
 const gameManagement = manifest.contracts.find((c) => c.tag === 'battleship-game_management');
 const coinFlip = manifest.contracts.find((c) => c.tag === 'battleship-coin_flip');
 const boardCommit = manifest.contracts.find((c) => c.tag === 'battleship-board_commit');
@@ -13,12 +13,20 @@ const gameplay = manifest.contracts.find((c) => c.tag === 'battleship-gameplay')
 const proofVerify = manifest.contracts.find((c) => c.tag === 'battleship-proof_verify');
 const timeout = manifest.contracts.find((c) => c.tag === 'battleship-timeout');
 const escrow = manifest.contracts.find((c) => c.tag === 'battleship-escrow');
-const mockWbtc = manifest.contracts.find((c) => c.tag === 'battleship-mock_wbtc');
-const debug = manifest.contracts.find((c) => c.tag === 'battleship-debug');
+
+// Real WBTC on mainnet
+const WBTC_ADDRESS = '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac';
 
 const controllerOpts = {
-  chains: [{ rpcUrl: 'http://localhost:5050' }],
-  defaultChainId: '0x4b4154414e41', // "KATANA"
+  chains: [
+    {
+      id: '0x534e5f4d41494e', // "SN_MAIN" in hex
+      // Using Cartridge's official RPC (most reliable + paymaster support)
+      // The real fix for TTL evictions is proper V3 fees with L1_DATA_GAS bounds!
+      rpcUrl: 'https://api.cartridge.gg/x/starknet/mainnet',
+    },
+  ],
+  defaultChainId: '0x534e5f4d41494e', // "SN_MAIN" in hex
   policies: {
     contracts: {
       // Game Management
@@ -86,22 +94,13 @@ const controllerOpts = {
           { name: 'Refund', entrypoint: 'refund_bond' },
         ],
       },
-      // Mock WBTC (for local testing only)
-      [mockWbtc.address]: {
-        name: 'Mock WBTC',
-        description: 'Test Bitcoin token',
+      // Real WBTC on Starknet Mainnet
+      [WBTC_ADDRESS]: {
+        name: 'WBTC',
+        description: 'Wrapped Bitcoin on Starknet',
         methods: [
           { name: 'Approve', entrypoint: 'approve' },
           { name: 'Transfer', entrypoint: 'transfer' },
-          { name: 'Mint', entrypoint: 'mint' },
-        ],
-      },
-      // Debug (for testing only - remove before production!)
-      [debug.address]: {
-        name: 'Debug',
-        description: 'Testing utilities',
-        methods: [
-          { name: 'Set Ship Alive Count', entrypoint: 'set_ship_alive_count' },
         ],
       },
     },

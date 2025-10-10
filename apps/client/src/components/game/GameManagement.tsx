@@ -13,23 +13,44 @@ export function GameManagement() {
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [joinGameId, setJoinGameId] = useState("");
 
-  // Check for game ID in URL and auto-join
+  // Persist game ID to localStorage whenever it changes
   useEffect(() => {
+    if (gameId) {
+      localStorage.setItem('battleship_game_id', gameId);
+      // Also update URL
+      const url = new URL(window.location.href);
+      url.searchParams.set('game', gameId);
+      window.history.replaceState({}, '', url);
+      console.log('💾 Game ID persisted:', gameId);
+    } else {
+      localStorage.removeItem('battleship_game_id');
+      // Remove from URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('game');
+      window.history.replaceState({}, '', url);
+    }
+  }, [gameId]);
+
+  // Load game ID from URL or localStorage when account is ready
+  useEffect(() => {
+    if (!account) return; // Wait for account
+    if (gameId) return; // Already have a game
+
     const urlParams = new URLSearchParams(window.location.search);
     const gameIdFromUrl = urlParams.get('game');
+    const gameIdFromStorage = localStorage.getItem('battleship_game_id');
     
-    if (gameIdFromUrl && !gameId) {
-      console.log('🔗 Game ID from URL:', gameIdFromUrl);
-      setJoinGameId(gameIdFromUrl);
-      setShowJoinInput(true);
-      // Auto-join after a short delay to ensure UI is ready
-      setTimeout(() => {
-        if (account) {
-          joinGame(gameIdFromUrl);
-        }
-      }, 500);
+    const restoredGameId = gameIdFromUrl || gameIdFromStorage;
+    
+    if (restoredGameId) {
+      console.log('♻️ Restoring game ID:', restoredGameId, 'from', gameIdFromUrl ? 'URL' : 'localStorage');
+      setGameId(restoredGameId);
     }
-  }, [account, gameId, joinGame]);
+  }, [account, gameId, setGameId]);
+
+  // Manual restore button
+  const storedGameId = localStorage.getItem('battleship_game_id');
+  const canRestore = storedGameId && !gameId;
 
   const handleCreateGame = async () => {
     try {
@@ -43,7 +64,19 @@ export function GameManagement() {
     if (!joinGameId) return;
 
     try {
-      await joinGame(joinGameId);
+      // First, just set the game ID (works for both joining and restoring)
+      setGameId(joinGameId);
+      
+      // Then try to join if we're actually Player 2 (will gracefully fail if we're P1)
+      try {
+        await joinGame(joinGameId);
+      } catch (joinError: any) {
+        // Ignore join errors - we might be P1 just restoring
+        if (joinError?.message?.includes('already')) {
+          console.log('ℹ️ Already in this game (probably P1 restoring)');
+        }
+      }
+      
       setShowJoinInput(false);
       setJoinGameId("");
     } catch (error) {
@@ -105,8 +138,10 @@ export function GameManagement() {
 
         <button
           onClick={() => {
-            setGameId(null);
-            setJoinGameId("");
+            if (confirm('⚠️ Are you sure you want to leave this game? This will clear the game from your session (you can rejoin later using the game ID).')) {
+              setGameId(null);
+              setJoinGameId("");
+            }
           }}
           className="secondary"
           style={{ marginTop: "10px" }}
@@ -121,12 +156,34 @@ export function GameManagement() {
     <div className="section">
       <h2>🎲 Game Management</h2>
 
+      {/* Restore Last Game Button */}
+      {canRestore && (
+        <div className="status-box" style={{ marginBottom: "15px", background: "#1a3a1a", borderColor: "#2d5a2d" }}>
+          <div style={{ marginBottom: "10px" }}>
+            <strong>♻️ Found Previous Game</strong>
+          </div>
+          <div style={{ fontSize: "12px", marginBottom: "10px", fontFamily: "monospace", color: "#888" }}>
+            {storedGameId.substring(0, 30)}...
+          </div>
+          <button 
+            onClick={() => {
+              console.log('♻️ Manually restoring game:', storedGameId);
+              setGameId(storedGameId);
+            }} 
+            className="primary"
+            style={{ width: "100%" }}
+          >
+            Restore Last Game
+          </button>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
         <button onClick={handleCreateGame} disabled={isLoading} className="primary">
           {isLoading ? "Creating..." : "Create Open Game"}
         </button>
         <button onClick={() => setShowJoinInput(!showJoinInput)} className="secondary">
-          {showJoinInput ? "Cancel" : "Join Game"}
+          {showJoinInput ? "Cancel" : "Join / Restore Game"}
         </button>
       </div>
 

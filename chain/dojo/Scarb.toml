@@ -15,3 +15,6 @@ openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", ta
 
 [[target.starknet-contract]]
 build-external-contracts = ["dojo::world::world_contract::world"]
+
+[profile.mainnet]
+# Mainnet deployment profile

@@ -14,13 +14,16 @@ export function useGameState(gameId: string | null) {
 
   // Fetch game state using GraphQL (same as vanilla JS)
   const fetchGameState = async () => {
-    if (!gameId || !account) return;
+    if (!gameId || !account) {
+      console.log("⚠️ fetchGameState: Missing gameId or account", { gameId, hasAccount: !!account });
+      return;
+    }
 
     try {
       console.log("📊 Fetching game state for:", gameId);
 
       // Query 1: Get game state from Torii GraphQL endpoint
-      const response = await fetch("http://localhost:8081/graphql", {
+      const response = await fetch("/torii-graphql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -51,6 +54,7 @@ export function useGameState(gameId: string | null) {
       });
 
       const result = await response.json();
+      console.log("📊 Game state response:", result);
 
       if (result.data?.entities?.edges && result.data.entities.edges.length > 0) {
         const gameNode = result.data.entities.edges[0].node;
@@ -58,7 +62,7 @@ export function useGameState(gameId: string | null) {
 
         if (gameModel) {
           // Query 2: Get ShipAliveCount for both players to calculate hits
-          const shipAliveResponse = await fetch("http://localhost:8081/graphql", {
+          const shipAliveResponse = await fetch("/torii-graphql", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -155,8 +159,12 @@ export function useGameState(gameId: string | null) {
     let subscription: any;
 
     (async () => {
+      // ALWAYS do initial fetch, even if subscription fails
+      await fetchGameState();
+      
+      // Try to subscribe (gRPC may fail, but HTTP polling will work)
       try {
-        console.log("📡 Subscribing to game updates...");
+        console.log("📡 Attempting to subscribe to game updates...");
 
         const [_, sub] = await sdk.subscribeEntityQuery({
           query: new ToriiQueryBuilder()
@@ -173,13 +181,11 @@ export function useGameState(gameId: string | null) {
         });
 
         subscription = sub;
-        console.log("✅ Subscribed to game updates");
-
-        // Initial fetch
-        await fetchGameState();
+        console.log("✅ Subscribed to game updates (real-time)");
       } catch (err: any) {
         console.error("❌ Failed to subscribe:", err);
-        setError(err.message || "Failed to subscribe to game updates");
+        console.log("ℹ️ Falling back to HTTP polling (this is expected)");
+        // Don't set error here - subscription failure is expected with gRPC proxy issues
       }
     })();
 

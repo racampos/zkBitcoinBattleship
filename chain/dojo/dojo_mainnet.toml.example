@@ -1,0 +1,26 @@
+[world]
+name = "ZK Battleship"
+description = "Provably fair on-chain Battleship with ZK proofs"
+seed = "battleship"
+
+[namespace]
+default = "battleship"
+
+[env]
+# Copy this file to dojo_mainnet.toml and fill in your credentials
+rpc_url = "https://starknet-mainnet.g.alchemy.com/v2/YOUR_API_KEY_HERE"
+account_address = "0xYOUR_ACCOUNT_ADDRESS_HERE"
+private_key = "0xYOUR_PRIVATE_KEY_HERE"
+
+[writers]
+"battleship" = [
+  "battleship-game_management",
+  "battleship-coin_flip",
+  "battleship-board_commit",
+  "battleship-gameplay",
+  "battleship-proof_verify",
+  "battleship-timeout",
+  "battleship-escrow",
+  # Note: mock_wbtc and debug removed for mainnet
+]
+

@@ -28,6 +28,7 @@ Thumbs.db
 
 # Dojo
 chain/dojo/target/
+chain/dojo/dojo_mainnet.toml
 torii.db*
 
 # Noir

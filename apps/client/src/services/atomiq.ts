@@ -1,7 +1,7 @@
 // Atomiq swap service for BTC ↔ STRK swaps
 // Browser-optimized configuration (NodeJS example uses RpcProvider object)
 
-import { SwapperFactory, type Swap, BitcoinNetwork } from "@atomiqlabs/sdk";
+import { SwapperFactory, type ISwap, BitcoinNetwork } from "@atomiqlabs/sdk";
 import { StarknetInitializer } from "@atomiqlabs/chain-starknet";
 import { RpcProvider } from "starknet";
 import type { Account } from "starknet";
@@ -166,20 +166,31 @@ export class AtomiqService {
   }
 
   /**
-   * Create Lightning deposit swap (BTC-LN → STRK)
+   * Create Lightning deposit swap (BTC-LN → WBTC on Starknet)
+   * For mainnet, we swap to WBTC to keep UX "Bitcoin-native"
    */
   async createDepositSwap(
     amount: bigint,
     starknetAddress: string,
     callbacks?: SwapMonitorCallbacks
-  ): Promise<Swap> {
+  ): Promise<any> {
     await this.initialize();
     if (!this.swapper || !this.factory) {
       throw new Error("Atomiq SDK not initialized");
     }
 
-    const fromToken = (this.factory as any).Tokens.BITCOIN.BTCLN;
-    const toToken = (this.factory as any).Tokens.STARKNET.STRK;
+    const fromToken = (this.factory as any).Tokens.BITCOIN.BTCLN; // Lightning Network
+    
+    // Use WBTC on Starknet for mainnet (Bitcoin-native UX)
+    // Check if WBTC token is available, otherwise fall back to STRK
+    const toToken = (this.factory as any).Tokens.STARKNET.WBTC || (this.factory as any).Tokens.STARKNET.STRK;
+    
+    console.log("🔄 Creating Lightning swap:", {
+      from: fromToken.symbol,
+      to: toToken.symbol,
+      amount: amount.toString(),
+      destination: starknetAddress
+    });
 
     // Create swap
     const swap = await this.swapper.swap(
@@ -211,7 +222,7 @@ export class AtomiqService {
     amount: bigint,
     bitcoinAddress: string,
     starknetAddress: string
-  ): Promise<Swap> {
+  ): Promise<any> {
     await this.initialize();
     if (!this.swapper || !this.factory) {
       throw new Error("Atomiq SDK not initialized");
@@ -241,7 +252,7 @@ export class AtomiqService {
     starknetAccount: Account,
     lightningInvoice: string,
     callbacks?: SwapMonitorCallbacks
-  ): Promise<Swap> {
+  ): Promise<any> {
     await this.initialize();
     if (!this.swapper || !this.factory) {
       throw new Error("Atomiq SDK not initialized");
@@ -279,7 +290,7 @@ export class AtomiqService {
   /**
    * Get the Lightning invoice for a BTC deposit
    */
-  getInvoice(swap: Swap): string | null {
+  getInvoice(swap: any): string | null {
     try {
       return swap.getAddress(); // For Lightning, this returns the invoice
     } catch (error) {
@@ -289,31 +300,148 @@ export class AtomiqService {
   }
 
   /**
-   * Wait for Bitcoin payment
+   * Wait for Bitcoin payment with timeout
    */
-  async waitForPayment(swap: Swap, timeoutMs: number = 600000): Promise<boolean> {
+  async waitForPayment(swap: any, timeoutMs: number = 600000): Promise<boolean> {
     try {
-      return await swap.waitForPayment(timeoutMs);
+      // Use Promise.race to implement timeout
+      const paymentPromise = swap.waitForPayment();
+      const timeoutPromise = new Promise<boolean>((resolve) => {
+        setTimeout(() => {
+          console.log('⏱️ Payment wait timed out after', timeoutMs, 'ms');
+          resolve(false);
+        }, timeoutMs);
+      });
+      
+      const result = await Promise.race([paymentPromise, timeoutPromise]);
+      return result;
     } catch (error) {
-      console.error("Payment wait failed:", error);
+      console.error("❌ Payment wait failed:", error);
       return false;
     }
   }
 
   /**
-   * Claim swap on Starknet after Bitcoin payment received
+   * Create a minimal ethers.js-like signer for Atomiq SDK
+   * This avoids property conflicts by NOT spreading the Cartridge Account
    */
-  async claimSwap(swap: Swap, starknetAccount: Account): Promise<string> {
-    const tx = await swap.claim(starknetAccount);
-    console.log("Claim transaction:", tx);
-    return tx as string;
+  private createSignerAdapter(starknetAccount: Account): any {
+    console.log("🔧 Creating signer adapter for account:", starknetAccount.address);
+    
+    // Create a clean object with ONLY the properties Atomiq needs
+    // Don't spread starknetAccount to avoid property conflicts
+    const adapter = {
+      // Core ethers.js Signer interface
+      address: starknetAccount.address,
+      _isSigner: true,
+      
+      getAddress: async () => {
+        console.log("📍 getAddress() called, returning:", starknetAccount.address);
+        return starknetAccount.address;
+      },
+      
+      // connect() is a standard ethers.js Signer method
+      connect: (provider: any) => {
+        console.log("🔗 connect() called with provider:", provider);
+        return adapter; // Return self
+      },
+      
+      // Provider is needed for Atomiq
+      provider: starknetAccount, // Use the actual Starknet account as provider
+      
+      // Starknet-specific methods that Atomiq will actually use
+      execute: starknetAccount.execute.bind(starknetAccount),
+      callContract: starknetAccount.callContract.bind(starknetAccount),
+      waitForTransaction: starknetAccount.waitForTransaction.bind(starknetAccount),
+      
+      // Additional signing methods (might not be called)
+      signMessage: async (message: any) => {
+        console.log("📝 signMessage() called with:", message);
+        return starknetAccount.address;
+      },
+      signTransaction: async (tx: any) => {
+        console.log("✍️ signTransaction() called with:", tx);
+        return starknetAccount.address;
+      },
+    };
+    
+    console.log("✅ Minimal signer adapter created with keys:", Object.keys(adapter));
+    return adapter;
+  }
+
+  /**
+   * Commit swap using transaction builder (bypasses signer validation)
+   * This works with ANY Starknet account that can execute transactions
+   */
+  async commitSwap(swap: any, starknetAccount: Account): Promise<void> {
+    console.log("📝 Building commit transactions...");
+    
+    // Use txsCommit() to build transactions without signer validation
+    const commitTxs = await swap.txsCommit(true); // skipChecks = true
+    console.log("📦 Commit transactions built:", commitTxs);
+    
+    // Extract just the calls (tx array) from the first transaction
+    // Cartridge will handle nonce, fees, and other details
+    const calls = commitTxs[0].tx;
+    console.log("📦 Extracted calls:", calls);
+    
+    // Execute with Cartridge account (let it handle nonce & fees)
+    console.log("📤 Sending commit transaction...");
+    const result = await starknetAccount.execute(calls);
+    console.log("📤 Commit transaction sent:", result.transaction_hash);
+    
+    // Wait for confirmation
+    await starknetAccount.waitForTransaction(result.transaction_hash, {
+      retryInterval: 1000,
+    });
+    console.log("✅ Commit transaction confirmed");
+    
+    // Wait for Atomiq to detect the on-chain commit
+    console.log("⏳ Waiting for Atomiq to detect commit...");
+    await swap.waitTillCommited();
+    console.log("✅ Swap committed and detected by Atomiq");
+  }
+
+  /**
+   * Claim swap using transaction builder (bypasses signer validation)
+   */
+  async claimSwap(swap: any, starknetAccount: Account): Promise<string> {
+    console.log("💰 Building claim transactions...");
+    
+    // Use txsClaim() to build transactions without signer
+    const claimTxs = await swap.txsClaim();
+    console.log("📦 Claim transactions built:", claimTxs);
+    
+    // Extract just the calls (tx array) from the first transaction
+    // Cartridge will handle nonce, fees, and other details
+    const calls = claimTxs[0].tx;
+    console.log("📦 Extracted calls:", calls);
+    
+    // Execute with Cartridge account (let it handle nonce & fees)
+    console.log("📤 Sending claim transaction...");
+    const result = await starknetAccount.execute(calls);
+    console.log("📤 Claim transaction sent:", result.transaction_hash);
+    
+    // Wait for confirmation
+    await starknetAccount.waitForTransaction(result.transaction_hash, {
+      retryInterval: 1000,
+    });
+    console.log("✅ Claim transaction confirmed");
+    
+    // Wait for Atomiq to detect the claim
+    console.log("⏳ Waiting for Atomiq to detect claim...");
+    await swap.waitTillClaimed();
+    console.log("✅ Swap claimed successfully");
+    
+    return result.transaction_hash;
   }
 
   /**
    * Refund swap if expired
    */
-  async refundSwap(swap: Swap, starknetAccount: Account): Promise<string> {
-    const tx = await swap.refund(starknetAccount);
+  async refundSwap(swap: any, starknetAccount: Account): Promise<string> {
+    const signer = this.createSignerAdapter(starknetAccount);
+    const tx = await swap.refund(signer);
     console.log("Refund transaction:", tx);
     return tx as string;
   }
@@ -321,7 +449,7 @@ export class AtomiqService {
   /**
    * Get swap status
    */
-  getSwapStatus(swap: Swap): string {
-    return swap.state || "unknown";
+  getSwapStatus(swap: any): string {
+    return String(swap.state || "unknown");
   }
 }

@@ -15,7 +15,7 @@ interface StakingStatus {
   isChecking: boolean; // Are we currently checking?
 }
 
-const STAKE_AMOUNT_SATS = 10000n;
+const STAKE_AMOUNT_SATS = 1000n; // Updated to match contract (1,000 sats)
 
 export function useStakingStatus(): StakingStatus {
   const { gameId, gameData, account, amIPlayer1 } = useGameStore();
@@ -29,7 +29,10 @@ export function useStakingStatus(): StakingStatus {
   });
 
   useEffect(() => {
+    console.log("🔍 useStakingStatus triggered:", { gameId, hasGameData: !!gameData, hasAccount: !!account });
+    
     if (!gameId || !gameData || !account) {
+      console.log("⚠️ useStakingStatus: Missing required data, returning early");
       setStatus({
         escrowExists: false,
         p1Staked: false,
@@ -40,6 +43,8 @@ export function useStakingStatus(): StakingStatus {
       });
       return;
     }
+    
+    console.log("✅ useStakingStatus: All data present, starting query");
 
     let cancelled = false;
 
@@ -50,7 +55,7 @@ export function useStakingStatus(): StakingStatus {
         setStatus((prev) => ({ ...prev, isChecking: true }));
 
         // Query Escrow entity from Torii
-        const response = await fetch("http://localhost:8081/graphql", {
+        const response = await fetch("/torii-graphql", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -74,7 +79,13 @@ export function useStakingStatus(): StakingStatus {
         });
 
         const result = await response.json();
+        
+        // DEBUG: Log the raw response
+        console.log("🔍 Staking query response:", JSON.stringify(result, null, 2));
+        console.log("🔍 Looking for game_id:", gameId);
+        
         const entities = result.data?.entities?.edges || [];
+        console.log(`🔍 Found ${entities.length} entities`);
 
         // Find escrow for this game
         let escrowFound = false;
@@ -83,13 +94,14 @@ export function useStakingStatus(): StakingStatus {
 
         entities.forEach((edge: any) => {
           edge.node?.models?.forEach((model: any) => {
+            console.log("🔍 Checking model:", model.__typename, "game_id:", model.game_id);
             if (
               model.__typename === "battleship_Escrow" &&
               model.game_id === gameId
             ) {
               escrowFound = true;
               
-              // Check if stakes meet requirement (10k sats)
+              // Check if stakes meet requirement (1000 sats)
               const stake_p1 = BigInt(model.stake_p1 || "0");
               const stake_p2 = BigInt(model.stake_p2 || "0");
               

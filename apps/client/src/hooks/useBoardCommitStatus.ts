@@ -20,7 +20,7 @@ export function useBoardCommitStatus() {
     const checkCommitStatus = async () => {
       setIsChecking(true);
       try {
-        const response = await fetch("http://localhost:8081/graphql", {
+        const response = await fetch("/torii-graphql", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

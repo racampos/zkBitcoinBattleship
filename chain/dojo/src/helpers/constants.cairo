@@ -16,10 +16,9 @@ pub const BOARD_SIZE: u8 = 10; // 10×10 grid (hardcoded in circuits)
 
 // Bitcoin staking parameters
 // WBTC addresses (update when deploying to different networks)
-// - Katana (local): Mock WBTC deployed by us
-// - Sepolia: Update to Sepolia testnet WBTC before deploying
+// - Katana (local): 0x066604cab8d009317131f7282b1c875311a41e3cac91af22858a92a0ddcfa0 (Mock WBTC)
 // - Mainnet: 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac
-pub const WBTC_ADDRESS: felt252 = 0x066604cab8d009317131f7282b1c875311a41e3cac91af22858a92a0ddcfa0; // Mock WBTC on Katana
+pub const WBTC_ADDRESS: felt252 = 0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac; // Real WBTC on Mainnet
 // 10,000 satoshis in WBTC (WBTC has 8 decimals, same as BTC)
 pub const STAKE_AMOUNT_SATS: u256 = 10000; // 0.0001 BTC
 pub const STAKING_TIMEOUT: u64 = 3600; // 1 hour to stake after P2 joins

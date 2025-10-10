@@ -9,11 +9,12 @@ import { useGameStore } from "../../store/gameStore";
 import { useGameContracts } from "../../hooks/useGameContracts";
 import { useWBTCContracts } from "../../hooks/useWBTCContracts";
 import { useStakingStatus } from "../../hooks/useStakingStatus";
+import { LightningStaking } from "./LightningStaking";
 
 export function StakingFlow() {
   const { account, gameId, gameData, amIPlayer1 } = useGameStore();
   const { stakeForGame, isLoading } = useGameContracts(account);
-  const { approveWBTC, checkAllowance, checkBalance, isApproving, STAKE_AMOUNT_SATS, MOCK_WBTC_ADDRESS } = useWBTCContracts(account);
+  const { approveWBTC, checkAllowance, checkBalance, isApproving, STAKE_AMOUNT_SATS, WBTC_ADDRESS } = useWBTCContracts(account);
   const stakingStatus = useStakingStatus();
   
   const [wbtcBalance, setWbtcBalance] = useState<bigint>(0n);
@@ -23,7 +24,10 @@ export function StakingFlow() {
 
   const handleStake = async () => {
     try {
-      await stakeForGame(MOCK_WBTC_ADDRESS, STAKE_AMOUNT_SATS);
+      // Stake actual WBTC balance (handles Lightning fees and partial amounts)
+      const amountToStake = wbtcBalance >= STAKE_AMOUNT_SATS ? STAKE_AMOUNT_SATS : wbtcBalance;
+      console.log(`💰 Staking ${amountToStake} sats (balance: ${wbtcBalance})`);
+      await stakeForGame(WBTC_ADDRESS, amountToStake);
     } catch (error) {
       // Error already handled in hook
     }
@@ -45,33 +49,6 @@ export function StakingFlow() {
     }
   };
 
-  // Temporary: Mint WBTC for testing (only on Katana!)
-  const handleMintWBTC = async () => {
-    if (!account) return;
-    
-    try {
-      console.log("🪙 Minting 100,000 sats of Mock WBTC...");
-      const tx = await account.execute({
-        contractAddress: MOCK_WBTC_ADDRESS,
-        entrypoint: "mint",
-        calldata: [
-          account.address, // recipient
-          "10000000000000", // 100k sats (u256 low)
-          "0", // u256 high
-        ],
-      });
-      
-      console.log("📤 Mint transaction:", tx.transaction_hash);
-      await account.waitForTransaction(tx.transaction_hash, { retryInterval: 1000 });
-      console.log("✅ Minted successfully! Refreshing balance...");
-      
-      // Refresh balance
-      const balance = await checkBalance();
-      setWbtcBalance(balance);
-    } catch (error: any) {
-      console.error("❌ Failed to mint WBTC:", error);
-    }
-  };
 
   // Check balance and allowance on mount and after approval
   useEffect(() => {
@@ -107,10 +84,10 @@ export function StakingFlow() {
         <h2>✅ You've Staked!</h2>
         <div className="status-box success">
           <div style={{ marginBottom: "10px" }}>
-            <strong>💰 Pot Size:</strong> 20,000 sats (0.0002 BTC)
+            <strong>💰 Pot Size:</strong> 2,000 sats (0.00002 BTC)
           </div>
           <div style={{ marginBottom: "10px" }}>
-            <strong>Your Stake:</strong> 10,000 sats ✅
+            <strong>Your Stake:</strong> 1,000 sats ✅
           </div>
           {!stakingStatus.bothStaked && (
             <div style={{ color: "#FFA726", marginTop: "15px" }}>
@@ -138,12 +115,12 @@ export function StakingFlow() {
       {mustStake ? (
         <div className="status-box" style={{ marginBottom: "15px", background: "#3a1a1a", borderColor: "#FFA726" }}>
           <div style={{ fontSize: "16px", color: "#FFA726", marginBottom: "10px" }}>
-            ⚠️ Your opponent has staked 10,000 sats!
+            ⚠️ Your opponent has staked 1,000 sats!
           </div>
           <div style={{ color: "#ccc" }}>
-            This is now a <strong>staked game</strong>. You must stake 10,000 sats to continue.
+            This is now a <strong>staked game</strong>. You must stake 1,000 sats to continue.
             <br />
-            Winner takes all: <strong>20,000 sats total!</strong>
+            Winner takes all: <strong>2,000 sats total!</strong>
           </div>
         </div>
       ) : (
@@ -169,9 +146,9 @@ export function StakingFlow() {
               💰 Option 2: Winner Takes All
             </div>
             <div style={{ color: "#ccc", marginBottom: "15px" }}>
-              Each player stakes <strong>10,000 satoshis</strong> (0.0001 BTC)
+              Each player stakes <strong>1,000 satoshis</strong> (0.00001 BTC)
               <br />
-              Winner gets the full pot: <strong>20,000 sats!</strong>
+              Winner gets the full pot: <strong>2,000 sats!</strong>
             </div>
           </div>
         </>
@@ -198,16 +175,37 @@ export function StakingFlow() {
           </div>
           {!hasEnoughBalance && (
             <div>
-              <div style={{ color: "#F44336", fontSize: "13px", marginBottom: "10px" }}>
-                ⚠️ Insufficient balance. Need at least 10,000 sats.
+              <div style={{ marginBottom: "15px" }}>
+                <div style={{ color: "#F44336", fontSize: "13px", marginBottom: "10px" }}>
+                  ⚠️ Insufficient WBTC balance. Need at least 1,000 sats.
+                </div>
+                <div style={{ 
+                  background: "#2a1a1a", 
+                  padding: "12px", 
+                  borderRadius: "6px",
+                  border: "1px solid #4CAF50",
+                  fontSize: "12px",
+                  color: "#4CAF50",
+                  marginBottom: "12px"
+                }}>
+                  💡 <strong>No worries!</strong> You can stake BTC directly via Lightning Network below.
+                </div>
               </div>
-              <button
-                onClick={handleMintWBTC}
-                className="secondary"
-                style={{ width: "100%", fontSize: "13px" }}
-              >
-                🪙 Mint 100,000 sats (Testnet Only)
-              </button>
+              
+              {/* Lightning Staking Integration */}
+              <LightningStaking />
+              
+              <div style={{ 
+                marginTop: "12px",
+                padding: "10px",
+                background: "#1a1a1a",
+                borderRadius: "6px",
+                fontSize: "11px",
+                color: "#666",
+                textAlign: "center"
+              }}>
+                💡 Tip: Lightning swaps are instant and convert your BTC to WBTC automatically
+              </div>
             </div>
           )}
         </div>
@@ -258,7 +256,7 @@ export function StakingFlow() {
                 <div>
                   <strong>Step 2: Stake for Game</strong>
                   <div style={{ fontSize: "13px", color: "#ccc", marginTop: "5px" }}>
-                    Lock 10,000 sats in escrow
+                    Lock {wbtcBalance >= STAKE_AMOUNT_SATS ? STAKE_AMOUNT_SATS : wbtcBalance} sats in escrow
                   </div>
                 </div>
                 <button
@@ -267,7 +265,7 @@ export function StakingFlow() {
                   className="primary"
                   style={{ opacity: isApproved ? 1 : 0.5 }}
                 >
-                  {isLoading ? "Staking..." : "Stake 10,000 sats"}
+                  {isLoading ? "Staking..." : `Stake ${wbtcBalance >= STAKE_AMOUNT_SATS ? STAKE_AMOUNT_SATS : wbtcBalance} sats`}
                 </button>
               </div>
             </div>

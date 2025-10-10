@@ -1,5 +1,9 @@
 # Torii configuration
 world_address = "0x04b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69"
+rpc = "https://api.cartridge.gg/x/starknet/mainnet"
+start_block = 2877000                                                                # Start syncing from around your stake transaction
+database_dir = ".torii_db"                                                           # Persist indexed data
+manifest_path = "manifest_mainnet.json"                                              # Use mainnet manifest for schema
 
 [server]
 http_port = 8081

@@ -15,12 +15,10 @@ export function useGameState(gameId: string | null) {
   // Fetch game state using GraphQL (same as vanilla JS)
   const fetchGameState = async () => {
     if (!gameId || !account) {
-      console.log("⚠️ fetchGameState: Missing gameId or account", { gameId, hasAccount: !!account });
       return;
     }
 
     try {
-      console.log("📊 Fetching game state for:", gameId);
 
       // Query 1: Get game state from Torii GraphQL endpoint
       const response = await fetch("/torii-graphql", {
@@ -54,7 +52,6 @@ export function useGameState(gameId: string | null) {
       });
 
       const result = await response.json();
-      console.log("📊 Game state response:", result);
 
       if (result.data?.entities?.edges && result.data.entities.edges.length > 0) {
         const gameNode = result.data.entities.edges[0].node;

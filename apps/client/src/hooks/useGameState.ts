@@ -123,6 +123,9 @@ export function useGameState(gameId: string | null) {
           const p1Hits = 17 - p1RemainingHits; // Hits against P1 (P1's ships hit)
           const p2Hits = 17 - p2RemainingHits; // Hits against P2 (P2's ships hit)
 
+          // Get current gameData to preserve pending_shot field
+          const currentGameData = useGameStore.getState().gameData;
+          
           const gameData: GameData = {
             game_id: gameModel.id || gameId,
             player_1: gameModel.p1 || "",
@@ -133,6 +136,7 @@ export function useGameState(gameId: string | null) {
             p2_board_hash: "",
             p1_hits: p2Hits, // P1's score = hits they landed on P2
             p2_hits: p1Hits, // P2's score = hits they landed on P1
+            pending_shot: currentGameData?.pending_shot, // Preserve pending_shot set by useShotTracking
           };
 
           setGameData(gameData);

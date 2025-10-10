@@ -154,6 +154,7 @@ export function useGameState(gameId: string | null) {
     if (!sdk || !isInitialized || !gameId) return;
 
     let subscription: any;
+    let pollingInterval: any;
 
     (async () => {
       // ALWAYS do initial fetch, even if subscription fails
@@ -181,8 +182,12 @@ export function useGameState(gameId: string | null) {
         console.log("✅ Subscribed to game updates (real-time)");
       } catch (err: any) {
         console.error("❌ Failed to subscribe:", err);
-        console.log("ℹ️ Falling back to HTTP polling (this is expected)");
-        // Don't set error here - subscription failure is expected with gRPC proxy issues
+        console.log("ℹ️ Falling back to HTTP polling every 3 seconds");
+        
+        // Fallback: Poll every 3 seconds if subscription fails
+        pollingInterval = setInterval(() => {
+          fetchGameState();
+        }, 3000);
       }
     })();
 
@@ -191,6 +196,9 @@ export function useGameState(gameId: string | null) {
       if (subscription) {
         console.log("🔌 Unsubscribing from game updates");
         subscription.cancel();
+      }
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
       }
     };
   }, [sdk, isInitialized, gameId]);

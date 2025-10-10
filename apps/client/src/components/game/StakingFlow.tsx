@@ -50,7 +50,7 @@ export function StakingFlow() {
   };
 
 
-  // Check balance and allowance on mount and after approval
+  // Check balance and allowance on mount, after staking, and poll periodically
   useEffect(() => {
     if (!account) return;
 
@@ -65,7 +65,14 @@ export function StakingFlow() {
       setIsCheckingBalance(false);
     };
 
+    // Check immediately
     checkBalances();
+    
+    // Poll every 3 seconds to detect balance/allowance changes
+    // (e.g., after Lightning swap completes or approval confirms)
+    const interval = setInterval(checkBalances, 3000);
+    
+    return () => clearInterval(interval);
   }, [account, stakingStatus.iHaveStaked]);
 
   // Hide if user chose to play for free and no escrow exists

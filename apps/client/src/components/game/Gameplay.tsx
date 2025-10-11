@@ -15,8 +15,20 @@ export function Gameplay() {
   const [shotRow, setShotRow] = useState("A");
   const [shotCol, setShotCol] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [isFiring, setIsFiring] = useState(false);
+  const [waitingForProof, setWaitingForProof] = useState(false);
   
   const isGameOver = gameData?.status === 2;
+  
+  // Check if there's a pending shot waiting for opponent to apply proof
+  const hasPendingShot = gameData?.pending_shot !== undefined;
+  
+  // Clear waitingForProof state when pending_shot appears (polling caught up)
+  useEffect(() => {
+    if (hasPendingShot) {
+      setWaitingForProof(false);
+    }
+  }, [hasPendingShot]);
 
   // Initialize opponent board if not set
   useEffect(() => {
@@ -47,12 +59,17 @@ export function Gameplay() {
     }
 
     setError(null);
+    setIsFiring(true);
     console.log(`🎯 Firing at ${shotRow}${shotCol} (${row}, ${col})`);
 
     try {
       await fireShot(row, col);
+      // Shot succeeded! Now waiting for polling to detect it
+      setWaitingForProof(true);
     } catch (error) {
       // Error handled in hook
+    } finally {
+      setIsFiring(false);
     }
   };
 
@@ -141,10 +158,11 @@ export function Gameplay() {
 
         <button 
           onClick={handleFireShot} 
-          disabled={isGameOver || !isMyTurn() || isAlreadyFired()} 
+          disabled={isGameOver || !isMyTurn() || isAlreadyFired() || isFiring || waitingForProof || hasPendingShot} 
           className="danger"
+          title={(waitingForProof || hasPendingShot) ? "Waiting for opponent to apply proof..." : "Fire a shot at the opponent"}
         >
-          🔥 Fire Shot
+          {isFiring ? "🎯 Firing Shot..." : (waitingForProof || hasPendingShot) ? "⏳ Waiting for Proof..." : "🔥 Fire Shot"}
         </button>
       </div>
 
@@ -159,9 +177,11 @@ export function Gameplay() {
           ? "🏁 Game Over - No more shots can be fired" 
           : !isMyTurn() 
             ? "Waiting for opponent..." 
-            : isAlreadyFired() 
-              ? `⚠️ Already fired at ${shotRow}${shotCol} - choose a different position`
-              : "Your turn! Select coordinates and fire"}
+            : (waitingForProof || hasPendingShot)
+              ? "⏳ Waiting for opponent to apply proof..."
+              : isAlreadyFired() 
+                ? `⚠️ Already fired at ${shotRow}${shotCol} - choose a different position`
+                : "Your turn! Select coordinates and fire"}
       </div>
     </div>
   );

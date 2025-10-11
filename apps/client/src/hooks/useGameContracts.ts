@@ -35,15 +35,22 @@ export function useGameContracts(account: Account | null) {
       const zeroAddress = "0x0";
       const boardSize = "10";
 
-      // Let Cartridge Controller handle fees automatically (it has a paymaster)
       const calls = {
         contractAddress: CONTRACTS.gameManagement.address,
         entrypoint: "create_game",
         calldata: [zeroAddress, boardSize, randomNonce], // p2, board_size, nonce
       };
 
-      // Don't pass fee details - let Cartridge's paymaster handle it
-      const tx = await account.execute(calls);
+      // Use prepareV3Fees with VERY generous bounds to prevent TTL eviction
+      const feeDetails = await prepareV3Fees(account, [calls], {
+        tipPercent: 50, // 50% tip to prioritize
+        l1GasMultiplier: 300, // 3x headroom
+        l2GasMultiplier: 300, // 3x headroom
+      });
+
+      console.log("⛽ Using V3 fees for create_game:", feeDetails);
+
+      const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Transaction sent:", tx.transaction_hash);
       setTxHash(tx.transaction_hash);
@@ -130,11 +137,18 @@ export function useGameContracts(account: Account | null) {
       setError(null);
       console.log("🎮 Joining game:", gameId);
 
-      const tx = await account.execute({
+      const calls = {
         contractAddress: CONTRACTS.gameManagement.address,
         entrypoint: "join_game",
         calldata: [gameId],
+      };
+
+      const feeDetails = await prepareV3Fees(account, [calls], {
+        tipPercent: 50,
+        l1GasMultiplier: 300,
+        l2GasMultiplier: 300,
       });
+      const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Transaction sent:", tx.transaction_hash);
       setTxHash(tx.transaction_hash);
@@ -175,11 +189,18 @@ export function useGameContracts(account: Account | null) {
       setIsLoading(true);
       setError(null);
 
-      const tx = await account.execute({
+      const calls = {
         contractAddress: CONTRACTS.boardCommit.address,
         entrypoint: "commit_board",
         calldata: [gameId, boardHash],
+      };
+
+      const feeDetails = await prepareV3Fees(account, [calls], {
+        tipPercent: 50,
+        l1GasMultiplier: 300,
+        l2GasMultiplier: 300,
       });
+      const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Board commit tx:", tx.transaction_hash);
       await account.waitForTransaction(tx.transaction_hash, {
@@ -217,11 +238,18 @@ export function useGameContracts(account: Account | null) {
       setError(null);
       console.log(`🎯 Firing shot at (${row}, ${col}) in game ${gameId}...`);
 
-      const tx = await account.execute({
+      const calls = {
         contractAddress: CONTRACTS.gameplay.address,
         entrypoint: "fire_shot",
         calldata: [gameId, row, col],
+      };
+
+      const feeDetails = await prepareV3Fees(account, [calls], {
+        tipPercent: 50,
+        l1GasMultiplier: 300,
+        l2GasMultiplier: 300,
       });
+      const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Transaction sent:", tx.transaction_hash);
       await account.waitForTransaction(tx.transaction_hash, {
@@ -262,11 +290,18 @@ export function useGameContracts(account: Account | null) {
       // Generate random nullifier
       const nullifier = '0x' + Math.random().toString(16).substring(2).padStart(64, '0');
 
-      const tx = await account.execute({
+      const calls = {
         contractAddress: CONTRACTS.proofVerify.address,
         entrypoint: "apply_shot_proof",
         calldata: [gameId, row, col, result, nullifier],
+      };
+
+      const feeDetails = await prepareV3Fees(account, [calls], {
+        tipPercent: 50,
+        l1GasMultiplier: 300,
+        l2GasMultiplier: 300,
       });
+      const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Proof transaction sent:", tx.transaction_hash);
       await account.waitForTransaction(tx.transaction_hash, {
@@ -330,9 +365,9 @@ export function useGameContracts(account: Account | null) {
       };
 
       const feeDetails = await prepareV3Fees(account, calls, {
-        tipPercent: 20, // Higher tip for token transfer operations
-        l1GasMultiplier: 200, // 2x headroom for L1_DATA_GAS (critical!)
-        l2GasMultiplier: 200,
+        tipPercent: 50, // 50% tip to prioritize (was 20%)
+        l1GasMultiplier: 300, // 3x headroom (was 2x)
+        l2GasMultiplier: 300, // 3x headroom (was 2x)
         lockNonce: true,
       });
 

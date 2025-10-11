@@ -43,9 +43,9 @@ export function useWBTCContracts(account: Account | null) {
       };
 
       const feeDetails = await prepareV3Fees(account, calls, {
-        tipPercent: 20, // Higher tip for token operations
-        l1GasMultiplier: 200, // 2x headroom for L1_DATA_GAS (events!)
-        l2GasMultiplier: 200,
+        tipPercent: 50, // 50% tip to prioritize (was 20%)
+        l1GasMultiplier: 300, // 3x headroom (was 2x)
+        l2GasMultiplier: 300, // 3x headroom (was 2x)
         lockNonce: true,
       });
 

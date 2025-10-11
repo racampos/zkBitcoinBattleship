@@ -1,11 +1,20 @@
 /**
- * Cartridge Controller configuration for ZK Battleship - MAINNET
+ * Cartridge Controller configuration for ZK Battleship
+ * Environment-aware: switches between Sepolia and Mainnet
  * https://docs.cartridge.gg/controller/getting-started
  */
 
-import manifest from '../../chain/dojo/manifest_mainnet.json' assert { type: 'json' };
+import manifestSepolia from './src/dojo/manifest_sepolia.json' assert { type: 'json' };
+import manifestMainnet from '../../chain/dojo/manifest_mainnet.json' assert { type: 'json' };
 
-// Find contract addresses from mainnet manifest
+// Determine which manifest and network to use
+const isMainnet = import.meta.env.VITE_STARKNET_RPC_URL?.includes('mainnet');
+const manifest = isMainnet ? manifestMainnet : manifestSepolia;
+const networkName = isMainnet ? 'MAINNET' : 'SEPOLIA';
+
+console.log(`🔧 Controller Config: Using ${networkName}`);
+
+// Find contract addresses from active manifest
 const gameManagement = manifest.contracts.find((c) => c.tag === 'battleship-game_management');
 const coinFlip = manifest.contracts.find((c) => c.tag === 'battleship-coin_flip');
 const boardCommit = manifest.contracts.find((c) => c.tag === 'battleship-board_commit');
@@ -14,19 +23,23 @@ const proofVerify = manifest.contracts.find((c) => c.tag === 'battleship-proof_v
 const timeout = manifest.contracts.find((c) => c.tag === 'battleship-timeout');
 const escrow = manifest.contracts.find((c) => c.tag === 'battleship-escrow');
 
-// Real WBTC on mainnet
-const WBTC_ADDRESS = '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac';
+// WBTC address (same for both networks - will be updated from Atomiq)
+const WBTC_ADDRESS = import.meta.env.VITE_WBTC_ADDRESS || '0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac';
+
+// Chain configuration
+const chainId = isMainnet ? '0x534e5f4d41494e' : '0x534e5f5345504f4c4941'; // "SN_MAIN" or "SN_SEPOLIA" in hex
+const rpcUrl = isMainnet 
+  ? 'https://api.cartridge.gg/x/starknet/mainnet'
+  : 'https://api.cartridge.gg/x/starknet/sepolia';
 
 const controllerOpts = {
   chains: [
     {
-      id: '0x534e5f4d41494e', // "SN_MAIN" in hex
-      // Using Cartridge's official RPC (most reliable + paymaster support)
-      // The real fix for TTL evictions is proper V3 fees with L1_DATA_GAS bounds!
-      rpcUrl: 'https://api.cartridge.gg/x/starknet/mainnet',
+      id: chainId,
+      rpcUrl: rpcUrl,
     },
   ],
-  defaultChainId: '0x534e5f4d41494e', // "SN_MAIN" in hex
+  defaultChainId: chainId,
   policies: {
     contracts: {
       // Game Management

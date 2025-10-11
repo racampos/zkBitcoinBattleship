@@ -20,6 +20,4 @@ private_key = "0x1c9053c053edf324aec366a34c6901b1095b07af69495bffec7d7fe21effb1b
   "battleship-proof_verify",
   "battleship-timeout",
   "battleship-escrow",
-  "battleship-mock_wbtc",
-  "battleship-debug",           # Testing only - remove before production!
 ]

@@ -43,14 +43,34 @@ export function WalletConnection() {
       setError(null);
       console.log("🔌 Attempting to connect to Cartridge Controller...");
       
-      const connectedAccount = await controller.connect();
+      // Retry logic for "Not ready to connect" error
+      let retries = 3;
+      let connectedAccount = null;
       
-      if (!connectedAccount) {
-        throw new Error("Controller returned undefined - connection failed");
+      while (retries > 0 && !connectedAccount) {
+        try {
+          connectedAccount = await controller.connect();
+          
+          if (!connectedAccount) {
+            throw new Error("Controller returned undefined");
+          }
+          
+          if (!connectedAccount.address) {
+            throw new Error("Connected account has no address");
+          }
+        } catch (err: any) {
+          if (err.message?.includes("Not ready") && retries > 1) {
+            console.log(`⏳ Controller not ready, retrying... (${retries - 1} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+            retries--;
+          } else {
+            throw err; // Rethrow if not a "not ready" error or out of retries
+          }
+        }
       }
       
-      if (!connectedAccount.address) {
-        throw new Error("Connected account has no address");
+      if (!connectedAccount) {
+        throw new Error("Controller connection failed after retries");
       }
       
       setAccount(connectedAccount);

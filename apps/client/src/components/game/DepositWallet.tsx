@@ -46,6 +46,14 @@ export function DepositWallet() {
   // Check WBTC balance periodically
   useEffect(() => {
     if (!account) return;
+    
+    // Skip if WBTC address is not configured (0x0 means testnet without Mock WBTC deployed)
+    if (WBTC_ADDRESS === "0x0") {
+      console.log("⚠️ WBTC not configured for this network. Skipping balance check.");
+      setWbtcBalance(0n);
+      setIsCheckingBalance(false);
+      return;
+    }
 
     const updateBalance = async () => {
       setIsCheckingBalance(true);
@@ -178,6 +186,9 @@ export function DepositWallet() {
   if (!account) {
     return null;
   }
+  
+  // Check if WBTC is available on this network
+  const wbtcNotConfigured = WBTC_ADDRESS === "0x0";
 
   // Calculate available matches based on balance
   const availableMatches = Math.floor(Number(wbtcBalance) / 1000);
@@ -186,6 +197,28 @@ export function DepositWallet() {
   return (
     <div className="section" style={{ background: "#1a2a1a", borderColor: "#2d5a2d" }}>
       <h2>💰 Game Wallet</h2>
+      
+      {/* Testnet Notice - WBTC not configured */}
+      {wbtcNotConfigured && (
+        <div className="status-box" style={{ background: "#3a1a1a", borderColor: "#FFA726", color: "#FFA726", marginBottom: "15px" }}>
+          <div style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "10px" }}>
+            🚧 Testnet Setup Required
+          </div>
+          <div style={{ fontSize: "13px", lineHeight: "1.6" }}>
+            <strong>For Sepolia testnet,</strong> we need to deploy a Mock WBTC contract first.
+            <br /><br />
+            <strong>Next Steps:</strong>
+            <ul style={{ paddingLeft: "20px", marginTop: "8px" }}>
+              <li>Deploy Mock WBTC ERC20 to Sepolia</li>
+              <li>Update WBTC_ADDRESS in <code style={{ background: "#2a1a1a", padding: "2px 4px", borderRadius: "3px" }}>useWBTCContracts.ts</code></li>
+              <li>Test deposit flow with testnet BTC</li>
+            </ul>
+            <div style={{ marginTop: "12px", fontSize: "12px", color: "#888" }}>
+              💡 For testing, you can skip deposits and play free games (no WBTC required).
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Balance Display */}
       <div className="status-box success" style={{ marginBottom: "15px" }}>

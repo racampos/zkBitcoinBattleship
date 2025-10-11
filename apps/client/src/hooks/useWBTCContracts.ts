@@ -9,9 +9,17 @@ import { useGameStore } from "../store/gameStore";
 import { CONTRACTS } from "../dojo/config";
 import { prepareV3Fees } from "../utils/feeHelper";
 
-// Real WBTC address on Starknet Mainnet
-const WBTC_ADDRESS = "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac";
+// WBTC address - environment aware
+// For Sepolia: We'll need to deploy a mock WBTC or use Atomiq's testnet WBTC
+// For Mainnet: Real WBTC
+const isMainnet = import.meta.env.VITE_STARKNET_RPC_URL?.includes('mainnet');
+const WBTC_ADDRESS = isMainnet 
+  ? "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac" // Real WBTC on Mainnet
+  : "0x0"; // TODO: Deploy Mock WBTC on Sepolia or use Atomiq's testnet WBTC
+
 const STAKE_AMOUNT_SATS = 1000n; // 1,000 satoshis (~$1 USD)
+
+console.log(`🪙 WBTC Address (${isMainnet ? 'MAINNET' : 'SEPOLIA'}):`, WBTC_ADDRESS);
 
 export function useWBTCContracts(account: Account | null) {
   const { setError, setIsLoading } = useGameStore();

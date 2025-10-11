@@ -5,6 +5,7 @@
 import React from "react";
 import { DojoProvider } from "./dojo/DojoContext";
 import { WalletConnection } from "./components/game/WalletConnection";
+import { DepositWallet } from "./components/game/DepositWallet";
 import { GameManagement } from "./components/game/GameManagement";
 import { StakingFlow } from "./components/game/StakingFlow";
 import { BoardSetup } from "./components/game/BoardSetup";
@@ -41,8 +42,11 @@ function GameApp() {
         {/* Wallet Connection */}
         <WalletConnection />
 
-      {/* Game Management - Create/Join Game */}
-      {account && <GameManagement />}
+        {/* Deposit Wallet - Deposit BTC once to play multiple matches */}
+        {account && <DepositWallet />}
+
+        {/* Game Management - Create/Join Game */}
+        {account && <GameManagement />}
 
       {/* Staking Flow - Approve and Stake WBTC (hide when game ends) */}
       {account && gameId && !isGameOver && <StakingFlow />}

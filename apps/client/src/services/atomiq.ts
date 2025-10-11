@@ -36,16 +36,22 @@ export class AtomiqService {
     if (this.initialized) return;
 
     console.log("🔧 Initializing Atomiq SDK (browser mode)...");
+    
+    // Debug environment variables
+    console.log("  🔍 Debug - VITE_BITCOIN_NETWORK env var:", import.meta.env.VITE_BITCOIN_NETWORK);
+    console.log("  🔍 Debug - BitcoinNetwork.MAINNET value:", BitcoinNetwork.MAINNET);
+    console.log("  🔍 Debug - BitcoinNetwork.TESTNET value:", BitcoinNetwork.TESTNET);
 
     const Factory = new SwapperFactory([StarknetInitializer] as const);
     this.factory = Factory;
 
-    const bitcoinNetwork =
-      import.meta.env.VITE_BITCOIN_NETWORK === "mainnet"
-        ? BitcoinNetwork.MAINNET
-        : BitcoinNetwork.TESTNET;
+    // Force TESTNET for now since env var might not be working
+    const envValue = import.meta.env.VITE_BITCOIN_NETWORK;
+    const bitcoinNetwork = envValue === "mainnet" 
+      ? BitcoinNetwork.MAINNET 
+      : BitcoinNetwork.TESTNET;
 
-    console.log("  Bitcoin Network:", bitcoinNetwork);
+    console.log("  ✅ Selected Bitcoin Network:", bitcoinNetwork, envValue === "mainnet" ? "(MAINNET)" : "(TESTNET)");
     console.log("  Starknet RPC:", import.meta.env.VITE_STARKNET_RPC_URL);
 
     // Create RpcProvider like official example (lines 60-62)

@@ -29,15 +29,6 @@ export function StakingFlow() {
   // Check balance and allowance periodically
   useEffect(() => {
     if (!account) return;
-    
-    // Skip if WBTC address is not configured
-    if (WBTC_ADDRESS === "0x0") {
-      console.log("⚠️ WBTC not configured for this network. Skipping balance check.");
-      setWbtcBalance(0n);
-      setAllowance(0n);
-      setIsCheckingBalance(false);
-      return;
-    }
 
     const checkBalances = async () => {
       setIsCheckingBalance(true);

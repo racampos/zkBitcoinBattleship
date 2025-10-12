@@ -17,18 +17,33 @@ export function Gameplay() {
   const [error, setError] = useState<string | null>(null);
   const [isFiring, setIsFiring] = useState(false);
   const [waitingForProof, setWaitingForProof] = useState(false);
+  const [lastShotCoords, setLastShotCoords] = useState<{ row: number; col: number } | null>(null);
+  const [shotResultMessage, setShotResultMessage] = useState<string | null>(null);
   
   const isGameOver = gameData?.status === 2;
   
   // Check if there's a pending shot waiting for opponent to apply proof
   const hasPendingShot = gameData?.pending_shot !== undefined;
   
-  // Clear waitingForProof state when pending_shot appears (polling caught up)
+  // Clear waitingForProof when turn comes back to us (proof was applied)
   useEffect(() => {
-    if (hasPendingShot) {
+    if (waitingForProof && isMyTurn() && !hasPendingShot) {
       setWaitingForProof(false);
+      
+      // Check result of last shot if we have coordinates
+      if (lastShotCoords && opponentBoard) {
+        const cellValue = opponentBoard[lastShotCoords.row][lastShotCoords.col];
+        if (cellValue === 2) {
+          setShotResultMessage(`🎯 HIT at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}!`);
+        } else if (cellValue === 3) {
+          setShotResultMessage(`💧 MISS at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
+        }
+        
+        // Clear message after 5 seconds
+        setTimeout(() => setShotResultMessage(null), 5000);
+      }
     }
-  }, [hasPendingShot]);
+  }, [waitingForProof, isMyTurn, hasPendingShot, lastShotCoords, opponentBoard]);
 
   // Initialize opponent board if not set
   useEffect(() => {
@@ -59,12 +74,14 @@ export function Gameplay() {
     }
 
     setError(null);
+    setShotResultMessage(null); // Clear any previous result message
     setIsFiring(true);
     console.log(`🎯 Firing at ${shotRow}${shotCol} (${row}, ${col})`);
 
     try {
       await fireShot(row, col);
-      // Shot succeeded! Now waiting for polling to detect it
+      // Shot succeeded! Save coordinates and wait for proof
+      setLastShotCoords({ row, col });
       setWaitingForProof(true);
     } catch (error) {
       // Error handled in hook
@@ -169,6 +186,22 @@ export function Gameplay() {
       {error && (
         <div className="status-box" style={{ background: "#3a1a1a", borderColor: "#8B0000", color: "#FF5722" }}>
           {error}
+        </div>
+      )}
+
+      {shotResultMessage && (
+        <div 
+          className="status-box" 
+          style={{ 
+            background: shotResultMessage.includes("HIT") ? "#1a3a1a" : "#1a2a3a", 
+            borderColor: shotResultMessage.includes("HIT") ? "#4CAF50" : "#2196F3",
+            color: shotResultMessage.includes("HIT") ? "#4CAF50" : "#2196F3",
+            fontWeight: "bold",
+            fontSize: "16px",
+            animation: "pulse 0.5s ease-in-out"
+          }}
+        >
+          {shotResultMessage}
         </div>
       )}
 

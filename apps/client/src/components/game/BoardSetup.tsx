@@ -61,10 +61,10 @@ export function BoardSetup() {
             </div>
           ) : (
             <>
-              {/* Show staking warning if escrow exists but not both staked */}
-              {stakingStatus.escrowExists && !stakingStatus.bothStaked && (
+              {/* Show staking warning if not both staked */}
+              {!stakingStatus.bothStaked && (
                 <div className="status-box" style={{ background: "#3a1a1a", borderColor: "#FFA726", marginTop: "15px" }}>
-                  ⚠️ <strong>Staking Required</strong>
+                  🔒 <strong>Staking Required</strong>
                   <div style={{ fontSize: "13px", marginTop: "8px" }}>
                     {!stakingStatus.iHaveStaked ? (
                       <>You must stake before committing your board. See staking section above.</>
@@ -81,11 +81,11 @@ export function BoardSetup() {
                   disabled={
                     isLoading || 
                     isChecking || 
-                    (stakingStatus.escrowExists && !stakingStatus.bothStaked) // Disable if staking incomplete
+                    !stakingStatus.bothStaked // ALWAYS require both players to stake
                   } 
                   className="primary"
                   title={
-                    stakingStatus.escrowExists && !stakingStatus.bothStaked 
+                    !stakingStatus.bothStaked
                       ? "Both players must stake before committing boards" 
                       : "Commit your board to the blockchain"
                   }
@@ -97,11 +97,15 @@ export function BoardSetup() {
                 </button>
               </div>
 
-              {!stakingStatus.escrowExists || stakingStatus.bothStaked ? (
-                <div className="status-box">
-                  Place your ships and commit your board to start the game.
+              {stakingStatus.bothStaked ? (
+                <div className="status-box success">
+                  ✅ Both players staked! Place your ships and commit your board to start the game.
                 </div>
-              ) : null}
+              ) : (
+                <div className="status-box">
+                  ⏳ Complete staking above before committing your board.
+                </div>
+              )}
             </>
           )}
         </>

@@ -99,40 +99,35 @@ export function StakingFlow() {
   const hasEnoughBalance = wbtcBalance >= STAKE_AMOUNT_SATS;
   const isApproved = allowance >= STAKE_AMOUNT_SATS;
   const opponentStaked = amIPlayer1() ? stakingStatus.p2Staked : stakingStatus.p1Staked;
-  const mustStake = stakingStatus.escrowExists && opponentStaked;
-
-  // Hide if user chose to play for free and no escrow exists
-  if (!stakingStatus.escrowExists && !opponentStaked) {
-    return null; // Free game, no staking needed
-  }
 
   return (
     <div className="section" style={{ background: "#3a1a1a", borderColor: "#8B0000" }}>
-      <h2>💰 {mustStake ? "Opponent Staked - You Must Stake Too!" : "Stake for This Match"}</h2>
+      <h2>🔒 {opponentStaked ? "Opponent Staked - You Must Stake Too!" : "Staking Required to Play"}</h2>
 
-      {mustStake ? (
-        <div className="status-box" style={{ marginBottom: "15px", background: "#3a1a1a", borderColor: "#FFA726" }}>
-          <div style={{ fontSize: "16px", color: "#FFA726", marginBottom: "10px" }}>
-            ⚠️ Your opponent has staked 1,000 sats!
-          </div>
-          <div style={{ color: "#ccc" }}>
-            This is now a <strong>staked game</strong>. You must stake 1,000 sats to continue.
-            <br />
-            Winner takes all: <strong>2,000 sats total!</strong>
-          </div>
+      <div className="status-box" style={{ marginBottom: "15px", background: "#3a1a1a", borderColor: "#FFA726" }}>
+        <div style={{ fontSize: "16px", color: "#FFA726", marginBottom: "10px" }}>
+          {opponentStaked ? "⚠️ Your opponent has staked 1,000 sats!" : "🔒 Staking is mandatory for all games"}
         </div>
-      ) : (
-        <div className="status-box" style={{ marginBottom: "15px", background: "#1a3a1a", borderColor: "#2d5a2d" }}>
-          <div style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "10px" }}>
-            💰 Stake 1,000 sats for this match
-          </div>
-          <div style={{ color: "#ccc", marginBottom: "15px" }}>
-            Stake from your game wallet balance.
-            <br />
-            Winner gets the full pot: <strong>2,000 sats!</strong>
-          </div>
+        <div style={{ color: "#ccc" }}>
+          {opponentStaked ? (
+            <>
+              Both players must stake to play.
+              <br />
+              Winner takes all: <strong>2,000 sats total!</strong>
+            </>
+          ) : (
+            <>
+              Each player stakes <strong>1,000 sats</strong> from their game wallet.
+              <br />
+              Winner takes the full pot: <strong>2,000 sats!</strong>
+              <br />
+              <em style={{ fontSize: "12px", color: "#888", marginTop: "5px", display: "block" }}>
+                This ensures fair competition and rewards skilled play.
+              </em>
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Balance Display */}
       <div style={{ 

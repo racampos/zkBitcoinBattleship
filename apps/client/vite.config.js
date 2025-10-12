@@ -6,7 +6,7 @@ import wasm from 'vite-plugin-wasm';
 export default defineConfig({
   plugins: [react(), mkcert(), wasm()],
   server: {
-    port: 3000, // Changed back to 3000 for React game
+    port: 4000, // Changed to 4000 to avoid Docker container conflict
     // Proxy Torii GraphQL requests to avoid CORS issues
     proxy: {
       '/torii-graphql': {

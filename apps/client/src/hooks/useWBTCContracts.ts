@@ -102,7 +102,11 @@ export function useWBTCContracts(account: Account | null) {
 
   /**
    * Check WBTC balance
+   * Throttled logging: only log once per minute to avoid console spam
    */
+  let lastLogTime = 0;
+  const LOG_THROTTLE_MS = 60000; // 1 minute
+
   const checkBalance = async (): Promise<bigint> => {
     if (!account) return 0n;
 
@@ -115,7 +119,14 @@ export function useWBTCContracts(account: Account | null) {
 
       // Result is [low, high] for u256
       const balance = BigInt(result[0]);
-      console.log(`🔍 WBTC balance: ${balance} sats`);
+      
+      // Only log once per minute to avoid console spam
+      const now = Date.now();
+      if (now - lastLogTime > LOG_THROTTLE_MS) {
+        console.log(`🔍 WBTC balance: ${balance} sats`);
+        lastLogTime = now;
+      }
+      
       return balance;
     } catch (err: any) {
       console.error("❌ Failed to check balance:", err);

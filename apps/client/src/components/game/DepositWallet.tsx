@@ -47,8 +47,15 @@ export function DepositWallet() {
   useEffect(() => {
     if (!account) return;
 
+    let isFirstLoad = true;
+
     const updateBalance = async () => {
-      setIsCheckingBalance(true);
+      // Only show "Checking..." on first load, not during polling
+      if (isFirstLoad) {
+        setIsCheckingBalance(true);
+        isFirstLoad = false;
+      }
+      
       const balance = await checkBalance();
       setWbtcBalance(balance);
       setIsCheckingBalance(false);
@@ -57,7 +64,7 @@ export function DepositWallet() {
     // Check immediately
     updateBalance();
 
-    // Poll every 5 seconds (reasonable balance for responsiveness vs. performance)
+    // Poll every 5 seconds (silent updates, no "Checking..." flicker)
     const interval = setInterval(updateBalance, 5000);
 
     return () => clearInterval(interval);

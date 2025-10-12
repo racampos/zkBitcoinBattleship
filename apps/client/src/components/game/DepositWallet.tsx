@@ -46,8 +46,6 @@ export function DepositWallet() {
   // Check WBTC balance periodically
   useEffect(() => {
     if (!account) return;
-    
-    // No longer needed - WBTC is configured for both mainnet and Sepolia
 
     const updateBalance = async () => {
       setIsCheckingBalance(true);
@@ -59,11 +57,12 @@ export function DepositWallet() {
     // Check immediately
     updateBalance();
 
-    // Poll every 10 seconds (will detect deposits)
-    const interval = setInterval(updateBalance, 10000);
+    // Poll every 5 seconds (reasonable balance for responsiveness vs. performance)
+    const interval = setInterval(updateBalance, 5000);
 
     return () => clearInterval(interval);
-  }, [account, checkBalance]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account]); // Only depend on account, not checkBalance (avoids infinite re-renders)
 
   // Connect Xverse wallet
   const handleConnectXverse = async () => {
@@ -220,8 +219,8 @@ export function DepositWallet() {
         </div>
       </div>
 
-      {/* Deposit Section */}
-      {wbtcBalance < DEPOSIT_AMOUNT_SATS && (
+      {/* Deposit Section - Only show if user can't play even 1 match */}
+      {wbtcBalance < 1000n && (
         <>
           <div className="status-box" style={{ marginBottom: "15px", background: "#2a1a1a", borderColor: "#FFA726" }}>
             <div style={{ fontSize: "14px", color: "#FFA726", marginBottom: "10px" }}>

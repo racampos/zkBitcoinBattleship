@@ -13,11 +13,12 @@ import { prepareV3Fees } from "../utils/feeHelper";
 const isMainnet = import.meta.env.VITE_STARKNET_RPC_URL?.includes('mainnet');
 const WBTC_ADDRESS = isMainnet 
   ? "0x03fe2b97c1fd336e750087d68b9b867997fd64a2661ff3ca5a7c771641e8e7ac" // Real WBTC on Mainnet
-  : "0x0496bef3ed20371382fbe0ca6a5a64252c5c848f9f1f0cccf8110fc4def912d5"; // WBTC on Sepolia (Atomiq-compatible)
+  : "0x04861ba938aed21f2cd7740acd3765ac4d2974783a3218367233de0153490cb6"; // Vesu WBTC on Sepolia (Atomiq-supported)
 
 const STAKE_AMOUNT_SATS = 1000n; // 1,000 satoshis (~$1 USD)
 
 console.log(`🪙 WBTC Address (${isMainnet ? 'MAINNET' : 'SEPOLIA'}):`, WBTC_ADDRESS);
+console.log(`   ${isMainnet ? 'Standard WBTC' : 'Vesu WBTC (testnet)'}`);
 
 export function useWBTCContracts(account: Account | null) {
   const { setError, setIsLoading } = useGameStore();

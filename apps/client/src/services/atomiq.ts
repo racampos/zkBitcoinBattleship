@@ -235,7 +235,24 @@ export class AtomiqService {
     }
 
     const fromToken = (this.factory as any).Tokens.BITCOIN.BTC; // On-chain BTC
-    const toToken = (this.factory as any).Tokens.STARKNET.STRK;
+    
+    // Atomiq SDK has TWO different WBTC tokens:
+    // - WBTC: Mainnet WBTC (0x03fe...)
+    // - _TESTNET_WBTC_VESU: Sepolia testnet WBTC (0x0486...)
+    // We must use the correct token IDENTIFIER, not just hardcode addresses!
+    const isMainnet = import.meta.env.VITE_STARKNET_RPC_URL?.includes('mainnet');
+    const toToken = isMainnet
+      ? (this.factory as any).Tokens.STARKNET.WBTC
+      : (this.factory as any).Tokens.STARKNET._TESTNET_WBTC_VESU;
+
+    console.log("🔄 Creating on-chain BTC → WBTC swap:", {
+      from: fromToken.symbol,
+      to: toToken.symbol,
+      network: isMainnet ? 'MAINNET' : 'SEPOLIA TESTNET',
+      amount: amount.toString(),
+      btcSource: bitcoinAddress,
+      starknetDest: starknetAddress
+    });
 
     // Create swap (line 135-142 from official example)
     const swap = await this.swapper.swap(

@@ -24,26 +24,30 @@ export function Gameplay() {
   
   // Check if there's a pending shot waiting for opponent to apply proof
   const hasPendingShot = gameData?.pending_shot !== undefined;
+  const myTurn = isMyTurn();
   
-  // Clear waitingForProof when turn comes back to us (proof was applied)
+  // Detect when shot result appears on opponent board (proof was applied)
   useEffect(() => {
-    if (waitingForProof && isMyTurn() && !hasPendingShot) {
+    if (!waitingForProof || !lastShotCoords || !opponentBoard) return;
+    
+    const cellValue = opponentBoard[lastShotCoords.row][lastShotCoords.col];
+    
+    // If cell has a result (2=hit, 3=miss), proof was applied!
+    if (cellValue === 2 || cellValue === 3) {
+      console.log(`✅ Detected shot result at (${lastShotCoords.row}, ${lastShotCoords.col}): ${cellValue === 2 ? 'HIT' : 'MISS'}`);
       setWaitingForProof(false);
       
-      // Check result of last shot if we have coordinates
-      if (lastShotCoords && opponentBoard) {
-        const cellValue = opponentBoard[lastShotCoords.row][lastShotCoords.col];
-        if (cellValue === 2) {
-          setShotResultMessage(`🎯 HIT at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}!`);
-        } else if (cellValue === 3) {
-          setShotResultMessage(`💧 MISS at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
-        }
-        
-        // Clear message after 5 seconds
-        setTimeout(() => setShotResultMessage(null), 5000);
+      // Show result notification
+      if (cellValue === 2) {
+        setShotResultMessage(`🎯 HIT at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}!`);
+      } else {
+        setShotResultMessage(`💧 MISS at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
       }
+      
+      // Clear message after 5 seconds
+      setTimeout(() => setShotResultMessage(null), 5000);
     }
-  }, [waitingForProof, isMyTurn, hasPendingShot, lastShotCoords, opponentBoard]);
+  }, [waitingForProof, lastShotCoords, opponentBoard]);
 
   // Initialize opponent board if not set
   useEffect(() => {
@@ -175,7 +179,7 @@ export function Gameplay() {
 
         <button 
           onClick={handleFireShot} 
-          disabled={isGameOver || !isMyTurn() || isAlreadyFired() || isFiring || waitingForProof || hasPendingShot} 
+          disabled={isGameOver || !myTurn || isAlreadyFired() || isFiring || waitingForProof || hasPendingShot} 
           className="danger"
           title={(waitingForProof || hasPendingShot) ? "Waiting for opponent to apply proof..." : "Fire a shot at the opponent"}
         >
@@ -208,7 +212,7 @@ export function Gameplay() {
       <div className="status-box">
         {isGameOver 
           ? "🏁 Game Over - No more shots can be fired" 
-          : !isMyTurn() 
+          : !myTurn 
             ? "Waiting for opponent..." 
             : (waitingForProof || hasPendingShot)
               ? "⏳ Waiting for opponent to apply proof..."

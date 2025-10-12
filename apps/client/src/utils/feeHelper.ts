@@ -57,11 +57,31 @@ export async function prepareV3Fees(
 
   console.log("⛽ Estimating V3 fees...");
 
-  // 1. Estimate fees
+  // 1. Estimate fees (with fallback for undeployed accounts)
   const callsArray = Array.isArray(calls) ? calls : [calls];
-  const estimate: any = await account.estimateInvokeFee(callsArray);
+  let estimate: any;
+  let isUndeployedAccount = false;
 
-  console.log(`   Estimated fee: ${estimate.overall_fee} FRI`);
+  try {
+    estimate = await account.estimateInvokeFee(callsArray);
+    console.log(`   Estimated fee: ${estimate.overall_fee} FRI`);
+  } catch (error: any) {
+    // If account is not deployed, fee estimation will fail with "Contract not found"
+    // In this case, use generous default fees that will cover deployment + transaction
+    if (error.message?.includes("Contract not found") || error.message?.includes("not deployed")) {
+      console.log("   ⚠️  Account not deployed - using default fees for deployment");
+      isUndeployedAccount = true;
+      estimate = {
+        overall_fee: "100000000000000", // 0.0001 STRK (generous for deployment + tx)
+        gas_consumed: "100000",
+        data_gas_consumed: "10000",
+        gas_price: "100000000000",
+        data_gas_price: "10000000000",
+      };
+    } else {
+      throw error; // Re-throw unexpected errors
+    }
+  }
 
   // 2. Extract resource usage from estimate
   // V3 estimates return resource breakdown (gas_consumed, data_gas_consumed, etc.)
@@ -69,9 +89,9 @@ export async function prepareV3Fees(
   
   // Parse resource estimates (these come from the RPC estimate response)
   // If not available, use conservative fallbacks
-  const l1Gas = BigInt((estimate as any).gas_consumed || "50000");
-  const l1DataGas = BigInt((estimate as any).data_gas_consumed || "5000"); // CRITICAL for token ops!
-  const l2Gas = BigInt((estimate as any).gas_consumed || "50000");
+  const l1Gas = BigInt((estimate as any).gas_consumed || "100000");
+  const l1DataGas = BigInt((estimate as any).data_gas_consumed || "10000"); // CRITICAL for token ops!
+  const l2Gas = BigInt((estimate as any).gas_consumed || "100000");
   
   const l1GasPrice = BigInt((estimate as any).gas_price || "100000000000"); // ~100 gwei in FRI
   const l1DataGasPrice = BigInt((estimate as any).data_gas_price || "10000000000"); // ~10 gwei in FRI

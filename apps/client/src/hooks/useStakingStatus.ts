@@ -95,10 +95,6 @@ export function useStakingStatus(): StakingStatus {
               
               p1Staked = stake_p1 >= STAKE_AMOUNT_SATS;
               p2Staked = stake_p2 >= STAKE_AMOUNT_SATS;
-              
-              console.log(
-                `📊 Escrow status - P1: ${stake_p1} sats (${p1Staked ? "✅" : "❌"}), P2: ${stake_p2} sats (${p2Staked ? "✅" : "❌"})`
-              );
             }
           });
         });

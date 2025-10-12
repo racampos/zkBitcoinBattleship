@@ -140,7 +140,6 @@ export function useGameState(gameId: string | null) {
           };
 
           setGameData(gameData);
-          console.log("✅ Game state updated");
         } else {
           console.log("⚠️ No Game model found in entity");
         }

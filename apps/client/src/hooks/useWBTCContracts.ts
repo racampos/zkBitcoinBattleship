@@ -92,7 +92,6 @@ export function useWBTCContracts(account: Account | null) {
 
       // Result is [low, high] for u256
       const allowance = BigInt(result[0]);
-      console.log(`🔍 Current WBTC allowance: ${allowance} sats`);
       return allowance;
     } catch (err: any) {
       console.error("❌ Failed to check allowance:", err);

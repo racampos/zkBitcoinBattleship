@@ -62,6 +62,7 @@ export function useShotTracking() {
 
         // Collect all entity types first
         const myAttackerShots = new Set<string>();
+        const opponentAttackerShots = new Set<string>(); // NEW: Track opponent's shots
         const allShots = new Map<string, number>();
         const allCellHits = new Map<string, number>();
         const allPendingShots: Array<{ x: number; y: number; turn_no: number }> = [];
@@ -74,6 +75,9 @@ export function useShotTracking() {
             if (model.__typename === "battleship_AttackerShot") {
               if (model.attacker?.toLowerCase() === account.address.toLowerCase() && model.fired) {
                 myAttackerShots.add(`${model.x},${model.y}`);
+              } else if (model.attacker?.toLowerCase() !== account.address.toLowerCase() && model.fired) {
+                // NEW: Collect opponent's shots for defense board restoration
+                opponentAttackerShots.add(`${model.x},${model.y}`);
               }
             }
 
@@ -111,11 +115,20 @@ export function useShotTracking() {
         });
 
         // Shots AT me (defense board)
-        // Priority: CellHit > PendingShot
+        // NEW: Use opponent's AttackerShot + Shot to restore BOTH hits and misses
+        opponentAttackerShots.forEach((key) => {
+          if (allShots.has(key)) {
+            const result = allShots.get(key)!; // 0 = miss, 1 = hit
+            defendingShotsMap.set(key, result);
+          }
+        });
+        
+        // Also add CellHit data (redundant for hits, but ensures consistency)
         allCellHits.forEach((hit, key) => {
           defendingShotsMap.set(key, hit);
         });
 
+        // Add pending shots (opponent fired but proof not applied yet)
         allPendingShots.forEach((shot) => {
           const key = `${shot.x},${shot.y}`;
           if (!defendingShotsMap.has(key)) {

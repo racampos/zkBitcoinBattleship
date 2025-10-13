@@ -17,7 +17,13 @@ export function useBoardCommitStatus() {
       return;
     }
 
+    let isMounted = true;
+    let isCurrentlyCommitted = false;
+
     const checkCommitStatus = async () => {
+      // Don't check if already committed
+      if (isCurrentlyCommitted) return;
+      
       setIsChecking(true);
       try {
         const response = await fetch("/torii-graphql", {
@@ -25,7 +31,7 @@ export function useBoardCommitStatus() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query: `{
-              entities(keys: ["${gameId}", "${account.address}"]) {
+              entities {
                 edges {
                   node {
                     models {
@@ -44,42 +50,66 @@ export function useBoardCommitStatus() {
         });
 
         const result = await response.json();
-        const boardCommit = result.data?.entities?.edges[0]?.node?.models?.find(
-          (m: any) => m.__typename === "battleship_BoardCommit"
-        );
+        const entities = result.data?.entities?.edges || [];
+        
+        // Find BoardCommit for this game and player
+        let boardCommit: any = null;
+        for (const edge of entities) {
+          const commit = edge.node?.models?.find(
+            (m: any) => m.__typename === "battleship_BoardCommit" &&
+                       m.game_id === gameId &&
+                       m.player === account.address
+          );
+          if (commit) {
+            boardCommit = commit;
+            break;
+          }
+        }
 
-        if (boardCommit?.commitment) {
-          console.log("✅ Board committed successfully");
+        if (!isMounted) return; // Don't update state if unmounted
+
+        // Check if commitment exists and is not zero (can be "0", "0x0", or 0)
+        const hasCommitment = boardCommit?.commitment && 
+                             boardCommit.commitment !== "0" && 
+                             boardCommit.commitment !== "0x0" &&
+                             boardCommit.commitment !== 0;
+
+        if (hasCommitment) {
+          console.log("✅ Board committed successfully", boardCommit.commitment);
+          isCurrentlyCommitted = true;
           setIsCommitted(true);
         } else {
+          console.log("ℹ️ Board not committed yet", { 
+            found: !!boardCommit, 
+            commitment: boardCommit?.commitment 
+          });
           setIsCommitted(false);
         }
       } catch (error) {
         console.error("Error checking board commit status:", error);
-        setIsCommitted(false);
+        if (isMounted) {
+          setIsCommitted(false);
+        }
       } finally {
-        setIsChecking(false);
+        if (isMounted) {
+          setIsChecking(false);
+        }
       }
     };
 
     // Check immediately
     checkCommitStatus();
 
-    // Check again after 3 seconds (matches vanilla JS setTimeout approach)
-    const timeout = setTimeout(checkCommitStatus, 3000);
-
-    // Also poll every 3 seconds while not committed
+    // Poll every 2 seconds until committed
     const interval = setInterval(() => {
-      if (!isCommitted) {
-        checkCommitStatus();
-      }
-    }, 3000);
+      checkCommitStatus();
+    }, 2000);
 
     return () => {
-      clearTimeout(timeout);
+      isMounted = false;
       clearInterval(interval);
     };
-  }, [gameId, account, isCommitted]);
+  }, [gameId, account]); // Remove isCommitted from dependencies!
 
   return { isCommitted, isChecking };
 }

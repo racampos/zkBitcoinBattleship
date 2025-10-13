@@ -157,6 +157,42 @@ export function GameManagement() {
     );
   }
 
+  // Handle case where gameId exists but gameData is null (stale/invalid game)
+  if (gameId && !gameData) {
+    return (
+      <div className="section">
+        <h2>⚠️ Game Not Found</h2>
+        
+        <div className="status-box" style={{ background: "#3a1a1a", borderColor: "#FF5722" }}>
+          <div style={{ marginBottom: "10px" }}>
+            <strong>Game ID:</strong> <span style={{ fontFamily: "monospace", fontSize: "12px" }}>{gameId.substring(0, 30)}...</span>
+          </div>
+          <div style={{ marginBottom: "15px", fontSize: "14px" }}>
+            This game could not be found. Possible reasons:
+            <ul style={{ marginTop: "8px", marginBottom: "0", paddingLeft: "20px" }}>
+              <li>Game was created on a different network (Katana vs Sepolia)</li>
+              <li>Torii indexer hasn't synced this game yet</li>
+              <li>Game ID is invalid or corrupted</li>
+            </ul>
+          </div>
+          <button 
+            onClick={() => {
+              console.log('🗑️ Clearing stale game ID');
+              if (gameId) {
+                clearBoardFromStorage(gameId);
+              }
+              setGameId(null);
+            }}
+            className="secondary"
+            style={{ width: "100%" }}
+          >
+            Clear and Start New Game
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="section">
       <h2>🎲 Game Management</h2>

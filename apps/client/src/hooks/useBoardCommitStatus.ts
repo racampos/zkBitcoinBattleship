@@ -3,26 +3,36 @@
  * Queries Torii for the BoardCommit model
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useGameStore } from "../store/gameStore";
 
 export function useBoardCommitStatus() {
   const { gameId, account } = useGameStore();
   const [isCommitted, setIsCommitted] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  
+  // Use ref to persist committed status across effect restarts
+  const isCurrentlyCommittedRef = useRef(false);
+  const lastGameIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!gameId || !account) {
       setIsCommitted(false);
+      isCurrentlyCommittedRef.current = false;
       return;
     }
 
+    // Reset committed status if game ID changed
+    if (lastGameIdRef.current !== gameId) {
+      isCurrentlyCommittedRef.current = false;
+      lastGameIdRef.current = gameId;
+    }
+
     let isMounted = true;
-    let isCurrentlyCommitted = false;
 
     const checkCommitStatus = async () => {
       // Don't check if already committed
-      if (isCurrentlyCommitted) return;
+      if (isCurrentlyCommittedRef.current) return;
       
       setIsChecking(true);
       try {
@@ -31,7 +41,7 @@ export function useBoardCommitStatus() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             query: `{
-              entities {
+              entities(first: 1000) {
                 edges {
                   node {
                     models {
@@ -76,7 +86,7 @@ export function useBoardCommitStatus() {
 
         if (hasCommitment) {
           console.log("✅ Board committed successfully", boardCommit.commitment);
-          isCurrentlyCommitted = true;
+          isCurrentlyCommittedRef.current = true;
           setIsCommitted(true);
         } else {
           console.log("ℹ️ Board not committed yet", { 

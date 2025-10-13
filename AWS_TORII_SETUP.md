@@ -3,22 +3,25 @@
 ## Step 1: Launch EC2 Instance
 
 ### Instance Configuration:
+
 - **AMI**: Ubuntu 22.04 LTS
 - **Instance Type**: `t3.small` (2 vCPU, 2GB RAM) - minimum recommended
 - **Storage**: 20GB gp3 (SSD)
 - **Key Pair**: Create or use existing SSH key
 
 ### Security Group (CRITICAL):
+
 Open these ports:
 
-| Port  | Protocol | Source    | Purpose                |
-|-------|----------|-----------|------------------------|
-| 22    | TCP      | Your IP   | SSH access             |
-| 8080  | TCP      | 0.0.0.0/0 | Torii GraphQL (HTTP)   |
-| 8081  | TCP      | 0.0.0.0/0 | Torii gRPC             |
-| 50051 | TCP      | 0.0.0.0/0 | Torii gRPC (optional)  |
+| Port  | Protocol | Source    | Purpose               |
+| ----- | -------- | --------- | --------------------- |
+| 22    | TCP      | Your IP   | SSH access            |
+| 8080  | TCP      | 0.0.0.0/0 | Torii GraphQL (HTTP)  |
+| 8081  | TCP      | 0.0.0.0/0 | Torii gRPC            |
+| 50051 | TCP      | 0.0.0.0/0 | Torii gRPC (optional) |
 
 ### Launch & Note:
+
 - Save your **Public IPv4 address** (e.g., `54.123.45.67`)
 - Save your **Public IPv4 DNS** (e.g., `ec2-54-123-45-67.compute-1.amazonaws.com`)
 
@@ -39,8 +42,8 @@ sudo apt update && sudo apt upgrade -y
 ## Step 3: Install Dependencies
 
 ```bash
-# Install required packages
-sudo apt install -y curl git build-essential
+# Install required packages (jq is required by dojoup)
+sudo apt install -y curl git build-essential jq
 
 # Install Rust (required by Dojo)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -90,6 +93,7 @@ cat torii.toml
 ```
 
 Should look like:
+
 ```toml
 # Torii configuration for Sepolia testnet
 world_address = "0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69"
@@ -112,6 +116,7 @@ torii --config torii.toml \
 ```
 
 **Expected output:**
+
 ```
 🌐 Starting Torii indexer...
 📡 Listening on 0.0.0.0:8080 (HTTP)
@@ -156,6 +161,7 @@ npm run dev
 ```
 
 **Test the game:**
+
 1. Open `http://localhost:4000`
 2. Connect Cartridge wallet
 3. Create a game
@@ -169,11 +175,13 @@ npm run dev
 Once testing works, set up Torii as a systemd service for auto-restart:
 
 ### Create service file:
+
 ```bash
 sudo nano /etc/systemd/system/torii.service
 ```
 
 ### Paste this configuration:
+
 ```ini
 [Unit]
 Description=Torii Indexer for BitcoinShip
@@ -194,6 +202,7 @@ WantedBy=multi-user.target
 ```
 
 ### Enable and start the service:
+
 ```bash
 # Reload systemd
 sudo systemctl daemon-reload
@@ -232,6 +241,7 @@ sudo nano /etc/nginx/sites-available/torii
 ```
 
 Add:
+
 ```nginx
 server {
     listen 80;
@@ -242,10 +252,10 @@ server {
 server {
     listen 443 ssl;
     server_name torii.yourdomain.com;
-    
+
     ssl_certificate /etc/letsencrypt/live/torii.yourdomain.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/torii.yourdomain.com/privkey.pem;
-    
+
     location /graphql {
         proxy_pass http://localhost:8080;
         proxy_http_version 1.1;
@@ -254,7 +264,7 @@ server {
         proxy_set_header Host $host;
         add_header Access-Control-Allow-Origin *;
     }
-    
+
     location /grpc {
         proxy_pass http://localhost:8081;
         proxy_http_version 1.1;
@@ -264,6 +274,7 @@ server {
 ```
 
 Then:
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/torii /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -277,6 +288,7 @@ Now use: `VITE_TORII_URL=https://torii.yourdomain.com`
 ## Troubleshooting
 
 ### Torii won't start:
+
 ```bash
 # Check logs
 sudo journalctl -u torii -n 50
@@ -288,6 +300,7 @@ sudo journalctl -u torii -n 50
 ```
 
 ### Can't connect from local dev:
+
 ```bash
 # Check security group allows port 8080, 8081
 # Check if Torii is listening on 0.0.0.0 (not 127.0.0.1)
@@ -295,6 +308,7 @@ sudo netstat -tlnp | grep torii
 ```
 
 ### Slow syncing:
+
 ```bash
 # Check RPC rate limits
 # Consider using paid RPC provider (Alchemy, Blast)
@@ -302,6 +316,7 @@ sudo netstat -tlnp | grep torii
 ```
 
 ### Out of memory:
+
 ```bash
 # Upgrade to t3.medium (4GB RAM)
 # Or add swap:
@@ -321,6 +336,7 @@ sudo swapon /swapfile
 - **Total**: ~$18/month
 
 ### Cost Optimization:
+
 - Use **Reserved Instance** for 1-year commitment: ~$9/month (save 40%)
 - Use **Spot Instance** for dev/testing: ~$4/month (but can be interrupted)
 
@@ -342,6 +358,7 @@ Once Torii is running on AWS and tested:
 ## Monitoring & Maintenance
 
 ### Check Torii health:
+
 ```bash
 # Check service status
 sudo systemctl status torii
@@ -354,6 +371,7 @@ sudo journalctl -u torii -f
 ```
 
 ### Update Torii:
+
 ```bash
 # Stop service
 sudo systemctl stop torii
@@ -366,6 +384,7 @@ sudo systemctl start torii
 ```
 
 ### Backup database (optional):
+
 ```bash
 cd ~/BitcoinShip/chain/dojo
 tar -czf torii_backup_$(date +%Y%m%d).tar.gz .torii_db_sepolia/
@@ -378,4 +397,3 @@ tar -czf torii_backup_$(date +%Y%m%d).tar.gz .torii_db_sepolia/
 - [Dojo Discord](https://discord.gg/dojoengine) - #support channel
 - [Torii Documentation](https://book.dojoengine.org/toolchain/torii)
 - AWS EC2 SSH troubleshooting: Check security group, key permissions (`chmod 400 key.pem`)
-

@@ -172,7 +172,11 @@ export function useGameState(gameId: string | null) {
             .withClause(KeysClause([`${NAMESPACE}-Game`], [gameId], "VariableLen").build()),
           callback: ({ data, error }) => {
             if (data) {
-              console.log("📡 Game update received");
+              console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+              console.log("📡 GAME STATE UPDATE RECEIVED (gRPC)");
+              console.log(`   Game ID: ${gameId}`);
+              console.log(`   Timestamp: ${new Date().toISOString()}`);
+              console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
               fetchGameState(); // Refresh state when update received
             }
             if (error) {

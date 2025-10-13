@@ -30,11 +30,21 @@ export function ProofApplication() {
     const wasHit = originalBoard[row][col] === 1;
     const result = wasHit ? 1 : 0; // 1 = hit, 0 = miss
     
-    console.log(`🛡️ Applying proof for shot at (${row}, ${col}): ${wasHit ? 'HIT' : 'MISS'} (original cell value: ${originalBoard[row][col]})`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🛡️ PROOF APPLICATION - START');
+    console.log(`   My Address: ${account?.address}`);
+    console.log(`   Current Turn (contract): ${gameData?.current_turn}`);
+    console.log(`   Am I the defender? ${gameData?.current_turn !== account?.address}`);
+    console.log(`   Pending Shot: (${row}, ${col})`);
+    console.log(`   Result: ${wasHit ? 'HIT' : 'MISS'} (cell value: ${originalBoard[row][col]})`);
+    console.log(`   Game Status: ${gameData?.status}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     try {
       await applyProof(row, col, result);
+      console.log('✅ Proof application successful!');
     } catch (error) {
+      console.log('❌ Proof application failed!');
       // Error handled in hook
     }
   };
@@ -66,8 +76,13 @@ export function ProofApplication() {
           className="danger"
           style={{ fontSize: "16px", padding: "12px 24px" }}
         >
-          {isLoading ? "Applying Proof..." : "🛡️ Apply Proof"}
+          {isLoading ? "⏳ Applying Proof..." : "🛡️ Apply Proof"}
         </button>
+        {isLoading && (
+          <div style={{ marginTop: "10px", fontSize: "12px", color: "#FFA726" }}>
+            Waiting for transaction confirmation...
+          </div>
+        )}
       </div>
     </div>
   );

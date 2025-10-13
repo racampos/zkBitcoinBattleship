@@ -9,32 +9,47 @@ import { useGameContracts } from "../../hooks/useGameContracts";
 import { useBoardCommitStatus } from "../../hooks/useBoardCommitStatus";
 import { useStakingStatus } from "../../hooks/useStakingStatus";
 import { BoardDisplay } from "./BoardDisplay";
-import { generateRandomBoard, calculateBoardHash } from "../../utils/boardUtils";
+import { generateRandomBoard, calculateBoardHash, loadBoardFromStorage, saveBoardToStorage } from "../../utils/boardUtils";
 
 export function BoardSetup() {
-  const { account, myBoard, setMyBoard, setOriginalBoard, isLoading } = useGameStore();
+  const { account, gameId, myBoard, setMyBoard, setOriginalBoard, isLoading } = useGameStore();
   const { commitBoard } = useGameContracts(account);
   const { isCommitted, isChecking } = useBoardCommitStatus();
   const stakingStatus = useStakingStatus();
 
-  // Generate board on mount if not already generated or if it's empty (no ships)
+  // Load or generate board on mount
   useEffect(() => {
-    if (!myBoard || myBoard.every(row => row.every(cell => cell === 0))) {
+    // Skip if no game ID or board already exists
+    if (!gameId) return;
+    if (myBoard && !myBoard.every(row => row.every(cell => cell === 0))) return;
+
+    // Try to restore from localStorage first
+    const savedBoard = loadBoardFromStorage(gameId);
+    
+    if (savedBoard) {
+      // Restore saved board
+      console.log("♻️ Restoring saved board for game");
+      setMyBoard(savedBoard);
+      setOriginalBoard(savedBoard.map(row => [...row])); // Deep copy for original
+    } else if (!isCommitted) {
+      // Only generate new board if not committed on-chain
       console.log("🎲 Generating random board...");
       const board = generateRandomBoard();
       setMyBoard(board);
       setOriginalBoard(board.map(row => [...row])); // Deep copy for original
     }
-  }, [myBoard, setMyBoard, setOriginalBoard]);
+  }, [gameId, myBoard, isCommitted, setMyBoard, setOriginalBoard]);
 
   const handleCommitBoard = async () => {
-    if (!myBoard) return;
+    if (!myBoard || !gameId) return;
 
     const boardHash = calculateBoardHash(myBoard);
     console.log("📝 Committing board with hash:", boardHash);
 
     try {
       await commitBoard(boardHash);
+      // Save board to localStorage after successful commit
+      saveBoardToStorage(gameId, myBoard);
     } catch (error) {
       // Error handled in hook
     }

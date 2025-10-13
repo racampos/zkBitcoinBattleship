@@ -54,22 +54,29 @@ export function Gameplay() {
     
     // If cell has a result (2=hit, 3=miss), proof was applied!
     if (cellValue === 2 || cellValue === 3) {
-      console.log(`✅ Detected shot result at (${lastShotCoords.row}, ${lastShotCoords.col}): ${cellValue === 2 ? 'HIT' : 'MISS'}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🎯 SHOT RESULT DETECTED');
+      console.log(`   My Address: ${account?.address}`);
+      console.log(`   Shot Coords: (${lastShotCoords.row}, ${lastShotCoords.col}) = ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
+      console.log(`   Cell Value: ${cellValue} (${cellValue === 2 ? 'HIT' : 'MISS'})`);
+      console.log(`   Current Turn: ${gameData?.current_turn}`);
+      console.log(`   Is My Turn: ${myTurn}`);
+      console.log(`   Has Pending Shot: ${hasPendingShot}`);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       
-      // IMPORTANT: Check BOTH conditions before enabling:
-      // 1. pending_shot is gone (proof was applied)
-      // 2. Turn has flipped back to us
+      // IMPORTANT: Only wait for pending_shot to clear (proof was applied)
+      // The turn will flip to the OPPONENT after proof, not back to us!
       const checkAndEnable = () => {
         const currentHasPendingShot = useGameStore.getState().gameData?.pending_shot !== undefined;
-        const currentIsMyTurn = isMyTurn();
         
-        // If pending shot still exists OR not our turn yet, keep waiting
-        if (currentHasPendingShot || !currentIsMyTurn) {
-          console.log(`⚠️ Not ready yet - pending: ${currentHasPendingShot}, myTurn: ${currentIsMyTurn}`);
+        // If pending shot still exists, proof wasn't applied yet
+        if (currentHasPendingShot) {
+          console.log(`⚠️ Proof not applied yet - pending: ${currentHasPendingShot}`);
           return; // Don't retry - will be triggered by next useEffect run
         }
         
-        console.log('✅ Proof confirmed and turn flipped - enabling Fire button');
+        console.log('✅ Proof confirmed - showing result');
+        console.log(`   Displaying message for MY shot at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
         setWaitingForProof(false);
         
         // Show result notification
@@ -119,14 +126,24 @@ export function Gameplay() {
     setError(null);
     setShotResultMessage(null); // Clear any previous result message
     setIsFiring(true);
-    console.log(`🎯 Firing at ${shotRow}${shotCol} (${row}, ${col})`);
+    
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('🎯 FIRING SHOT');
+    console.log(`   My Address: ${account?.address}`);
+    console.log(`   Target: ${shotRow}${shotCol} (${row}, ${col})`);
+    console.log(`   Current Turn: ${gameData?.current_turn}`);
+    console.log(`   Is My Turn: ${myTurn}`);
+    console.log(`   Has Pending Shot: ${hasPendingShot}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     try {
       await fireShot(row, col);
       // Shot succeeded! Save coordinates and wait for proof
+      console.log(`✅ Shot fired successfully - waiting for defender to apply proof`);
       setLastShotCoords({ row, col });
       setWaitingForProof(true);
     } catch (error) {
+      console.log(`❌ Shot firing failed`);
       // Error handled in hook
     } finally {
       setIsFiring(false);

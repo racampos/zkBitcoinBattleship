@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from "react";
 import { useGameStore } from "../../store/gameStore";
 import { useGameContracts } from "../../hooks/useGameContracts";
+import { clearBoardFromStorage } from "../../utils/boardUtils";
 
 export function GameManagement() {
   const { account, gameId, gameData, setGameId, isLoading, error, amIPlayer1 } = useGameStore();
@@ -139,6 +140,10 @@ export function GameManagement() {
         <button
           onClick={() => {
             if (confirm('⚠️ Are you sure you want to leave this game? This will clear the game from your session (you can rejoin later using the game ID).')) {
+              // Clear board from localStorage
+              if (gameId) {
+                clearBoardFromStorage(gameId);
+              }
               setGameId(null);
               setJoinGameId("");
             }

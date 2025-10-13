@@ -296,11 +296,39 @@ export function useGameContracts(account: Account | null) {
         calldata: [gameId, row, col, result, nullifier],
       };
 
-      const feeDetails = await prepareV3Fees(account, [calls], {
-        tipPercent: 50,
-        l1GasMultiplier: 300,
-        l2GasMultiplier: 300,
-      });
+      // Retry logic: If we get WRONG_SHOOTER, the shot transaction might not be propagated yet
+      // Wait and retry up to 3 times with exponential backoff
+      let feeDetails;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount <= maxRetries) {
+        try {
+          feeDetails = await prepareV3Fees(account, [calls], {
+            tipPercent: 50,
+            l1GasMultiplier: 300,
+            l2GasMultiplier: 300,
+          });
+          break; // Success! Exit retry loop
+        } catch (err: any) {
+          const isWrongShooter = err.message?.includes('WRONG_SHOOTER');
+          
+          if (isWrongShooter && retryCount < maxRetries) {
+            const waitTime = 1000 * (2 ** retryCount); // Exponential backoff: 1s, 2s, 4s
+            console.log(`⏳ WRONG_SHOOTER detected (shot not confirmed yet). Retrying in ${waitTime}ms... (attempt ${retryCount + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            retryCount++;
+          } else {
+            // Not a WRONG_SHOOTER error or out of retries - rethrow
+            throw err;
+          }
+        }
+      }
+      
+      if (!feeDetails) {
+        throw new Error("Failed to estimate fees after retries");
+      }
+      
       const tx = await account.execute(calls, undefined, feeDetails);
 
       console.log("📤 Proof transaction sent:", tx.transaction_hash);

@@ -110,3 +110,48 @@ export function calculateBoardHash(board: Board): string {
   // TODO: Implement proper Poseidon hash
   return "0x" + "0".repeat(63) + "1";
 }
+
+/**
+ * Board Persistence - Save to localStorage
+ */
+const BOARD_STORAGE_PREFIX = "battleship_board_";
+
+export function saveBoardToStorage(gameId: string, board: Board): void {
+  try {
+    const key = `${BOARD_STORAGE_PREFIX}${gameId}`;
+    const boardData = JSON.stringify(board);
+    localStorage.setItem(key, boardData);
+    console.log(`💾 Board saved to localStorage for game ${gameId.substring(0, 20)}...`);
+  } catch (error) {
+    console.error("❌ Failed to save board to localStorage:", error);
+  }
+}
+
+export function loadBoardFromStorage(gameId: string): Board | null {
+  try {
+    const key = `${BOARD_STORAGE_PREFIX}${gameId}`;
+    const boardData = localStorage.getItem(key);
+    
+    if (!boardData) {
+      console.log(`ℹ️ No saved board found for game ${gameId.substring(0, 20)}...`);
+      return null;
+    }
+    
+    const board = JSON.parse(boardData) as Board;
+    console.log(`♻️ Board restored from localStorage for game ${gameId.substring(0, 20)}...`);
+    return board;
+  } catch (error) {
+    console.error("❌ Failed to load board from localStorage:", error);
+    return null;
+  }
+}
+
+export function clearBoardFromStorage(gameId: string): void {
+  try {
+    const key = `${BOARD_STORAGE_PREFIX}${gameId}`;
+    localStorage.removeItem(key);
+    console.log(`🗑️ Board cleared from localStorage for game ${gameId.substring(0, 20)}...`);
+  } catch (error) {
+    console.error("❌ Failed to clear board from localStorage:", error);
+  }
+}

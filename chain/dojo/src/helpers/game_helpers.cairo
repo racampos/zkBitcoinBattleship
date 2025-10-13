@@ -163,8 +163,10 @@ pub fn finalize_win(mut world: WorldStorage, game_id: felt252, winner: ContractA
     // instead of from this contract
     let e_opt = get_opt_escrow(world, game_id);
     if e_opt.is_some() {
-        // Get escrow contract address (hardcoded for now)
-        let escrow_contract: ContractAddress = 0x56c96bcab1bd80e736422a407f469e72bda9987a80a3b37bf63a523ea0944c4
+        // Get escrow contract address
+        // Sepolia: 0xfc378fb3dc5c81094e305ef23099d3c7fbd7305ce0998c2e80df4792056b30
+        // Katana:  0x56c96bcab1bd80e736422a407f469e72bda9987a80a3b37bf63a523ea0944c4
+        let escrow_contract: ContractAddress = 0xfc378fb3dc5c81094e305ef23099d3c7fbd7305ce0998c2e80df4792056b30
             .try_into()
             .unwrap();
         

@@ -1,0 +1,23 @@
+[world]
+name = "ZK Battleship"
+description = "Provably fair on-chain Battleship with ZK proofs"
+seed = "battleship"
+
+[namespace]
+default = "battleship"
+
+[env]
+rpc_url = "https://api.cartridge.gg/x/starknet/sepolia"
+account_address = "0x05dd46e52bc01823527b68fb73febebb5981bcaa28aaf3869b55b231656dca84"
+private_key = "0x0713fa77c07cdc81164319477e6194f1a68c68cea81c2223f0bb9e437ca99786"
+
+[writers]
+"battleship" = [
+  "battleship-game_management",
+  "battleship-coin_flip",
+  "battleship-board_commit",
+  "battleship-gameplay",
+  "battleship-proof_verify",
+  "battleship-timeout",
+  "battleship-escrow",
+]

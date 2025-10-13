@@ -10,7 +10,7 @@ import { BoardDisplay } from "./BoardDisplay";
 import { createEmptyBoard } from "../../utils/boardUtils";
 
 export function Gameplay() {
-  const { account, gameData, opponentBoard, setOpponentBoard, isMyTurn } = useGameStore();
+  const { account, gameData, gameId, opponentBoard, setOpponentBoard, isMyTurn } = useGameStore();
   const { fireShot } = useGameContracts(account);
   const [shotRow, setShotRow] = useState("A");
   const [shotCol, setShotCol] = useState(1);
@@ -26,28 +26,67 @@ export function Gameplay() {
   const hasPendingShot = gameData?.pending_shot !== undefined;
   const myTurn = isMyTurn();
   
+  // Clear board state when game ID changes (new game started)
+  useEffect(() => {
+    if (gameId) {
+      console.log(`🎮 New game detected: ${gameId} - resetting opponent board and shot state`);
+      setOpponentBoard(createEmptyBoard());
+      setWaitingForProof(false);
+      setLastShotCoords(null);
+      setShotResultMessage(null);
+      setError(null);
+    }
+  }, [gameId, setOpponentBoard]);
+  
   // Detect when shot result appears on opponent board (proof was applied)
   useEffect(() => {
     if (!waitingForProof || !lastShotCoords || !opponentBoard) return;
     
     const cellValue = opponentBoard[lastShotCoords.row][lastShotCoords.col];
     
+    // CRITICAL: Only detect NEW results (not stale data from previous games)
+    // Cell should be 0 (empty) when we first fire, THEN become 2 or 3 after proof
+    // If it's already 2 or 3, it's stale data - ignore it
+    if (cellValue === 0) {
+      // Cell is still empty - proof not applied yet (expected)
+      return;
+    }
+    
     // If cell has a result (2=hit, 3=miss), proof was applied!
     if (cellValue === 2 || cellValue === 3) {
       console.log(`✅ Detected shot result at (${lastShotCoords.row}, ${lastShotCoords.col}): ${cellValue === 2 ? 'HIT' : 'MISS'}`);
-      setWaitingForProof(false);
       
-      // Show result notification
-      if (cellValue === 2) {
-        setShotResultMessage(`🎯 HIT at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}!`);
-      } else {
-        setShotResultMessage(`💧 MISS at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
-      }
+      // IMPORTANT: Check BOTH conditions before enabling:
+      // 1. pending_shot is gone (proof was applied)
+      // 2. Turn has flipped back to us
+      const checkAndEnable = () => {
+        const currentHasPendingShot = useGameStore.getState().gameData?.pending_shot !== undefined;
+        const currentIsMyTurn = isMyTurn();
+        
+        // If pending shot still exists OR not our turn yet, keep waiting
+        if (currentHasPendingShot || !currentIsMyTurn) {
+          console.log(`⚠️ Not ready yet - pending: ${currentHasPendingShot}, myTurn: ${currentIsMyTurn}`);
+          return; // Don't retry - will be triggered by next useEffect run
+        }
+        
+        console.log('✅ Proof confirmed and turn flipped - enabling Fire button');
+        setWaitingForProof(false);
+        
+        // Show result notification
+        if (cellValue === 2) {
+          setShotResultMessage(`🎯 HIT at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}!`);
+        } else {
+          setShotResultMessage(`💧 MISS at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
+        }
+        
+        // Clear message after 5 seconds
+        setTimeout(() => setShotResultMessage(null), 5000);
+      };
       
-      // Clear message after 5 seconds
-      setTimeout(() => setShotResultMessage(null), 5000);
+      // Check immediately (no need for delay - useEffect will re-run when conditions change)
+      checkAndEnable();
     }
-  }, [waitingForProof, lastShotCoords, opponentBoard]);
+  }, [waitingForProof, lastShotCoords, opponentBoard, hasPendingShot, myTurn]);
 
   // Initialize opponent board if not set
   useEffect(() => {

@@ -17,28 +17,28 @@ export function BoardSetup() {
   const { isCommitted, isChecking } = useBoardCommitStatus();
   const stakingStatus = useStakingStatus();
 
-  // Load or generate board on mount
+  // Reset board when game ID changes (new game started)
   useEffect(() => {
-    // Skip if no game ID or board already exists
-    if (!gameId) return;
-    if (myBoard && !myBoard.every(row => row.every(cell => cell === 0))) return;
-
-    // Try to restore from localStorage first
-    const savedBoard = loadBoardFromStorage(gameId);
-    
-    if (savedBoard) {
-      // Restore saved board
-      console.log("♻️ Restoring saved board for game");
-      setMyBoard(savedBoard);
-      setOriginalBoard(savedBoard.map(row => [...row])); // Deep copy for original
-    } else if (!isCommitted) {
-      // Only generate new board if not committed on-chain
-      console.log("🎲 Generating random board...");
-      const board = generateRandomBoard();
-      setMyBoard(board);
-      setOriginalBoard(board.map(row => [...row])); // Deep copy for original
+    if (gameId) {
+      console.log(`🎲 New game detected: ${gameId} - checking if board needs reset`);
+      
+      // Try to restore from localStorage first
+      const savedBoard = loadBoardFromStorage(gameId);
+      
+      if (savedBoard) {
+        // Restore saved board (page reload or rejoin)
+        console.log("♻️ Restoring saved board for game");
+        setMyBoard(savedBoard);
+        setOriginalBoard(savedBoard.map(row => [...row])); // Deep copy for original
+      } else {
+        // No saved board - generate new random board
+        console.log("🎲 Generating new random board...");
+        const board = generateRandomBoard();
+        setMyBoard(board);
+        setOriginalBoard(board.map(row => [...row])); // Deep copy for original
+      }
     }
-  }, [gameId, myBoard, isCommitted, setMyBoard, setOriginalBoard]);
+  }, [gameId, setMyBoard, setOriginalBoard]); // Only depend on gameId - reset whenever it changes
 
   const handleCommitBoard = async () => {
     if (!myBoard || !gameId) return;

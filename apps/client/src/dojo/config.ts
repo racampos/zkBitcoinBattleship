@@ -14,7 +14,7 @@ console.log(`🔧 Dojo Config: Using ${isMainnet ? 'MAINNET' : 'SEPOLIA'} manife
 
 export const DOJO_CONFIG = {
   worldAddress: activeManifest.world.address,
-  toriiUrl: "/torii-graphql", // Proxied through Vite to avoid CORS
+  toriiUrl: "http://localhost:8081", // Direct connection - Torii has CORS configured
   rpcUrl: import.meta.env.VITE_STARKNET_RPC_URL || "https://starknet-sepolia.g.alchemy.com/v2/A7uy7yxUkDxDje-8thlzv7LNcwsFEAki",
   relayUrl: "", // Not needed for deployed networks
   domainSeparator: {

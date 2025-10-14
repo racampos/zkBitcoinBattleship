@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { useGameStore } from "../store/gameStore";
+import { getToriiGraphQLUrl } from "../utils/toriiUrl";
 
 interface StakingStatus {
   escrowExists: boolean; // Does an Escrow entity exist for this game?
@@ -50,7 +51,7 @@ export function useStakingStatus(): StakingStatus {
         setStatus((prev) => ({ ...prev, isChecking: true }));
 
         // Query Escrow entity from Torii
-        const response = await fetch("/torii-graphql", {
+        const response = await fetch(getToriiGraphQLUrl(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -5,6 +5,7 @@
 
 import { useEffect } from "react";
 import { useGameStore } from "../store/gameStore";
+import { getToriiGraphQLUrl } from "../utils/toriiUrl";
 
 // Helper to create empty board
 function createEmptyBoard(): number[][] {
@@ -44,7 +45,7 @@ export function useShotTracking() {
         
         try {
           // Query all shot-related entities
-          const response = await fetch("/torii-graphql", {
+          const response = await fetch(getToriiGraphQLUrl(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -7,6 +7,7 @@ import { ToriiQueryBuilder, KeysClause } from "@dojoengine/sdk";
 import { useDojo } from "../dojo/DojoContext";
 import { useGameStore, GameData } from "../store/gameStore";
 import { NAMESPACE } from "../dojo/config";
+import { getToriiGraphQLUrl } from "../utils/toriiUrl";
 
 export function useGameState(gameId: string | null) {
   const { sdk, isInitialized } = useDojo();
@@ -21,7 +22,7 @@ export function useGameState(gameId: string | null) {
     try {
 
       // Query 1: Get game state from Torii GraphQL endpoint
-      const response = await fetch("/torii-graphql", {
+      const response = await fetch(getToriiGraphQLUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -59,7 +60,7 @@ export function useGameState(gameId: string | null) {
 
         if (gameModel) {
           // Query 2: Get ShipAliveCount for both players to calculate hits
-          const shipAliveResponse = await fetch("/torii-graphql", {
+          const shipAliveResponse = await fetch(getToriiGraphQLUrl(), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

@@ -5,6 +5,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useGameStore } from "../store/gameStore";
+import { getToriiGraphQLUrl } from "../utils/toriiUrl";
 
 export function useBoardCommitStatus() {
   const { gameId, account } = useGameStore();
@@ -36,7 +37,7 @@ export function useBoardCommitStatus() {
       
       setIsChecking(true);
       try {
-        const response = await fetch("/torii-graphql", {
+        const response = await fetch(getToriiGraphQLUrl(), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

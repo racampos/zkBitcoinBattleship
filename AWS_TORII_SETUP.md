@@ -13,12 +13,12 @@
 
 Open these ports:
 
-| Port  | Protocol | Source    | Purpose               |
-| ----- | -------- | --------- | --------------------- |
-| 22    | TCP      | Your IP   | SSH access            |
-| 8080  | TCP      | 0.0.0.0/0 | Torii GraphQL (HTTP)  |
-| 8081  | TCP      | 0.0.0.0/0 | Torii gRPC            |
-| 50051 | TCP      | 0.0.0.0/0 | Torii gRPC (optional) |
+| Port | Protocol | Source    | Purpose                         |
+| ---- | -------- | --------- | ------------------------------- |
+| 22   | TCP      | Your IP   | SSH access                      |
+| 8081 | TCP      | 0.0.0.0/0 | Torii (GraphQL + gRPC combined) |
+| 443  | TCP      | 0.0.0.0/0 | HTTPS (for production w/Nginx)  |
+| 80   | TCP      | 0.0.0.0/0 | HTTP (for Let's Encrypt)        |
 
 ### Launch & Note:
 
@@ -108,9 +108,8 @@ manifest_path = "../apps/client/src/dojo/manifest_sepolia.json"
 ## Step 7: Start Torii (Test Run)
 
 ```bash
-# Start Torii with CORS enabled (foreground for testing)
+# Start Torii (foreground for testing)
 torii --config torii.toml \
-  --allowed-origins "*" \
   --http.addr 0.0.0.0 \
   --grpc.addr 0.0.0.0
 ```
@@ -119,10 +118,11 @@ torii --config torii.toml \
 
 ```
 🌐 Starting Torii indexer...
-📡 Listening on 0.0.0.0:8080 (HTTP)
-📡 Listening on 0.0.0.0:8081 (gRPC)
+📡 Listening on 0.0.0.0:8081 (HTTP/gRPC combined)
 🔄 Syncing from block 0...
 ```
+
+**Note:** Modern Torii versions use **port 8081 for both GraphQL and gRPC**. Older documentation may reference port 8080, but that's no longer used.
 
 **Leave this running** and open a new terminal to test!
 
@@ -134,10 +134,10 @@ Open a new terminal on your **local machine**:
 
 ```bash
 # Test GraphQL endpoint (should return HTML page)
-curl http://54.123.45.67:8080/graphql
+curl http://54.123.45.67:8081/graphql
 
 # Test with a simple GraphQL query
-curl -X POST http://54.123.45.67:8080/graphql \
+curl -X POST http://54.123.45.67:8081/graphql \
   -H "Content-Type: application/json" \
   -d '{"query": "{ entities(first: 1) { edges { node { keys } } } }"}'
 ```
@@ -191,7 +191,7 @@ After=network.target
 Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/BitcoinShip/chain/dojo
-ExecStart=/home/ubuntu/.dojo/bin/torii --config torii.toml --allowed-origins "*" --http.addr 0.0.0.0 --grpc.addr 0.0.0.0
+ExecStart=/home/ubuntu/.dojo/bin/torii --config torii.toml --http.addr 0.0.0.0 --grpc.addr 0.0.0.0
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -257,18 +257,21 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/torii.yourdomain.com/privkey.pem;
 
     location /graphql {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:8081/graphql;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        add_header Access-Control-Allow-Origin *;
+        # CORS is handled by Torii - do NOT add headers here or you'll get duplicates
     }
 
-    location /grpc {
+    location / {
         proxy_pass http://localhost:8081;
         proxy_http_version 1.1;
-        add_header Access-Control-Allow-Origin *;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        # CORS is handled by Torii - do NOT add headers here or you'll get duplicates
     }
 }
 ```
@@ -302,9 +305,11 @@ sudo journalctl -u torii -n 50
 ### Can't connect from local dev:
 
 ```bash
-# Check security group allows port 8080, 8081
+# Check security group allows port 8081
 # Check if Torii is listening on 0.0.0.0 (not 127.0.0.1)
-sudo netstat -tlnp | grep torii
+sudo ss -tlnp | grep torii
+
+# Should see: 0.0.0.0:8081
 ```
 
 ### Slow syncing:

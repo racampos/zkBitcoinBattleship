@@ -4,7 +4,11 @@ import mkcert from 'vite-plugin-mkcert';
 import wasm from 'vite-plugin-wasm';
 
 export default defineConfig({
-  plugins: [react(), mkcert(), wasm()],
+  plugins: [
+    react(),
+    mkcert(), // HTTPS enabled for local development
+    wasm()
+  ],
   server: {
     port: 4000, // Changed to 4000 to avoid Docker container conflict
     // Proxy Torii GraphQL requests to avoid CORS issues

@@ -230,61 +230,90 @@ For production, use HTTPS with Let's Encrypt:
 # Install Nginx as reverse proxy
 sudo apt install -y nginx certbot python3-certbot-nginx
 
-# Get a domain name (e.g., torii.yourdomain.com)
+# Get a domain name (e.g., torii.praxys.academy)
 # Point DNS A record to your EC2 IP
 
 # Install SSL certificate
-sudo certbot --nginx -d torii.yourdomain.com
+sudo certbot --nginx -d torii.praxys.academy
 
 # Configure Nginx to proxy Torii
 sudo nano /etc/nginx/sites-available/torii
 ```
 
-Add:
+Add this basic HTTP configuration first (before running certbot):
 
 ```nginx
 server {
     listen 80;
-    server_name torii.yourdomain.com;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name torii.yourdomain.com;
-
-    ssl_certificate /etc/letsencrypt/live/torii.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/torii.yourdomain.com/privkey.pem;
-
-    location /graphql {
-        proxy_pass http://localhost:8081/graphql;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        # CORS is handled by Torii - do NOT add headers here or you'll get duplicates
-    }
-
+    server_name torii.praxys.academy;
+    
     location / {
         proxy_pass http://localhost:8081;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        # CORS is handled by Torii - do NOT add headers here or you'll get duplicates
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-Then:
+**Important:** Do NOT add CORS headers to the Nginx config! Torii handles CORS natively. Adding headers here will cause "multiple values" errors.
+
+Then enable the site:
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/torii /etc/nginx/sites-enabled/
 sudo nginx -t
-sudo systemctl restart nginx
+sudo systemctl reload nginx
 ```
 
-Now use: `VITE_TORII_URL=https://torii.yourdomain.com`
+Now run certbot to add HTTPS:
+
+```bash
+sudo certbot --nginx -d torii.praxys.academy
+```
+
+Certbot will automatically modify your config. The final config will look like:
+
+```nginx
+server {
+    server_name torii.praxys.academy;
+    
+    location / {
+        proxy_pass http://localhost:8081;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Do NOT add CORS headers here - Torii handles them
+    }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/torii.praxys.academy/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/torii.praxys.academy/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+}
+
+server {
+    if ($host = torii.praxys.academy) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+    listen 80;
+    server_name torii.praxys.academy;
+    return 404; # managed by Certbot
+}
+```
+
+Now use: `VITE_TORII_URL=https://torii.praxys.academy`
 
 ---
 

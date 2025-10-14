@@ -11,73 +11,70 @@
 
 ### 1. Torii Indexer (Required!)
 
-Your game requires a running Torii instance to index game state. You have two options:
+Your game requires a running Torii instance to index game state.
 
-#### Option A: Deploy Your Own Torii (Recommended)
+#### ✅ Your Torii is Already Running!
 
-Deploy Torii on a VPS (DigitalOcean, AWS, etc.):
+You have Torii deployed on AWS EC2:
+- **URL:** https://torii.praxys.academy
+- **Status:** Running with HTTPS (Nginx + Let's Encrypt)
+- **Features:** GraphQL API + gRPC subscriptions
 
-```bash
-# On your server
-git clone <your-repo>
-cd BitcoinShip/chain/dojo
+**📚 See setup guide:** [AWS_TORII_SETUP.md](./AWS_TORII_SETUP.md)
 
-# Install Dojo
-curl -L https://install.dojoengine.org | bash
-dojoup
+#### Need to Deploy Your Own?
 
-# Start Torii with CORS enabled
-torii --config torii.toml \
-  --allowed-origins "*" \
-  --world 0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69 \
-  --rpc https://api.cartridge.gg/x/starknet/sepolia
-```
-
-**Expose Ports**: 8080 (HTTP), 8081 (gRPC)
-
-#### Option B: Use Slot (Cartridge's Hosted Torii)
-
-If available, you can use Cartridge's hosted indexer service. Check their documentation.
+Follow the comprehensive guide in [AWS_TORII_SETUP.md](./AWS_TORII_SETUP.md) which covers:
+- EC2 instance setup
+- Dojo/Torii installation
+- Nginx reverse proxy configuration
+- HTTPS with Let's Encrypt
+- Systemd service for auto-restart
 
 ### 2. Environment Variables
 
 The app needs these environment variables in production:
 
 ```bash
-# Torii URL (your deployed Torii instance)
-VITE_TORII_URL=https://your-torii-instance.com:8081
+# Torii URL (your AWS Torii instance)
+VITE_TORII_URL=https://torii.praxys.academy
 
-# Starknet RPC (get API key from Alchemy/Blast/Infura)
-VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+# Starknet RPC (using Cartridge's free endpoint)
+VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
+
+# Optional: Use your own RPC for better rate limits
+# VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 ```
+
+**Note:** All variables starting with `VITE_` are exposed to the client (this is a Vite requirement).
 
 ## Deployment Options
 
 ### Option 1: Vercel (Recommended ⭐)
 
-1. **Push to GitHub**:
+**📚 See detailed guide:** [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
 
-   ```bash
-   git push origin main
-   ```
+**Quick Steps:**
 
-2. **Connect to Vercel**:
+1. **Push to GitHub**: `git push origin main`
 
+2. **Import to Vercel**:
    - Go to [vercel.com](https://vercel.com)
    - Import your GitHub repo
-   - Framework: Vite
-   - Root Directory: `apps/client`
+   - **IMPORTANT:** Set Root Directory to `apps/client`
+   - Framework: Vite (auto-detected)
    - Build Command: `npm run build`
    - Output Directory: `dist`
 
-3. **Set Environment Variables** in Vercel dashboard:
-
+3. **Set Environment Variables**:
    ```
-   VITE_TORII_URL=https://your-torii-instance.com:8081
-   VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY
+   VITE_TORII_URL=https://torii.praxys.academy
+   VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
    ```
 
-4. **Deploy**: Vercel auto-deploys on every push!
+4. **Deploy**: Click Deploy! Vercel auto-deploys on every push.
+
+**Note:** `vercel.json` is already configured for SPA routing and WASM support.
 
 ### Option 2: Netlify
 

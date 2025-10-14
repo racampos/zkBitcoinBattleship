@@ -98,6 +98,7 @@ VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 Click **"Deploy"**! 🚀
 
 Vercel will:
+
 1. Install dependencies (`npm install`)
 2. Build your app (`npm run build`)
 3. Deploy to a production URL
@@ -111,6 +112,7 @@ Vercel will:
 ### 5.1 Visit Your Site
 
 Your app will be available at:
+
 ```
 https://your-project-name.vercel.app
 ```
@@ -133,6 +135,7 @@ https://your-project-name.vercel.app
 ### 5.3 Check Console for Errors
 
 Open browser DevTools (F12) and check:
+
 - No CORS errors
 - gRPC or HTTP polling working
 - Game state updates appear
@@ -185,7 +188,8 @@ Every Pull Request gets its own preview URL!
 
 ### "Failed to fetch" errors in production
 
-**Solution:** 
+**Solution:**
+
 - Check `VITE_TORII_URL` is set correctly
 - Verify Torii is running on AWS
 - Test Torii directly: `curl https://torii.praxys.academy/graphql`
@@ -197,12 +201,14 @@ Every Pull Request gets its own preview URL!
 ### Environment variables not working
 
 **Solution:**
+
 - Variable names MUST start with `VITE_` to be exposed to the client
 - Redeploy after adding variables (Settings → Deployments → click "..." → Redeploy)
 
 ### Game state not updating
 
 **Solution:**
+
 - Check browser console for errors
 - Verify `VITE_TORII_URL` points to your AWS Torii instance
 - Check Torii logs on AWS: `sudo journalctl -u torii -f`
@@ -212,6 +218,7 @@ Every Pull Request gets its own preview URL!
 ## Cost
 
 - **Vercel Free Tier:**
+
   - ✅ Unlimited deployments
   - ✅ 100 GB bandwidth/month
   - ✅ Automatic HTTPS
@@ -272,16 +279,19 @@ In Vercel settings, you can password-protect preview deployments.
 ## Next Steps After Deployment
 
 1. **Share your game!**
+
    - Tweet the URL
    - Post on Discord
    - Submit to Starknet ecosystem showcase
 
 2. **Monitor usage:**
+
    - Check Vercel Analytics
    - Monitor Torii logs for activity
    - Track gas costs on Voyager
 
 3. **Get feedback:**
+
    - Add analytics (optional)
    - Monitor error rates
    - Iterate based on user feedback
@@ -318,4 +328,3 @@ Before going live:
 - [ ] All features tested on production URL
 
 **You're ready to ship! 🚀**
-

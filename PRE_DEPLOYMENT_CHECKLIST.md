@@ -5,6 +5,7 @@ Complete this checklist before deploying to Vercel.
 ## ✅ Infrastructure
 
 - [x] **Torii running on AWS**
+
   - URL: https://torii.praxys.academy
   - HTTPS enabled with Let's Encrypt
   - Nginx configured for long-lived gRPC connections
@@ -19,12 +20,14 @@ Complete this checklist before deploying to Vercel.
 ## 🔧 Code Preparation
 
 - [ ] **Latest code committed**
+
   ```bash
   git status  # Should be clean
   git push origin main  # Push to GitHub
   ```
 
 - [x] **Configuration files ready**
+
   - [x] `vercel.json` exists in `apps/client/`
   - [x] `.gitignore` includes `.env` (never commit secrets)
   - [x] `toriiUrl.ts` utility configured for production
@@ -41,6 +44,7 @@ Complete this checklist before deploying to Vercel.
 Prepare these values for Vercel:
 
 - [ ] **VITE_TORII_URL**
+
   - Value: `https://torii.praxys.academy`
   - Copy this exactly (no trailing slash)
 
@@ -53,6 +57,7 @@ Prepare these values for Vercel:
 Before deploying, test everything locally with production config:
 
 - [ ] Create `.env` file with production values:
+
   ```bash
   cd apps/client
   echo "VITE_TORII_URL=https://torii.praxys.academy" > .env
@@ -70,6 +75,7 @@ Before deploying, test everything locally with production config:
 ## 📝 Vercel Account Setup
 
 - [ ] **Vercel account created**
+
   - Go to [vercel.com](https://vercel.com)
   - Sign up with GitHub (recommended)
   - Verify email
@@ -91,12 +97,15 @@ Double-check these before hitting deploy:
 ## 🚨 Common Pitfalls to Avoid
 
 - ❌ **Wrong root directory** → Build will fail
+
   - ✅ Must be `apps/client`, not repo root
 
 - ❌ **Forgot environment variables** → App won't connect to Torii
+
   - ✅ Add both `VITE_TORII_URL` and `VITE_STARKNET_RPC_URL`
 
 - ❌ **Trailing slash in VITE_TORII_URL** → API calls will fail
+
   - ✅ Use `https://torii.praxys.academy` (no `/` at end)
 
 - ❌ **Committed `.env` file** → Secrets exposed
@@ -140,4 +149,3 @@ After deployment, monitor:
 If all checkboxes above are checked, you're ready!
 
 **Next step:** Follow [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
-

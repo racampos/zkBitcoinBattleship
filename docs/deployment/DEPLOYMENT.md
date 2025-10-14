@@ -16,7 +16,8 @@ Your game requires a running Torii instance to index game state.
 #### ✅ Your Torii is Already Running!
 
 You have Torii deployed on AWS EC2:
-- **URL:** https://torii.praxys.academy
+
+- **URL:** https://torii.zkbattleship.fun
 - **Status:** Running with HTTPS (Nginx + Let's Encrypt)
 - **Features:** GraphQL API + gRPC subscriptions
 
@@ -25,6 +26,7 @@ You have Torii deployed on AWS EC2:
 #### Need to Deploy Your Own?
 
 Follow the comprehensive guide in [AWS_TORII_SETUP.md](./AWS_TORII_SETUP.md) which covers:
+
 - EC2 instance setup
 - Dojo/Torii installation
 - Nginx reverse proxy configuration
@@ -37,7 +39,7 @@ The app needs these environment variables in production:
 
 ```bash
 # Torii URL (your AWS Torii instance)
-VITE_TORII_URL=https://torii.praxys.academy
+VITE_TORII_URL=https://torii.zkbattleship.fun
 
 # Starknet RPC (using Cartridge's free endpoint)
 VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
@@ -59,6 +61,7 @@ VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
 1. **Push to GitHub**: `git push origin main`
 
 2. **Import to Vercel**:
+
    - Go to [vercel.com](https://vercel.com)
    - Import your GitHub repo
    - **IMPORTANT:** Set Root Directory to `apps/client`
@@ -67,8 +70,9 @@ VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
    - Output Directory: `dist`
 
 3. **Set Environment Variables**:
+
    ```
-   VITE_TORII_URL=https://torii.praxys.academy
+   VITE_TORII_URL=https://torii.zkbattleship.fun
    VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
    ```
 

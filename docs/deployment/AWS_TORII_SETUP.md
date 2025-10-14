@@ -230,11 +230,11 @@ For production, use HTTPS with Let's Encrypt:
 # Install Nginx as reverse proxy
 sudo apt install -y nginx certbot python3-certbot-nginx
 
-# Get a domain name (e.g., torii.praxys.academy)
+# Get a domain name (e.g., torii.zkbattleship.fun)
 # Point DNS A record to your EC2 IP
 
 # Install SSL certificate
-sudo certbot --nginx -d torii.praxys.academy
+sudo certbot --nginx -d torii.zkbattleship.fun
 
 # Configure Nginx to proxy Torii
 sudo nano /etc/nginx/sites-available/torii
@@ -245,7 +245,7 @@ Add this basic HTTP configuration first (before running certbot):
 ```nginx
 server {
     listen 80;
-    server_name torii.praxys.academy;
+    server_name torii.zkbattleship.fun;
 
     location / {
         proxy_pass http://localhost:8081;
@@ -273,14 +273,14 @@ sudo systemctl reload nginx
 Now run certbot to add HTTPS:
 
 ```bash
-sudo certbot --nginx -d torii.praxys.academy
+sudo certbot --nginx -d torii.zkbattleship.fun
 ```
 
 Certbot will automatically modify your config. The final config will look like:
 
 ```nginx
 server {
-    server_name torii.praxys.academy;
+    server_name torii.zkbattleship.fun;
 
     location / {
         proxy_pass http://localhost:8081;
@@ -307,24 +307,24 @@ server {
     }
 
     listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/torii.praxys.academy/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/torii.praxys.academy/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/torii.zkbattleship.fun/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/torii.zkbattleship.fun/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 }
 
 server {
-    if ($host = torii.praxys.academy) {
+    if ($host = torii.zkbattleship.fun) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
 
     listen 80;
-    server_name torii.praxys.academy;
+    server_name torii.zkbattleship.fun;
     return 404; # managed by Certbot
 }
 ```
 
-Now use: `VITE_TORII_URL=https://torii.praxys.academy`
+Now use: `VITE_TORII_URL=https://torii.zkbattleship.fun`
 
 ---
 

@@ -11,8 +11,8 @@ This document captures the successful deployment of the ZK Bitcoin Battleship ga
 
 | Component            | URL                                                                 | Status                 |
 | -------------------- | ------------------------------------------------------------------- | ---------------------- |
-| **Frontend**         | https://zk-bitcoin-battleship.vercel.app                            | ✅ Live                |
-| **Torii Indexer**    | https://praxys.academy                                              | ✅ Live (HTTPS + gRPC) |
+| **Frontend**         | https://zkbattleship.fun                                            | ✅ Live                |
+| **Torii Indexer**    | https://torii.zkbattleship.fun                                      | ✅ Live (HTTPS + gRPC) |
 | **Starknet Network** | Sepolia Testnet                                                     | ✅ Active              |
 | **Bitcoin Network**  | Testnet3                                                            | ✅ Active              |
 | **World Contract**   | `0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69` | ✅ Deployed            |
@@ -31,7 +31,7 @@ This document captures the successful deployment of the ZK Bitcoin Battleship ga
                      ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    VERCEL (Frontend)                         │
-│         https://zk-bitcoin-battleship.vercel.app            │
+│         https://zkbattleship.fun            │
 │  - React + Vite + Dojo SDK                                  │
 │  - Cartridge Controller Integration                          │
 │  - Atomiq SDK for BTC ↔ WBTC swaps                         │
@@ -41,7 +41,7 @@ This document captures the successful deployment of the ZK Bitcoin Battleship ga
              ▼                      ▼
 ┌─────────────────────────┐  ┌──────────────────────────────┐
 │   AWS EC2 (Torii)       │  │   Starknet Sepolia           │
-│   https://praxys.academy│  │   (via Alchemy RPC)          │
+│   https://ptorii.zk...ip.fun│  │   (via Alchemy RPC)          │
 │  - Dojo Indexer         │  │  - World contract            │
 │  - GraphQL API          │  │  - Game contracts            │
 │  - gRPC subscriptions   │  │  - Escrow contract           │
@@ -258,6 +258,7 @@ The game includes a complete zero-knowledge proof system using **Noir circuits**
 **What's Complete:**
 
 - ✅ **Noir Circuits** (21/21 tests passing)
+
   - `BoardCommit`: Validates board placement + generates commitment (10 tests)
   - `ShotResult`: Proves hit/miss without revealing board (11 tests)
   - Both use Poseidon2 hashing (Starknet-optimized)
@@ -265,6 +266,7 @@ The game includes a complete zero-knowledge proof system using **Noir circuits**
   - Nullifier system prevents replay attacks
 
 - ✅ **Cairo Verifiers** (Generated with Garaga)
+
   - `battleship_board_commit_verifier/` (1.2MB contract, 3430 lines)
   - `battleship_shot_result_verifier/` (1.2MB contract, 4256 lines)
   - Both compile successfully with Scarb
@@ -280,22 +282,24 @@ The game includes a complete zero-knowledge proof system using **Noir circuits**
 
 **Critical UX Issue: Proof Generation Time**
 
-| Action | With Real ZK Proofs | Current (Mock) |
-|--------|---------------------|----------------|
-| Board Commitment | **10-30 seconds** ⏳ | <1 second ✅ |
-| Shot Response | **10-30 seconds** ⏳ | <1 second ✅ |
-| Total Match Wait Time | **60-120+ seconds** | Instant |
+| Action                | With Real ZK Proofs  | Current (Mock) |
+| --------------------- | -------------------- | -------------- |
+| Board Commitment      | **10-30 seconds** ⏳ | <1 second ✅   |
+| Shot Response         | **10-30 seconds** ⏳ | <1 second ✅   |
+| Total Match Wait Time | **60-120+ seconds**  | Instant        |
 
 **Impact:** 10-30 second waits for each proof generation create an unacceptable UX for a real-time multiplayer game where turns should feel instant.
 
 **Additional Considerations:**
 
 1. **Client Integration Incomplete**
+
    - `bb.js` integration not yet implemented
    - Would require bundling ~1-2MB circuit artifacts + ~10MB WASM files
    - Browser proving is CPU-intensive
 
 2. **Deployment Challenges**
+
    - 1.2MB verifier contracts are very expensive to deploy on Starknet
    - RPC compatibility issues during deployment testing
    - High gas costs even on testnet
@@ -315,7 +319,7 @@ The production game uses **mock verification** to enable instant gameplay:
 fn commit_board(ref self: T, game_id: felt252, commitment: felt252, proof: Span<felt252>) {
     // MOCK: Accept proof without verification for fast gameplay
     // Real implementation would call Garaga verifier here
-    
+
     let mut board_commit = get!(world, (game_id, player), BoardCommit);
     board_commit.commitment = commitment;
     set!(world, (board_commit));
@@ -329,16 +333,19 @@ This allows players to commit boards and respond to shots instantly, prioritizin
 **When to Enable Real ZK Proofs:**
 
 **Option 1: Wait for Performance Improvements**
+
 - Barretenberg/bb.js optimizations (target: <3 seconds per proof)
 - GPU-accelerated proving (WebGPU support in browsers)
 - Circuit optimizations (smaller constraint systems)
 
 **Option 2: Hybrid Mode**
+
 - **High-Stakes Games** (stakes > $100): Real ZK proofs required
 - **Casual Games** (stakes < $100): Mock proofs for speed
 - Let players choose: "Fast Mode" vs "ZK Mode"
 
 **Option 3: Server-Side Proving**
+
 - Centralized proving service (AWS Lambda + native Barretenberg)
 - Players submit board/shots → server generates proofs in <5 seconds
 - Trade-off: More centralized, but significantly better UX
@@ -360,6 +367,7 @@ ShotResult Circuit:
 ```
 
 **Proof System:**
+
 - **Backend:** Barretenberg v0.87.4-starknet.1
 - **Frontend:** Noir v1.0.0-beta.5
 - **Verifier Generator:** Garaga v0.18.1
@@ -367,6 +375,7 @@ ShotResult Circuit:
 - **Hash Oracle:** Poseidon (not Keccak) for Starknet compatibility
 
 **Documentation:**
+
 - Full circuit docs: `zk/circuits/README.md`
 - Integration status: `zk/ZK_INTEGRATION_STATUS.md`
 - Testing guide: `zk/circuits/TESTING.md`
@@ -515,7 +524,7 @@ Don't hardcode token addresses when using Atomiq. Use the SDK's token identifier
 ### Vercel (Frontend)
 
 ```bash
-VITE_TORII_URL=https://praxys.academy
+VITE_TORII_URL=https://torii.zkbattleship.fun
 VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/A7uy7yxUkDxDje-8thlzv7LNcwsFEAki
 VITE_BITCOIN_NETWORK=testnet
 ```
@@ -571,7 +580,7 @@ host = "0.0.0.0"
 
 ## 🎮 Try It Yourself
 
-**Live App:** https://zk-bitcoin-battleship.vercel.app
+**Live App:** https://zkbattleship.fun
 
 **How to Play:**
 

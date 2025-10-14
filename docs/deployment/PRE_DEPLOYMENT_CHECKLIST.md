@@ -6,7 +6,7 @@ Complete this checklist before deploying to Vercel.
 
 - [x] **Torii running on AWS**
 
-  - URL: https://torii.praxys.academy
+  - URL: https://torii.zkbattleship.fun
   - HTTPS enabled with Let's Encrypt
   - Nginx configured for long-lived gRPC connections
   - Systemd service enabled (auto-restart on reboot)
@@ -45,7 +45,7 @@ Prepare these values for Vercel:
 
 - [ ] **VITE_TORII_URL**
 
-  - Value: `https://torii.praxys.academy`
+  - Value: `https://torii.zkbattleship.fun`
   - Copy this exactly (no trailing slash)
 
 - [ ] **VITE_STARKNET_RPC_URL**
@@ -60,7 +60,7 @@ Before deploying, test everything locally with production config:
 
   ```bash
   cd apps/client
-  echo "VITE_TORII_URL=https://torii.praxys.academy" > .env
+  echo "VITE_TORII_URL=https://torii.zkbattleship.fun" > .env
   echo "VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia" >> .env
   ```
 
@@ -106,7 +106,7 @@ Double-check these before hitting deploy:
 
 - ❌ **Trailing slash in VITE_TORII_URL** → API calls will fail
 
-  - ✅ Use `https://torii.praxys.academy` (no `/` at end)
+  - ✅ Use `https://torii.zkbattleship.fun` (no `/` at end)
 
 - ❌ **Committed `.env` file** → Secrets exposed
   - ✅ Always in `.gitignore`, set variables in Vercel dashboard
@@ -140,7 +140,7 @@ After deployment, monitor:
 
 1. **Check Vercel build logs** for errors
 2. **Verify environment variables** are set correctly
-3. **Test Torii directly**: `curl https://torii.praxys.academy/graphql`
+3. **Test Torii directly**: `curl https://torii.zkbattleship.fun/graphql`
 4. **Check AWS Torii logs**: `sudo journalctl -u torii -n 100`
 5. **Rollback in Vercel**: Deployments → Previous → Promote to Production
 

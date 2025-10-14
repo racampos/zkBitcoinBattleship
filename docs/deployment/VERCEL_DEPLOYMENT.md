@@ -6,7 +6,7 @@ Complete step-by-step guide to deploy your ZK Battleship game to Vercel.
 
 Before deploying to Vercel, ensure you have:
 
-- [x] Torii running on AWS (https://torii.praxys.academy) ✅
+- [x] Torii running on AWS (https://torii.zkbattleship.fun) ✅
 - [x] Game contracts deployed to Starknet Sepolia ✅
 - [x] Code pushed to GitHub
 - [ ] Vercel account (free)
@@ -69,7 +69,7 @@ In the Vercel dashboard, add these environment variables:
 ### Required Variables:
 
 ```bash
-VITE_TORII_URL=https://torii.praxys.academy
+VITE_TORII_URL=https://torii.zkbattleship.fun
 VITE_STARKNET_RPC_URL=https://api.cartridge.gg/x/starknet/sepolia
 ```
 
@@ -86,7 +86,7 @@ VITE_STARKNET_RPC_URL=https://starknet-sepolia.g.alchemy.com/v2/YOUR_API_KEY
 2. Go to **Settings** → **Environment Variables**
 3. Add each variable:
    - Name: `VITE_TORII_URL`
-   - Value: `https://torii.praxys.academy`
+   - Value: `https://torii.zkbattleship.fun`
    - Environment: Select **Production**, **Preview**, and **Development**
 4. Click **Save**
 5. Repeat for `VITE_STARKNET_RPC_URL`
@@ -148,7 +148,7 @@ Open browser DevTools (F12) and check:
 
 1. Go to **Settings** → **Domains**
 2. Click **"Add Domain"**
-3. Enter your domain (e.g., `battleship.praxys.academy`)
+3. Enter your domain (e.g., `zkbattleship.fun`)
 4. Follow Vercel's DNS instructions
 
 ### 6.2 Update DNS
@@ -192,7 +192,7 @@ Every Pull Request gets its own preview URL!
 
 - Check `VITE_TORII_URL` is set correctly
 - Verify Torii is running on AWS
-- Test Torii directly: `curl https://torii.praxys.academy/graphql`
+- Test Torii directly: `curl https://torii.zkbattleship.fun/graphql`
 
 ### WASM files not loading
 

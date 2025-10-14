@@ -125,11 +125,11 @@ ZK proof implementation (currently disabled for UX):
 
 ### Live URLs
 
-| Service      | URL                                      |
-| ------------ | ---------------------------------------- |
-| **Frontend** | https://zk-bitcoin-battleship.vercel.app |
-| **Torii**    | https://praxys.academy                   |
-| **Network**  | Starknet Sepolia Testnet                 |
+| Service      | URL                            |
+| ------------ | ------------------------------ |
+| **Frontend** | https://zkbattleship.fun       |
+| **Torii**    | https://torii.zkbattleship.fun |
+| **Network**  | Starknet Sepolia Testnet       |
 
 ### Key Contracts
 

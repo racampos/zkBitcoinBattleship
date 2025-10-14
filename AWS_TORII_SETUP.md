@@ -246,7 +246,7 @@ Add this basic HTTP configuration first (before running certbot):
 server {
     listen 80;
     server_name torii.praxys.academy;
-    
+
     location / {
         proxy_pass http://localhost:8081;
         proxy_http_version 1.1;
@@ -281,7 +281,7 @@ Certbot will automatically modify your config. The final config will look like:
 ```nginx
 server {
     server_name torii.praxys.academy;
-    
+
     location / {
         proxy_pass http://localhost:8081;
         proxy_http_version 1.1;
@@ -291,7 +291,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # Do NOT add CORS headers here - Torii handles them
     }
 

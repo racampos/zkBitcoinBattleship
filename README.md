@@ -2,7 +2,7 @@
 
 > **A fully on-chain multiplayer Battleship game on Starknet with Bitcoin staking**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-zk--bitcoin--battleship.vercel.app-blue)](https://zk-bitcoin-battleship.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-zk--bitcoin--battleship.vercel.app-blue)](https://zkbattleship.fun)
 [![Network](https://img.shields.io/badge/Network-Starknet%20Sepolia-purple)](https://sepolia.voyager.online/)
 [![Framework](https://img.shields.io/badge/Framework-Dojo%201.0.11-orange)](https://www.dojoengine.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](#)
@@ -21,7 +21,7 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 - 🎯 **Provably Fair** - All game logic enforced on-chain (Starknet)
 - 🌐 **Cross-Chain** - BTC (Testnet3) ↔ WBTC (Starknet Sepolia) via Atomiq
 
-**[🎮 Play Now](https://zk-bitcoin-battleship.vercel.app)** | **[📚 Full Documentation](./docs/)** | **[🔍 View Contracts](https://sepolia.voyager.online/contract/0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69)**
+**[🎮 Play Now](https://zkbattleship.fun)** | **[📚 Full Documentation](./docs/)** | **[🔍 View Contracts](https://sepolia.voyager.online/contract/0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69)**
 
 ---
 
@@ -57,23 +57,28 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 This project showcases integration with cutting-edge blockchain technologies:
 
 ### Core Framework
+
 - **[Dojo Engine](https://www.dojoengine.org/)** - On-chain game framework for Starknet
 - **[Starknet](https://www.starknet.io/)** - Layer 2 scaling solution with Cairo
 
 ### Wallets & Accounts
+
 - **[Cartridge Controller](https://cartridge.gg/)** - Starknet wallet with session keys and game-optimized UX
 - **[Xverse](https://www.xverse.app/)** - Bitcoin wallet for PSBT signing and BTC deposits
 
 ### Cross-Chain & Bitcoin
+
 - **[Atomiq](https://atomiq.exchange/)** - Trustless BTC ↔ Starknet swap protocol
 - Bitcoin Testnet3 - For real BTC deposits and testing
 
 ### Zero-Knowledge Proofs
+
 - **[Noir](https://noir-lang.org/)** - ZK-SNARK circuit language by Aztec
 - **[Garaga](https://github.com/keep-starknet-strange/garaga)** - Cairo verifier generator for Starknet
 - Barretenberg - Aztec's proving backend
 
 ### Development Tools
+
 - React 18 + Vite - Modern frontend framework
 - Vercel - Frontend hosting and deployment
 - AWS EC2 - Torii indexer hosting
@@ -88,8 +93,8 @@ This project showcases integration with cutting-edge blockchain technologies:
 
 ✅ **Fully Functional Live Game**
 
-- Frontend: [zk-bitcoin-battleship.vercel.app](https://zk-bitcoin-battleship.vercel.app)
-- Torii Indexer: [praxys.academy](https://praxys.academy) (AWS EC2 + HTTPS)
+- Frontend: [zkbattleship.fun](https://zkbattleship.fun)
+- Torii Indexer: [torii.zkbattleship.fun](https://torii.zkbattleship.fun) (AWS EC2 + HTTPS)
 - Successfully tested with remote multiplayer (two players from different locations)
 
 ✅ **Complete Bitcoin-to-Starknet Integration**
@@ -429,4 +434,4 @@ MIT License - see [LICENSE](./LICENSE) for details
 
 **Built with ❤️ for the Starknet Hackathon**
 
-🎮 [Play Now](https://zk-bitcoin-battleship.vercel.app) | 📚 [Documentation](./docs/) | 🔍 [View on Explorer](https://sepolia.voyager.online/contract/0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69)
+🎮 [Play Now](https://zkbattleship.fun) | 📚 [Documentation](./docs/) | 🔍 [View on Explorer](https://sepolia.voyager.online/contract/0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69)

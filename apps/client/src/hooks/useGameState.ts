@@ -161,12 +161,19 @@ export function useGameState(gameId: string | null) {
     let pollingInterval: any;
 
     (async () => {
-      // ALWAYS do initial fetch, even if subscription fails
+      // ALWAYS do initial fetch
       await fetchGameState();
       
-      // Try to subscribe (gRPC may fail, but HTTP polling will work)
+      // ALWAYS start HTTP polling as backup (even if gRPC works)
+      // This ensures game state updates even if gRPC stream dies silently
+      pollingInterval = setInterval(() => {
+        fetchGameState();
+      }, 5000); // Poll every 5 seconds as backup
+      console.log("🔄 HTTP polling started (5s interval) as backup");
+      
+      // Try to subscribe to gRPC for real-time updates (best effort)
       try {
-        console.log("📡 Attempting to subscribe to game updates...");
+        console.log("📡 Attempting to subscribe to game updates via gRPC...");
 
         const [_, sub] = await sdk.subscribeEntityQuery({
           query: new ToriiQueryBuilder()
@@ -181,21 +188,15 @@ export function useGameState(gameId: string | null) {
               fetchGameState(); // Refresh state when update received
             }
             if (error) {
-              console.error("Subscription error:", error);
+              console.warn("⚠️ gRPC subscription error (HTTP polling will continue):", error);
             }
           },
         });
 
         subscription = sub;
-        console.log("✅ Subscribed to game updates (real-time)");
+        console.log("✅ Subscribed to game updates via gRPC (HTTP polling also active as backup)");
       } catch (err: any) {
-        console.error("❌ Failed to subscribe:", err);
-        console.log("ℹ️ Falling back to HTTP polling every 3 seconds");
-        
-        // Fallback: Poll every 3 seconds if subscription fails
-        pollingInterval = setInterval(() => {
-          fetchGameState();
-        }, 3000);
+        console.warn("⚠️ gRPC subscription failed (HTTP polling will continue):", err);
       }
     })();
 

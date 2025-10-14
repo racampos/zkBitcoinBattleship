@@ -285,12 +285,23 @@ server {
     location / {
         proxy_pass http://localhost:8081;
         proxy_http_version 1.1;
+
+        # Headers for WebSocket/gRPC
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+
+        # CRITICAL: Prevent timeout for long-lived gRPC streams
+        proxy_read_timeout 3600s;  # 1 hour timeout
+        proxy_send_timeout 3600s;
+        proxy_connect_timeout 60s;
+
+        # Disable buffering for streaming
+        proxy_buffering off;
+        proxy_cache off;
 
         # Do NOT add CORS headers here - Torii handles them
     }

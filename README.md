@@ -46,10 +46,39 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 
 - **Dojo Engine** - ECS-based on-chain game framework
 - **Cartridge Controller** - Seamless Starknet account management
-- **V3 Transactions** - Resource bounds and tips for optimal gas
 - **Account Abstraction** - Automatic deployment on first transaction
 - **gRPC + HTTP Polling** - Resilient real-time state updates
 - **Board Persistence** - localStorage + blockchain for state recovery
+
+---
+
+## 🛠️ Built With
+
+This project showcases integration with cutting-edge blockchain technologies:
+
+### Core Framework
+- **[Dojo Engine](https://www.dojoengine.org/)** - On-chain game framework for Starknet
+- **[Starknet](https://www.starknet.io/)** - Layer 2 scaling solution with Cairo
+
+### Wallets & Accounts
+- **[Cartridge Controller](https://cartridge.gg/)** - Starknet wallet with session keys and game-optimized UX
+- **[Xverse](https://www.xverse.app/)** - Bitcoin wallet for PSBT signing and BTC deposits
+
+### Cross-Chain & Bitcoin
+- **[Atomiq](https://atomiq.exchange/)** - Trustless BTC ↔ Starknet swap protocol
+- Bitcoin Testnet3 - For real BTC deposits and testing
+
+### Zero-Knowledge Proofs
+- **[Noir](https://noir-lang.org/)** - ZK-SNARK circuit language by Aztec
+- **[Garaga](https://github.com/keep-starknet-strange/garaga)** - Cairo verifier generator for Starknet
+- Barretenberg - Aztec's proving backend
+
+### Development Tools
+- React 18 + Vite - Modern frontend framework
+- Vercel - Frontend hosting and deployment
+- AWS EC2 - Torii indexer hosting
+
+**Special Thanks:** Atomiq team for Telegram support, Dojo community for debugging help, Garaga maintainers for v0.18.1 bug fix.
 
 ---
 
@@ -57,46 +86,40 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 
 ### Production Deployment
 
-✅ **Fully Functional Live Game**  
+✅ **Fully Functional Live Game**
+
 - Frontend: [zk-bitcoin-battleship.vercel.app](https://zk-bitcoin-battleship.vercel.app)
 - Torii Indexer: [praxys.academy](https://praxys.academy) (AWS EC2 + HTTPS)
 - Successfully tested with remote multiplayer (two players from different locations)
 
 ✅ **Complete Bitcoin-to-Starknet Integration**
+
 - BTC Testnet3 deposits working
 - Atomiq SDK integration for cross-chain swaps
 - WBTC staking and escrow system operational
 - Automatic prize distribution to winner
 
 ✅ **Production-Ready Infrastructure**
-- Nginx reverse proxy with SSL (Let's Encrypt)
-- gRPC streaming for real-time updates
-- HTTP polling fallback for resilience
-- Vercel deployment with optimized build
+
+- **Frontend (Vercel):** React app with optimized build, automatic GitHub deployments, and HTTPS
+- **Indexer (AWS EC2):** Torii for blockchain indexing with Nginx reverse proxy, SSL (Let's Encrypt), and gRPC streaming
+- **Real-Time Updates:** gRPC subscriptions with HTTP polling fallback for maximum resilience
 
 ### Technical Milestones
 
 ✅ **Zero-Knowledge Proof System** (50% Complete)
+
 - Noir circuits implemented and tested (21/21 tests passing)
 - Garaga Cairo verifiers generated (1.2MB contracts)
 - Complete offline proof generation pipeline
 - Currently disabled due to 10-30s proof times (see [ZK Status](#-zero-knowledge-proofs-status))
 
 ✅ **Smart Contract System** (100% Complete)
+
 - 7 Cairo contract systems (game management, board commit, gameplay, proof verify, escrow, timeout)
 - Comprehensive game state models
 - Robust error handling and validation
 - Deployed on Starknet Sepolia
-
-✅ **8 Critical Production Fixes Documented**
-- RPC provider compatibility (Alchemy vs Cartridge)
-- Cartridge Controller security headers
-- Nginx gRPC streaming configuration
-- HTTP polling as backup
-- Torii URL centralization
-- React version downgrade
-- Default entry point configuration
-- Vesu WBTC token identifier
 
 ---
 
@@ -120,12 +143,12 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 
 **ZK proofs are fully implemented but disabled for UX:**
 
-| Aspect | Real ZK Proofs | Mock Proofs (Current) |
-|--------|----------------|----------------------|
-| **Privacy** | ✅ Complete | ❌ Honor system |
-| **Security** | ✅ Cryptographic | ❌ Trust-based |
-| **UX** | ❌ 10-30s waits | ✅ Instant |
-| **Deployment Cost** | ❌ 1.2MB contracts | ✅ Minimal |
+| Aspect              | Real ZK Proofs     | Mock Proofs (Current) |
+| ------------------- | ------------------ | --------------------- |
+| **Privacy**         | ✅ Complete        | ❌ Honor system       |
+| **Security**        | ✅ Cryptographic   | ❌ Trust-based        |
+| **UX**              | ❌ 10-30s waits    | ✅ Instant            |
+| **Deployment Cost** | ❌ 1.2MB contracts | ✅ Minimal            |
 
 **Decision:** Prioritize UX for MVP, activate ZK when proof generation drops to <3 seconds.
 
@@ -138,11 +161,13 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 ### ✅ What's Complete
 
 - **Noir Circuits** (21/21 tests passing)
+
   - `BoardCommit`: Validates board placement + generates commitment
   - `ShotResult`: Proves hit/miss without revealing board
   - Both use Poseidon2 hashing (Starknet-optimized)
 
 - **Cairo Verifiers** (Generated with Garaga)
+
   - `battleship_board_commit_verifier/` (1.2MB contract)
   - `battleship_shot_result_verifier/` (1.2MB contract)
 
@@ -155,26 +180,19 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 **Critical Issue:** Proof generation takes **10-30 seconds** in browser, creating unacceptable UX for real-time multiplayer.
 
 **Impact:**
+
 - Board commitment: 10-30s wait
 - Each shot response: 10-30s wait
 - Total match time: 60-120+ seconds of pure waiting
 
-**Alternative:** Game uses instant mock verification to prioritize gameplay experience.
-
-### 🔮 Activation Plan
-
-**When to Enable:**
-1. **Performance improvements** - Barretenberg optimization (<3s proofs)
-2. **Hybrid mode** - ZK for high-stakes, mock for casual
-3. **Server-side proving** - Centralized service for 5s generation
-
-**See full details:** [docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md](./docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md#-zero-knowledge-proofs-garaga-integration)
+**Alternative:** Game uses instant mock verification to prioritize gameplay experience. See full ZK implementation details in [docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md](./docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md#-zero-knowledge-proofs-garaga-integration)
 
 ---
 
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **Framework:** React 18.3.1 + Vite 6.0.11
 - **Blockchain SDK:** Dojo SDK 1.7.6
 - **Wallet:** Cartridge Controller 0.6.3
@@ -184,6 +202,7 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 - **Styling:** Custom CSS (dark theme)
 
 ### Smart Contracts
+
 - **Framework:** Dojo 1.0.11 (Cairo)
 - **Network:** Starknet Sepolia Testnet
 - **World Address:** `0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69`
@@ -191,6 +210,7 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 - **WBTC Contract:** `0x04861ba938aed21f2cd7740acd3765ac4d2974783a3218367233de0153490cb6` (Vesu)
 
 ### Infrastructure
+
 - **Frontend Hosting:** Vercel
 - **Indexer:** Torii (Dojo) on AWS EC2 (Ubuntu 24.04 LTS)
 - **Web Server:** Nginx 1.24+ (reverse proxy + SSL)
@@ -199,6 +219,7 @@ ZK Bitcoin Battleship is a **fully on-chain multiplayer game** that brings the c
 - **Bitcoin:** Testnet3
 
 ### Zero-Knowledge (Ready but Disabled)
+
 - **Circuits:** Noir v1.0.0-beta.5
 - **Proving:** Barretenberg v0.87.4-starknet.1
 - **Verifier Generator:** Garaga v0.18.1
@@ -257,7 +278,7 @@ Open [http://localhost:4000](http://localhost:4000) to play!
 ## 📁 Project Structure
 
 ```
-BitcoinShip/
+zkBitcoinBattleship/
 ├── apps/
 │   ├── client/                    # React frontend
 │   │   ├── src/
@@ -340,6 +361,7 @@ The game is deployed across multiple services:
 **For complete deployment guide:** See [docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md](./docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md)
 
 **Quick deployment links:**
+
 - [AWS Torii Setup](./docs/deployment/AWS_TORII_SETUP.md)
 - [Vercel Deployment](./docs/deployment/VERCEL_DEPLOYMENT.md)
 - [Pre-Deployment Checklist](./docs/deployment/PRE_DEPLOYMENT_CHECKLIST.md)
@@ -363,16 +385,6 @@ The game is deployed across multiple services:
 - **[Installation Guide](./INSTALL_GUIDE.md)** - Detailed setup instructions
 - **[Circuit README](./zk/circuits/README.md)** - ZK circuit specifications
 - **[Atomiq Integration](./docs/integrations/atomiq/)** - Cross-chain integration journey
-
-### Quick Links
-
-| Topic | Link |
-|-------|------|
-| **Live Demo** | https://zk-bitcoin-battleship.vercel.app |
-| **Deployment Guide** | [docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md](./docs/deployment/PRODUCTION_DEPLOYMENT_SUCCESS.md) |
-| **ZK Proofs** | [zk/ZK_INTEGRATION_STATUS.md](./zk/ZK_INTEGRATION_STATUS.md) |
-| **Contracts** | [Voyager Explorer](https://sepolia.voyager.online/contract/0x4b9579af308a28c5c1c54a869af4a448e14a41ca6c4e69caccb0aba3a24be69) |
-| **Product Spec** | [PRD.md](./PRD.md) |
 
 ---
 
@@ -409,45 +421,9 @@ The game is deployed across multiple services:
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! This project demonstrates:
-
-- ✅ **On-chain game development** with Dojo
-- ✅ **Cross-chain integration** (BTC ↔ Starknet)
-- ✅ **Zero-knowledge proofs** with Noir + Garaga
-- ✅ **Production deployment** (Vercel + AWS)
-- ✅ **Real-time multiplayer** (gRPC + HTTP)
-
-**Areas for contribution:**
-- Performance optimization (ZK proving)
-- UI/UX improvements
-- Additional game modes
-- Mobile support
-- Testing & documentation
-
----
-
 ## 📝 License
 
 MIT License - see [LICENSE](./LICENSE) for details
-
----
-
-## 🙏 Acknowledgments
-
-**Frameworks & Tools:**
-- [Dojo Engine](https://www.dojoengine.org/) - On-chain game framework
-- [Starknet](https://www.starknet.io/) - Layer 2 scaling solution
-- [Noir](https://noir-lang.org/) - ZK-SNARK circuit language
-- [Garaga](https://github.com/keep-starknet-strange/garaga) - Cairo verifier generator
-- [Atomiq](https://atomiq.exchange/) - Cross-chain swap protocol
-- [Cartridge](https://cartridge.gg/) - Starknet wallet & controller
-
-**Special Thanks:**
-- Atomiq team for Telegram support on token identifiers
-- Dojo community for debugging help
-- Garaga maintainers for v0.18.1 bug fix
 
 ---
 

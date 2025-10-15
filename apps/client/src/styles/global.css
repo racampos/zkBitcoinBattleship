@@ -565,6 +565,26 @@ button.secondary:hover:not(:disabled) {
   background: rgba(30, 136, 229, 0.2);
 }
 
+/* Clickable cells (unfired water cells on attack board) */
+.grid-cell.cell-clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.grid-cell.cell-clickable:hover {
+  background: rgba(76, 175, 80, 0.3) !important;
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.5) !important;
+  transform: scale(1.1) !important;
+  z-index: 100;
+}
+
+.grid-cell.cell-clickable:active {
+  background: rgba(255, 87, 34, 0.4) !important;
+  border-color: #FF5722 !important;
+  box-shadow: 0 0 20px rgba(255, 87, 34, 0.6) !important;
+}
+
 /* Ship type colors with gradients */
 .grid-cell.ship-carrier {
   background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
@@ -636,14 +656,9 @@ button.secondary:hover:not(:disabled) {
   }
 }
 
-/* Miss cells */
+/* Miss cells - blend into dark board background (where the numbers are) */
 .grid-cell.cell-miss {
-  background: rgba(66, 165, 245, 0.3) !important;
-}
-
-.grid-cell.cell-miss .cell-overlay {
-  font-size: 24px;
-  animation: miss-splash 0.5s ease-out;
+  background: rgba(0, 0, 0, 0.3) !important; /* Same as battleship-grid-container */
 }
 
 /* Pending shot */

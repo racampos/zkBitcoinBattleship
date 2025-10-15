@@ -14,6 +14,8 @@ interface BoardDisplayProps {
   isVictory?: boolean; // For victory animation
   isDefeat?: boolean; // For defeat animation
   showShipColors?: boolean; // Hide ship colors on attack board
+  onCellClick?: (row: number, col: number) => void; // For clickable attack board
+  isClickable?: boolean; // Whether cells can be clicked
 }
 
 export function BoardDisplay({ 
@@ -23,7 +25,9 @@ export function BoardDisplay({
   isActive = false, 
   isVictory = false, 
   isDefeat = false,
-  showShipColors = true
+  showShipColors = true,
+  onCellClick,
+  isClickable = false
 }: BoardDisplayProps) {
   const rowLabels = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 
@@ -67,7 +71,20 @@ export function BoardDisplay({
       classes.push('cell-pending');
     }
     
+    // Add clickable class for unfired cells
+    if (isClickable && cell === 0) {
+      classes.push('cell-clickable');
+    }
+    
     return classes.join(' ');
+  };
+
+  // Handle cell click
+  const handleCellClick = (row: number, col: number) => {
+    // Only allow clicks on unfired cells (value 0)
+    if (isClickable && board[row][col] === 0 && onCellClick) {
+      onCellClick(row, col);
+    }
   };
 
   // Build className for board container
@@ -100,10 +117,11 @@ export function BoardDisplay({
                   className={getCellClassName(y, x)}
                   data-coord={`${rowLabels[y]}${x + 1}`}
                   title={`${rowLabels[y]}${x + 1}`}
+                  onClick={() => handleCellClick(y, x)}
+                  style={{ cursor: (isClickable && cell === 0) ? 'pointer' : 'default' }}
                 >
-                  {/* Overlay icons for hits/misses */}
+                  {/* Overlay icons for hits and pending shots (no icon for misses) */}
                   {cell === 2 && <span className="cell-overlay">💥</span>}
-                  {cell === 3 && <span className="cell-overlay">💧</span>}
                   {cell === 4 && <span className="cell-overlay">🎯</span>}
                 </div>
               ))}

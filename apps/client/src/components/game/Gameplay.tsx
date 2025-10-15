@@ -12,8 +12,6 @@ import { createEmptyBoard } from "../../utils/boardUtils";
 export function Gameplay() {
   const { account, gameData, gameId, opponentBoard, setOpponentBoard, isMyTurn } = useGameStore();
   const { fireShot } = useGameContracts(account);
-  const [shotRow, setShotRow] = useState("A");
-  const [shotCol, setShotCol] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isFiring, setIsFiring] = useState(false);
   const [waitingForProof, setWaitingForProof] = useState(false);
@@ -102,24 +100,11 @@ export function Gameplay() {
     }
   }, [opponentBoard, setOpponentBoard]);
 
-  // Check if current coordinates have already been fired at
-  const isAlreadyFired = () => {
-    if (!opponentBoard) return false;
-    const row = shotRow.charCodeAt(0) - 65;
-    const col = shotCol - 1;
-    if (row < 0 || row > 9 || col < 0 || col > 9) return false;
-    // Cell values: 0 = water (not fired), 1 = ship (shouldn't exist on opponent board), 
-    // 2 = hit, 3 = miss, 4 = pending
-    return opponentBoard[row][col] > 0;
-  };
-
-  const handleFireShot = async () => {
-    const row = shotRow.charCodeAt(0) - 65; // A=0, B=1, etc.
-    const col = shotCol - 1; // 1-indexed to 0-indexed
-
+  const handleFireShot = async (row: number, col: number) => {
     // Check if already fired at this position
     if (opponentBoard && opponentBoard[row][col] > 0) {
-      setError(`❌ You've already fired at ${shotRow}${shotCol}!`);
+      const coordinate = `${String.fromCharCode(65 + row)}${col + 1}`;
+      setError(`❌ You've already fired at ${coordinate}!`);
       return;
     }
 
@@ -127,10 +112,17 @@ export function Gameplay() {
     setShotResultMessage(null); // Clear any previous result message
     setIsFiring(true);
     
+    // Optimistic UI update: Immediately show bullseye on clicked cell
+    const newBoard = opponentBoard.map((r, y) =>
+      r.map((cell, x) => (y === row && x === col ? 4 : cell)) // 4 = pending shot
+    );
+    setOpponentBoard(newBoard);
+    
+    const coordinate = `${String.fromCharCode(65 + row)}${col + 1}`;
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('🎯 FIRING SHOT');
     console.log(`   My Address: ${account?.address}`);
-    console.log(`   Target: ${shotRow}${shotCol} (${row}, ${col})`);
+    console.log(`   Target: ${coordinate} (${row}, ${col})`);
     console.log(`   Current Turn: ${gameData?.current_turn}`);
     console.log(`   Is My Turn: ${myTurn}`);
     console.log(`   Has Pending Shot: ${hasPendingShot}`);
@@ -144,35 +136,14 @@ export function Gameplay() {
       setWaitingForProof(true);
     } catch (error) {
       console.log(`❌ Shot firing failed`);
-      // Error handled in hook
+      // Revert optimistic update if shot failed
+      const revertedBoard = opponentBoard.map((r, y) =>
+        r.map((cell, x) => (y === row && x === col ? 0 : cell))
+      );
+      setOpponentBoard(revertedBoard);
     } finally {
       setIsFiring(false);
     }
-  };
-
-  const handleRandomCoords = () => {
-    if (!opponentBoard) return;
-
-    // Find all unfired positions
-    const unfiredPositions: Array<{ row: number; col: number }> = [];
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
-        if (opponentBoard[r][c] === 0) {
-          unfiredPositions.push({ row: r, col: c });
-        }
-      }
-    }
-
-    if (unfiredPositions.length === 0) {
-      setError("❌ All positions have been fired at!");
-      return;
-    }
-
-    // Pick random unfired position
-    const randomPos = unfiredPositions[Math.floor(Math.random() * unfiredPositions.length)];
-    setShotRow(String.fromCharCode(65 + randomPos.row));
-    setShotCol(randomPos.col + 1);
-    setError(null);
   };
 
   return (
@@ -184,70 +155,16 @@ export function Gameplay() {
           <BoardDisplay 
             board={opponentBoard}
             ships={[]}
-            title="Track Your Shots" 
+            title="Click a cell to fire 🎯" 
             isActive={myTurn && !waitingForProof}
             showShipColors={false}
+            onCellClick={handleFireShot}
+            isClickable={myTurn && !waitingForProof && !isFiring && !hasPendingShot && !isGameOver}
           />
         </>
       ) : (
         <div className="status-box">Initializing...</div>
       )}
-
-      <div style={{ display: "flex", gap: "15px", alignItems: "center", marginTop: "15px" }}>
-        <label>
-          Row:{" "}
-          <input
-            type="text"
-            maxLength={1}
-            value={shotRow}
-            onChange={(e) => setShotRow(e.target.value.toUpperCase())}
-            style={{
-              width: "60px",
-              padding: "8px",
-              fontSize: "16px",
-              textAlign: "center",
-              borderRadius: "6px",
-              border: "1px solid #444",
-              background: "#2a2a2a",
-              color: "#e0e0e0",
-            }}
-          />
-        </label>
-
-        <label>
-          Column:{" "}
-          <input
-            type="number"
-            min={1}
-            max={10}
-            value={shotCol}
-            onChange={(e) => setShotCol(parseInt(e.target.value) || 1)}
-            style={{
-              width: "70px",
-              padding: "8px",
-              fontSize: "16px",
-              textAlign: "center",
-              borderRadius: "6px",
-              border: "1px solid #444",
-              background: "#2a2a2a",
-              color: "#e0e0e0",
-            }}
-          />
-        </label>
-
-        <button onClick={handleRandomCoords} disabled={isGameOver} className="secondary">
-          🎲 Random
-        </button>
-
-        <button 
-          onClick={handleFireShot} 
-          disabled={isGameOver || !myTurn || isAlreadyFired() || isFiring || waitingForProof || hasPendingShot} 
-          className="danger"
-          title={(waitingForProof || hasPendingShot) ? "Waiting for opponent to apply proof..." : "Fire a shot at the opponent"}
-        >
-          {isFiring ? "🎯 Firing Shot..." : (waitingForProof || hasPendingShot) ? "⏳ Waiting for Proof..." : "🔥 Fire Shot"}
-        </button>
-      </div>
 
       {error && (
         <div className="status-box" style={{ background: "#3a1a1a", borderColor: "#8B0000", color: "#FF5722" }}>
@@ -275,12 +192,12 @@ export function Gameplay() {
         {isGameOver 
           ? "🏁 Game Over - No more shots can be fired" 
           : !myTurn 
-            ? "Waiting for opponent..." 
+            ? "⏳ Waiting for opponent..." 
             : (waitingForProof || hasPendingShot)
               ? "⏳ Waiting for opponent to apply proof..."
-              : isAlreadyFired() 
-                ? `⚠️ Already fired at ${shotRow}${shotCol} - choose a different position`
-                : "Your turn! Select coordinates and fire"}
+              : isFiring
+                ? "🎯 Firing shot..."
+                : "✨ Your turn! Click a cell to fire"}
       </div>
     </div>
   );

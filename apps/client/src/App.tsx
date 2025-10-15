@@ -34,8 +34,8 @@ function GameApp() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>Bitcoin Battleship</h1>
-        <p className="subtitle">Stake sats, sink ships, win on Starknet</p>
+        <h1>ZK Bitcoin Battleship</h1>
+        <p className="subtitle">Stake sats, prove shots, win on Starknet</p>
       </header>
 
       <main className="app-main">

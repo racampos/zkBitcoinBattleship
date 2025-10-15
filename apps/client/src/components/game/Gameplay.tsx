@@ -181,7 +181,13 @@ export function Gameplay() {
 
       {opponentBoard ? (
         <>
-          <BoardDisplay board={opponentBoard} title="Track Your Shots" />
+          <BoardDisplay 
+            board={opponentBoard}
+            ships={[]}
+            title="Track Your Shots" 
+            isActive={myTurn && !waitingForProof}
+            showShipColors={false}
+          />
         </>
       ) : (
         <div className="status-box">Initializing...</div>

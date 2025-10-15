@@ -1,63 +1,128 @@
 /**
  * Board Display Component
- * Renders a Battleship board (ASCII-style)
+ * Renders a Battleship board with HTML grid and colored ships
  */
 
 import React from "react";
-import type { Board } from "../../utils/boardUtils";
+import type { Board, PlacedShip } from "../../utils/boardUtils";
 
 interface BoardDisplayProps {
   board: Board;
+  ships: PlacedShip[];
   title: string;
+  isActive?: boolean; // For "Your Turn" shimmer effect
+  isVictory?: boolean; // For victory animation
+  isDefeat?: boolean; // For defeat animation
+  showShipColors?: boolean; // Hide ship colors on attack board
 }
 
-export function BoardDisplay({ board, title }: BoardDisplayProps) {
+export function BoardDisplay({ 
+  board, 
+  ships,
+  title, 
+  isActive = false, 
+  isVictory = false, 
+  isDefeat = false,
+  showShipColors = true
+}: BoardDisplayProps) {
   const rowLabels = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 
-  const renderCell = (cell: number) => {
-    if (cell === 1) {
-      return <span style={{ color: "#4CAF50", fontWeight: "bold" }}>S</span>; // Ship (green)
-    } else if (cell === 2) {
-      return <span style={{ color: "#F44336", fontWeight: "bold" }}>X</span>; // Hit (red)
-    } else if (cell === 3) {
-      return <span style={{ color: "#2196F3" }}>o</span>; // Miss (blue)
-    } else if (cell === 4) {
-      return <span style={{ color: "#FFA726", fontWeight: "bold" }}>?</span>; // Pending shot (orange)
-    } else {
-      return <span style={{ color: "#555" }}>·</span>; // Water (gray)
+  // Find which ship occupies a given cell
+  const getShipForCell = (row: number, col: number): PlacedShip | null => {
+    if (board[row][col] !== 1) return null;
+    
+    for (const ship of ships) {
+      if (ship.orientation === 'horizontal') {
+        if (ship.y === row && col >= ship.x && col < ship.x + ship.size) {
+          return ship;
+        }
+      } else {
+        if (ship.x === col && row >= ship.y && row < ship.y + ship.size) {
+          return ship;
+        }
+      }
     }
+    return null;
   };
 
-  return (
-    <div>
-      <h3 style={{ marginBottom: "10px", color: "#4CAF50" }}>{title}</h3>
-      <div
-        style={{
-          fontFamily: "'Monaco', 'Courier New', monospace",
-          fontSize: "14px",
-          lineHeight: "1.4",
-          background: "#2a2a2a",
-          padding: "15px",
-          borderRadius: "8px",
-        }}
-      >
-        {/* Header with column numbers */}
-        <div style={{ color: "#4CAF50", fontWeight: "bold", marginBottom: "4px" }}>
-          &nbsp;&nbsp;1 2 3 4 5 6 7 8 9 10
-        </div>
+  // Get CSS classes for a cell
+  const getCellClassName = (row: number, col: number): string => {
+    const cell = board[row][col];
+    const ship = getShipForCell(row, col);
+    
+    let classes = ['grid-cell'];
+    
+    // Base state
+    if (cell === 0) {
+      classes.push('cell-water');
+    } else if (cell === 1 && ship && showShipColors) {
+      classes.push(`cell-ship ship-${ship.type}`);
+    } else if (cell === 1) {
+      classes.push('cell-ship');
+    } else if (cell === 2) {
+      classes.push('cell-hit');
+    } else if (cell === 3) {
+      classes.push('cell-miss');
+    } else if (cell === 4) {
+      classes.push('cell-pending');
+    }
+    
+    return classes.join(' ');
+  };
 
-        {/* Board rows */}
+  // Build className for board container
+  let boardClassName = "board-display-grid";
+  if (isActive) boardClassName += " active";
+  if (isVictory) boardClassName += " victory-board";
+  if (isDefeat) boardClassName += " defeat-board";
+
+  return (
+    <div className={boardClassName}>
+      <h3 className="board-title">{title}</h3>
+      
+      <div className="battleship-grid-container">
+        {/* Column headers */}
+        <div className="grid-header-row">
+          <div className="grid-corner"></div>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+            <div key={n} className="grid-col-header">{n}</div>
+          ))}
+        </div>
+        
+        {/* Rows with labels */}
         {board.map((row, y) => (
-          <div key={y} style={{ margin: "2px 0" }}>
-            {rowLabels[y]}&nbsp;&nbsp;
-            {row.map((cell, x) => (
-              <span key={x}>
-                {renderCell(cell)}{" "}
-              </span>
-            ))}
+          <div key={y} className="grid-row-container">
+            <div className="grid-row-header">{rowLabels[y]}</div>
+            <div className="grid-row">
+              {row.map((cell, x) => (
+                <div 
+                  key={x} 
+                  className={getCellClassName(y, x)}
+                  data-coord={`${rowLabels[y]}${x + 1}`}
+                  title={`${rowLabels[y]}${x + 1}`}
+                >
+                  {/* Overlay icons for hits/misses */}
+                  {cell === 2 && <span className="cell-overlay">💥</span>}
+                  {cell === 3 && <span className="cell-overlay">💧</span>}
+                  {cell === 4 && <span className="cell-overlay">🎯</span>}
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
+      
+      {/* Ship legend (only if showing ship colors) */}
+      {showShipColors && ships.length > 0 && (
+        <div className="ship-legend">
+          {ships.map(ship => (
+            <div key={ship.id} className="legend-item">
+              <div className={`legend-color ship-${ship.type}`}></div>
+              <span>{ship.name} ({ship.size})</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

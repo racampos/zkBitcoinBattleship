@@ -166,7 +166,7 @@ export function GameState() {
         
         {/* Only show turn info if game is active */}
         {!isGameOver && (
-          <div className={`status-box ${myTurn ? 'success' : ''}`}>
+          <div className={`status-box ${myTurn ? 'success your-turn' : ''}`}>
             <strong>Turn:</strong><br />
             {myTurn ? "🟢 Your Turn!" : "⏸️ Opponent's Turn"}
           </div>
@@ -189,7 +189,7 @@ export function GameState() {
       </div>
 
       {gameData.status === 1 && (
-        <div className="status-box" style={{ marginTop: "12px", fontSize: "13px" }}>
+        <div className={`status-box ${myTurn ? 'success your-turn' : ''}`} style={{ marginTop: "12px", fontSize: "13px" }}>
           {myTurn ? (
             <>🎯 <strong>Your turn!</strong> Fire a shot at your opponent's board below.</>
           ) : (

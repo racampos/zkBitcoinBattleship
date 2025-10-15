@@ -4,6 +4,7 @@
 
 import { create } from "zustand";
 import type { Account } from "@cartridge/controller";
+import type { PlacedShip } from "../utils/boardUtils";
 
 export interface GameData {
   game_id: string;
@@ -36,9 +37,11 @@ interface GameStore {
   myBoard: number[][] | null; // Defense board showing shots received
   originalBoard: number[][] | null; // Original ship layout (never modified)
   opponentBoard: number[][] | null; // Attack board tracking hits/misses
+  myShips: PlacedShip[]; // Ship metadata for rendering
   setMyBoard: (board: number[][] | null) => void;
   setOriginalBoard: (board: number[][] | null) => void;
   setOpponentBoard: (board: number[][] | null) => void;
+  setMyShips: (ships: PlacedShip[]) => void;
 
   // UI State
   isLoading: boolean;
@@ -60,6 +63,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   myBoard: null,
   originalBoard: null,
   opponentBoard: null,
+  myShips: [],
   isLoading: false,
   error: null,
 
@@ -70,6 +74,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setMyBoard: (myBoard) => set({ myBoard }),
   setOriginalBoard: (originalBoard) => set({ originalBoard }),
   setOpponentBoard: (opponentBoard) => set({ opponentBoard }),
+  setMyShips: (myShips) => set({ myShips }),
   setIsLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
 
@@ -81,6 +86,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       myBoard: null,
       originalBoard: null,
       opponentBoard: null,
+      myShips: [],
       error: null,
     }),
 

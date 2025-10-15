@@ -12,7 +12,7 @@ import { BoardDisplay } from "./BoardDisplay";
 import { generateRandomBoard, calculateBoardHash, loadBoardFromStorage, saveBoardToStorage } from "../../utils/boardUtils";
 
 export function BoardSetup() {
-  const { account, gameId, myBoard, setMyBoard, setOriginalBoard, isLoading } = useGameStore();
+  const { account, gameId, myBoard, myShips, setMyBoard, setOriginalBoard, setMyShips, isLoading } = useGameStore();
   const { commitBoard } = useGameContracts(account);
   const { isCommitted, isChecking } = useBoardCommitStatus();
   const stakingStatus = useStakingStatus();
@@ -23,22 +23,24 @@ export function BoardSetup() {
       console.log(`🎲 New game detected: ${gameId} - checking if board needs reset`);
       
       // Try to restore from localStorage first
-      const savedBoard = loadBoardFromStorage(gameId);
+      const savedData = loadBoardFromStorage(gameId);
       
-      if (savedBoard) {
+      if (savedData) {
         // Restore saved board (page reload or rejoin)
-        console.log("♻️ Restoring saved board for game");
-        setMyBoard(savedBoard);
-        setOriginalBoard(savedBoard.map(row => [...row])); // Deep copy for original
+        console.log("♻️ Restoring saved board and ships for game");
+        setMyBoard(savedData.board);
+        setOriginalBoard(savedData.board.map(row => [...row])); // Deep copy for original
+        setMyShips(savedData.ships);
       } else {
         // No saved board - generate new random board
         console.log("🎲 Generating new random board...");
-        const board = generateRandomBoard();
-        setMyBoard(board);
-        setOriginalBoard(board.map(row => [...row])); // Deep copy for original
+        const boardData = generateRandomBoard();
+        setMyBoard(boardData.board);
+        setOriginalBoard(boardData.board.map(row => [...row])); // Deep copy for original
+        setMyShips(boardData.ships);
       }
     }
-  }, [gameId, setMyBoard, setOriginalBoard]); // Only depend on gameId - reset whenever it changes
+  }, [gameId, setMyBoard, setOriginalBoard, setMyShips]); // Only depend on gameId - reset whenever it changes
 
   const handleCommitBoard = async () => {
     if (!myBoard || !gameId) return;
@@ -49,7 +51,7 @@ export function BoardSetup() {
     try {
       await commitBoard(boardHash);
       // Save board to localStorage after successful commit
-      saveBoardToStorage(gameId, myBoard);
+      saveBoardToStorage(gameId, { board: myBoard, ships: myShips });
     } catch (error) {
       // Error handled in hook
     }
@@ -57,9 +59,10 @@ export function BoardSetup() {
 
   const handleRegenerateBoard = () => {
     console.log("🔄 Regenerating board...");
-    const board = generateRandomBoard();
-    setMyBoard(board);
-    setOriginalBoard(board.map(row => [...row])); // Deep copy for original
+    const boardData = generateRandomBoard();
+    setMyBoard(boardData.board);
+    setOriginalBoard(boardData.board.map(row => [...row])); // Deep copy for original
+    setMyShips(boardData.ships);
   };
 
   return (
@@ -68,7 +71,7 @@ export function BoardSetup() {
 
       {myBoard ? (
         <>
-          <BoardDisplay board={myBoard} title="Your Ships" />
+          <BoardDisplay board={myBoard} ships={myShips} title="Your Ships" showShipColors={true} />
 
           {isCommitted ? (
             <div className="status-box" style={{ color: "#4CAF50" }}>

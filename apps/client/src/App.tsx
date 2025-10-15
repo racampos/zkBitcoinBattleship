@@ -51,14 +51,19 @@ function GameApp() {
       {/* Staking Flow - Approve and Stake WBTC (hide when game ends) */}
       {account && gameId && !isGameOver && <StakingFlow />}
 
-      {/* Board Setup - Place Ships */}
-      {account && gameId && <BoardSetup />}
+      {/* Proof Application - Respond to opponent's shot */}
+      {account && gameId && <ProofApplication />}
 
-        {/* Proof Application - Respond to opponent's shot */}
-        {account && gameId && <ProofApplication />}
+      {/* Both Boards Side by Side */}
+      {account && gameId && (
+        <div className="boards-container">
+          {/* Board Setup - Place Ships */}
+          <BoardSetup />
 
-        {/* Gameplay - Fire Shots */}
-        {account && gameId && <Gameplay />}
+          {/* Gameplay - Fire Shots */}
+          <Gameplay />
+        </div>
+      )}
 
         {/* Game State Display */}
         {account && gameId && <GameState />}

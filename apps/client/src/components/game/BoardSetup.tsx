@@ -16,6 +16,7 @@ export function BoardSetup() {
   const { commitBoard } = useGameContracts(account);
   const { isCommitted, isChecking } = useBoardCommitStatus();
   const stakingStatus = useStakingStatus();
+  const [showCommitMessage, setShowCommitMessage] = React.useState(false);
 
   // Reset board when game ID changes (new game started)
   useEffect(() => {
@@ -41,6 +42,17 @@ export function BoardSetup() {
       }
     }
   }, [gameId, setMyBoard, setOriginalBoard, setMyShips]); // Only depend on gameId - reset whenever it changes
+
+  // Show commit success message temporarily (5 seconds) when board is committed
+  useEffect(() => {
+    if (isCommitted) {
+      setShowCommitMessage(true);
+      const timeout = setTimeout(() => {
+        setShowCommitMessage(false);
+      }, 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isCommitted]);
 
   const handleCommitBoard = async () => {
     if (!myBoard || !gameId) return;
@@ -73,11 +85,14 @@ export function BoardSetup() {
         <>
           <BoardDisplay board={myBoard} ships={myShips} title="Your Ships" showShipColors={true} />
 
-          {isCommitted ? (
-            <div className="status-box" style={{ color: "#4CAF50" }}>
+          {/* Show temporary success message after commitment */}
+          {showCommitMessage && (
+            <div className="status-box" style={{ color: "#4CAF50", animation: "fadeIn 0.3s ease-in" }}>
               ✅ Board committed! Waiting for game to start...
             </div>
-          ) : (
+          )}
+
+          {!isCommitted && (
             <>
               {/* Show staking warning if not both staked */}
               {!stakingStatus.bothStaked && (

@@ -187,16 +187,6 @@ export function GameState() {
           {isPlayer1 ? gameData.p2_hits : gameData.p1_hits}
         </div>
       </div>
-
-      {gameData.status === 1 && (
-        <div className={`status-box ${myTurn ? 'success your-turn' : ''}`} style={{ marginTop: "12px", fontSize: "13px" }}>
-          {myTurn ? (
-            <>🎯 <strong>Your turn!</strong> Fire a shot at your opponent's board below.</>
-          ) : (
-            <>⏳ <strong>Waiting for opponent...</strong> They're taking their shot.</>
-          )}
-        </div>
-      )}
     </div>
   );
 }

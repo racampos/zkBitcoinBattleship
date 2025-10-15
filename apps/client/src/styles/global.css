@@ -463,6 +463,160 @@ button.secondary:hover:not(:disabled) {
 }
 
 /* ========================================
+   PROOF NOTIFICATION - COMPACT & ATTENTION-GRABBING
+   ======================================== */
+
+.proof-notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  animation: slideInRight 0.5s ease-out;
+}
+
+.proof-notification {
+  background: linear-gradient(135deg, #8B0000 0%, #B22222 100%);
+  border: 3px solid #FF5722;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 
+    0 8px 32px rgba(255, 87, 34, 0.4),
+    0 0 0 0 rgba(255, 87, 34, 0.7);
+  animation: urgentPulse 2s ease-in-out infinite;
+  min-width: 280px;
+  max-width: 320px;
+}
+
+.proof-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.proof-icon {
+  font-size: 24px;
+  animation: rotate 2s linear infinite;
+}
+
+.proof-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.proof-coords {
+  font-size: 18px;
+  font-weight: bold;
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes urgentPulse {
+  0%, 100% {
+    box-shadow: 
+      0 8px 32px rgba(255, 87, 34, 0.4),
+      0 0 0 0 rgba(255, 87, 34, 0.7);
+  }
+  50% {
+    box-shadow: 
+      0 8px 32px rgba(255, 87, 34, 0.6),
+      0 0 0 10px rgba(255, 87, 34, 0);
+  }
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  10% {
+    transform: rotate(20deg);
+  }
+  20% {
+    transform: rotate(-20deg);
+  }
+  30% {
+    transform: rotate(20deg);
+  }
+  40% {
+    transform: rotate(-20deg);
+  }
+  50%, 100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Mobile: move to top center */
+@media (max-width: 768px) {
+  .proof-notification-container {
+    top: 10px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+  
+  @keyframes slideInRight {
+    from {
+      transform: translateX(50%) translateY(-100px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(50%) translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+/* ========================================
+   BOARDS CONTAINER - SIDE BY SIDE LAYOUT
+   ======================================== */
+
+.boards-container {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+
+.boards-container > * {
+  flex: 1 1 550px; /* Grow/shrink, base width 550px */
+  min-width: 0; /* Prevent flex items from overflowing */
+  max-width: 600px;
+}
+
+/* On smaller screens, stack vertically */
+@media (max-width: 1200px) {
+  .boards-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .boards-container > * {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* ========================================
    HTML GRID BOARD (NEW)
    ======================================== */
 

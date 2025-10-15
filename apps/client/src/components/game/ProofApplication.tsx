@@ -53,36 +53,21 @@ export function ProofApplication() {
   const displayCoords = `${rowLabels[pendingShot.row]}${pendingShot.col + 1}`;
 
   return (
-    <div 
-      className="section" 
-      style={{ 
-        background: "#3a1a1a", 
-        borderColor: "#8B0000",
-        animation: "pulse 2s infinite"
-      }}
-    >
-      <h2 style={{ color: "#FF5722" }}>🎯 Opponent Fired!</h2>
-      
-      <div className="status-box" style={{ background: "#2a0a0a", borderColor: "#FF5722" }}>
-        <div style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "10px" }}>
-          Shot at: <span style={{ color: "#FF5722", fontFamily: "monospace" }}>{displayCoords}</span>
-        </div>
-        <div style={{ marginBottom: "15px", color: "#ccc" }}>
-          Apply proof to reveal hit/miss and flip turn
+    <div className="proof-notification-container">
+      <div className="proof-notification">
+        <div className="proof-header">
+          <span className="proof-icon">🎯</span>
+          <span className="proof-title">Shot Incoming!</span>
+          <span className="proof-coords">{displayCoords}</span>
         </div>
         <button
           onClick={handleApplyProof}
           disabled={isLoading}
           className="danger"
-          style={{ fontSize: "16px", padding: "12px 24px" }}
+          style={{ width: "100%", fontSize: "14px", padding: "10px" }}
         >
-          {isLoading ? "⏳ Applying Proof..." : "🛡️ Apply Proof"}
+          {isLoading ? "⏳ Applying..." : "🛡️ Apply Proof"}
         </button>
-        {isLoading && (
-          <div style={{ marginTop: "10px", fontSize: "12px", color: "#FFA726" }}>
-            Waiting for transaction confirmation...
-          </div>
-        )}
       </div>
     </div>
   );

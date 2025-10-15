@@ -15,6 +15,7 @@ export function useBoardCommitStatus() {
   // Use ref to persist committed status across effect restarts
   const isCurrentlyCommittedRef = useRef(false);
   const lastGameIdRef = useRef<string | null>(null);
+  const isFirstCheckRef = useRef(true); // Track if this is the first check
 
   useEffect(() => {
     if (!gameId || !account) {
@@ -27,6 +28,7 @@ export function useBoardCommitStatus() {
     if (lastGameIdRef.current !== gameId) {
       isCurrentlyCommittedRef.current = false;
       lastGameIdRef.current = gameId;
+      isFirstCheckRef.current = true; // Reset first check flag for new game
     }
 
     let isMounted = true;
@@ -35,7 +37,11 @@ export function useBoardCommitStatus() {
       // Don't check if already committed
       if (isCurrentlyCommittedRef.current) return;
       
-      setIsChecking(true);
+      // Only show "checking" on first load, not during polling
+      if (isFirstCheckRef.current) {
+        setIsChecking(true);
+        isFirstCheckRef.current = false;
+      }
       try {
         const response = await fetch(getToriiGraphQLUrl(), {
           method: "POST",

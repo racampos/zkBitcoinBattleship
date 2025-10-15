@@ -13,8 +13,9 @@ export function GameManagement() {
   const { createGame, joinGame } = useGameContracts(account);
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [joinGameId, setJoinGameId] = useState("");
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Persist game ID to localStorage whenever it changes
+  // Persist game ID to localStorage whenever it changes (but only after initialization)
   useEffect(() => {
     if (gameId) {
       localStorage.setItem('battleship_game_id', gameId);
@@ -23,19 +24,24 @@ export function GameManagement() {
       url.searchParams.set('game', gameId);
       window.history.replaceState({}, '', url);
       console.log('💾 Game ID persisted:', gameId);
-    } else {
+    } else if (hasInitialized) {
+      // Only remove from localStorage/URL if we've initialized
+      // (prevents removing URL param on initial mount before we've read it)
       localStorage.removeItem('battleship_game_id');
       // Remove from URL
       const url = new URL(window.location.href);
       url.searchParams.delete('game');
       window.history.replaceState({}, '', url);
     }
-  }, [gameId]);
+  }, [gameId, hasInitialized]);
 
   // Load game ID from URL or localStorage when account is ready
   useEffect(() => {
     if (!account) return; // Wait for account
-    if (gameId) return; // Already have a game
+    if (gameId) {
+      setHasInitialized(true); // Already have a game, mark as initialized
+      return;
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const gameIdFromUrl = urlParams.get('game');
@@ -44,10 +50,27 @@ export function GameManagement() {
     const restoredGameId = gameIdFromUrl || gameIdFromStorage;
     
     if (restoredGameId) {
-      console.log('♻️ Restoring game ID:', restoredGameId, 'from', gameIdFromUrl ? 'URL' : 'localStorage');
+      const source = gameIdFromUrl ? 'URL' : 'localStorage';
+      console.log('♻️ Restoring game ID:', restoredGameId, 'from', source);
+      
+      // Set the game ID first
       setGameId(restoredGameId);
+      
+      // If coming from URL (shared link), try to join the game
+      // This will succeed if we're P2 joining for the first time
+      // It will gracefully fail if we're P1 or already joined
+      if (gameIdFromUrl) {
+        console.log('🔗 URL game link detected - attempting to join...');
+        joinGame(restoredGameId).catch((err) => {
+          // Silently ignore errors - could be P1 restoring or already joined
+          console.log('ℹ️ Join attempt from URL failed (likely already in game):', err.message);
+        });
+      }
     }
-  }, [account, gameId, setGameId]);
+    
+    // Mark as initialized whether we found a game or not
+    setHasInitialized(true);
+  }, [account, gameId, setGameId, joinGame]);
 
   // Manual restore button
   const storedGameId = localStorage.getItem('battleship_game_id');

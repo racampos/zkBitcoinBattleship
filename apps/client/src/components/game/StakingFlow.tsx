@@ -18,13 +18,14 @@ const STAKE_AMOUNT_SATS = 1000n; // Per-match stake
 
 export function StakingFlow() {
   const { account, gameId, gameData, amIPlayer1 } = useGameStore();
-  const { stakeForGame, isLoading } = useGameContracts(account);
+  const { stakeForGame } = useGameContracts(account);
   const { approveWBTC, checkAllowance, checkBalance, isApproving, WBTC_ADDRESS } = useWBTCContracts(account);
   const stakingStatus = useStakingStatus();
   
   const [wbtcBalance, setWbtcBalance] = useState<bigint>(0n);
   const [allowance, setAllowance] = useState<bigint>(0n);
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
+  const [isStaking, setIsStaking] = useState(false); // Local staking state
 
   // Check balance and allowance periodically
   useEffect(() => {
@@ -61,10 +62,13 @@ export function StakingFlow() {
 
   const handleStake = async () => {
     try {
+      setIsStaking(true);
       console.log(`💰 Staking ${STAKE_AMOUNT_SATS} sats from balance ${wbtcBalance}`);
       await stakeForGame(WBTC_ADDRESS, STAKE_AMOUNT_SATS);
     } catch (error) {
       // Error already handled in hook
+    } finally {
+      setIsStaking(false);
     }
   };
 
@@ -205,11 +209,11 @@ export function StakingFlow() {
             </div>
             <button
               onClick={handleStake}
-              disabled={!isApproved || !hasEnoughBalance || isLoading}
+              disabled={!isApproved || !hasEnoughBalance || isStaking}
               className="primary"
               style={{ opacity: isApproved ? 1 : 0.5 }}
             >
-              {isLoading ? "Staking..." : "Stake 1,000 sats"}
+              {isStaking ? "Staking..." : "Stake 1,000 sats"}
             </button>
           </div>
         </div>

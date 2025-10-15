@@ -120,7 +120,7 @@ export function GameManagement() {
 
     return (
       <div className="section">
-        <h2>📋 Current Game</h2>
+        <h2>Current Game</h2>
         
         <div className="status-box">
           <div style={{ marginBottom: "8px" }}>

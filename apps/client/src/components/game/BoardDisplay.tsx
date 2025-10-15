@@ -122,7 +122,7 @@ export function BoardDisplay({
                 >
                   {/* Overlay icons for hits and pending shots (no icon for misses) */}
                   {cell === 2 && <span className="cell-overlay">💥</span>}
-                  {cell === 4 && <span className="cell-overlay">⏳</span>}
+                  {cell === 4 && <span className="cell-overlay">🎯</span>}
                 </div>
               ))}
             </div>

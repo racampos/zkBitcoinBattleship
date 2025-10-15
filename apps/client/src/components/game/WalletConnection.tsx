@@ -91,7 +91,7 @@ export function WalletConnection() {
 
   return (
     <div className="section">
-      <h2>🎮 Controller</h2>
+      <h2>Controller</h2>
 
       {!account ? (
         <>

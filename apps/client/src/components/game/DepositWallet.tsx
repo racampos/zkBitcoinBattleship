@@ -200,7 +200,7 @@ export function DepositWallet() {
 
   return (
     <div className="section" style={{ background: "#1a2a1a", borderColor: "#2d5a2d" }}>
-      <h2>💰 Game Wallet</h2>
+      <h2>Game Wallet</h2>
 
       {/* Balance Display */}
       <div className="status-box success" style={{ marginBottom: "15px" }}>

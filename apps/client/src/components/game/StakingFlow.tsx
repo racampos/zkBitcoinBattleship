@@ -76,7 +76,7 @@ export function StakingFlow() {
   if (stakingStatus.iHaveStaked) {
     return (
       <div className="section" style={{ background: "#1a3a1a", borderColor: "#2d5a2d" }}>
-        <h2>✅ You've Staked!</h2>
+        <h2>You've Staked!</h2>
         <div className="status-box success">
           <div style={{ marginBottom: "10px" }}>
             <strong>💰 Pot Size:</strong> 2,000 sats (0.00002 BTC)

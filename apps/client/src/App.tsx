@@ -34,7 +34,7 @@ function GameApp() {
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>⚔️ ZK Battleship on Starknet</h1>
+        <h1>ZK Battleship on Starknet</h1>
         <p className="subtitle">Privacy-preserving on-chain battleship powered by ZK proofs</p>
       </header>
 

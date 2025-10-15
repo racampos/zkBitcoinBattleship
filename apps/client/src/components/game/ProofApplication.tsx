@@ -62,7 +62,7 @@ export function ProofApplication() {
     <div className="proof-notification-container">
       <div className="proof-notification">
         <div className="proof-header">
-          <span className="proof-icon">⚠️</span>
+          <span className="proof-icon">🎯</span>
           <span className="proof-title">Shot Incoming!</span>
           <span className="proof-coords">{displayCoords}</span>
         </div>
@@ -80,7 +80,7 @@ export function ProofApplication() {
           className="danger"
           style={{ width: "100%", fontSize: "14px", padding: "10px" }}
         >
-          {isLoading ? "⏳ Applying..." : "Apply Proof"}
+          {isLoading ? "⏳ Applying..." : "🛡️ Apply Proof"}
         </button>
       </div>
     </div>

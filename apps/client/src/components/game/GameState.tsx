@@ -70,7 +70,7 @@ export function GameState() {
   // Now safe to calculate derived values (after gameData check)
   const statusMap: Record<number, string> = {
     0: "⏳ Waiting for Player 2",
-    1: "🎮 In Progress",
+    1: "In Progress",
     2: "🏁 Game Over",
   };
 
@@ -88,7 +88,7 @@ export function GameState() {
       {/* Confetti for winner! */}
       {showConfetti && <Confetti />}
       
-      <h2>📊 Game State</h2>
+      <h2>Game State</h2>
 
       {/* Winner Announcement - Only show when game is over */}
       {isGameOver && (
@@ -121,7 +121,7 @@ export function GameState() {
                 borderRadius: "8px",
                 border: "1px solid #4CAF50"
               }}>
-                💰 Winnings: <span style={{ color: "#4CAF50" }}>+2,000 sats</span>
+                Winnings: <span style={{ color: "#4CAF50" }}>+2,000 sats</span>
                 <div style={{ fontSize: "12px", fontWeight: "normal", marginTop: "6px", color: "#aaa" }}>
                   (Your stake returned + opponent's stake)
                 </div>

@@ -79,7 +79,7 @@ export function BoardSetup() {
 
   return (
     <div className="section">
-      <h2>🛡️ Your Defense Board</h2>
+      <h2>Your Defense Board</h2>
 
       {myBoard ? (
         <>
@@ -88,7 +88,7 @@ export function BoardSetup() {
           {/* Show temporary success message after commitment */}
           {showCommitMessage && (
             <div className="status-box" style={{ color: "#4CAF50", animation: "fadeIn 0.3s ease-in" }}>
-              ✅ Board committed! Waiting for game to start...
+              Board committed! Waiting for game to start...
             </div>
           )}
 
@@ -102,7 +102,7 @@ export function BoardSetup() {
                     {!stakingStatus.iHaveStaked ? (
                       <>You must stake before committing your board. See staking section above.</>
                     ) : (
-                      <>Waiting for opponent to stake... ({stakingStatus.p1Staked ? "P1 ✅" : "P1 ⏳"} | {stakingStatus.p2Staked ? "P2 ✅" : "P2 ⏳"})</>
+                      <>Waiting for opponent to stake... ({stakingStatus.p1Staked ? "P1 ✓" : "P1 ⏳"} | {stakingStatus.p2Staked ? "P2 ✓" : "P2 ⏳"})</>
                     )}
                   </div>
                 </div>
@@ -132,7 +132,7 @@ export function BoardSetup() {
 
               {stakingStatus.bothStaked ? (
                 <div className="status-box success">
-                  ✅ Both players staked! Place your ships and commit your board to start the game.
+                  Both players staked! Place your ships and commit your board to start the game.
                 </div>
               ) : (
                 <div className="status-box">

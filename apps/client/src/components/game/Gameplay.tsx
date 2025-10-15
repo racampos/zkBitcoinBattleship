@@ -79,7 +79,7 @@ export function Gameplay() {
         
         // Show result notification
         if (cellValue === 2) {
-          setShotResultMessage(`🎯 HIT at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}!`);
+          setShotResultMessage(`HIT at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}!`);
         } else {
           setShotResultMessage(`💧 MISS at ${String.fromCharCode(65 + lastShotCoords.row)}${lastShotCoords.col + 1}`);
         }
@@ -148,14 +148,14 @@ export function Gameplay() {
 
   return (
     <div className="section">
-      <h2>🎯 Attack Board</h2>
+      <h2>Attack Board</h2>
 
       {opponentBoard ? (
         <>
           <BoardDisplay 
             board={opponentBoard}
             ships={[]}
-            title="Click a cell to fire 🎯" 
+            title="Click a cell to fire" 
             isActive={myTurn && !waitingForProof}
             showShipColors={false}
             onCellClick={handleFireShot}
@@ -196,8 +196,8 @@ export function Gameplay() {
             : (waitingForProof || hasPendingShot)
               ? "⏳ Waiting for opponent to apply proof..."
               : isFiring
-                ? "🎯 Firing shot..."
-                : "✨ Your turn! Click a cell to fire"}
+                ? "Firing shot..."
+                : "Your turn! Click a cell to fire"}
       </div>
     </div>
   );

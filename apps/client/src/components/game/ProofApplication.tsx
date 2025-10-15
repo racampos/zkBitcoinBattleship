@@ -51,14 +51,28 @@ export function ProofApplication() {
 
   const rowLabels = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
   const displayCoords = `${rowLabels[pendingShot.row]}${pendingShot.col + 1}`;
+  
+  // Determine if it's a hit or miss
+  const wasHit = originalBoard[pendingShot.row][pendingShot.col] === 1;
+  const resultIcon = wasHit ? "💥" : "💧";
+  const resultText = wasHit ? "HIT" : "MISS";
+  const resultColor = wasHit ? "#FF5722" : "#2196F3";
 
   return (
     <div className="proof-notification-container">
       <div className="proof-notification">
         <div className="proof-header">
-          <span className="proof-icon">🎯</span>
+          <span className="proof-icon">⚠️</span>
           <span className="proof-title">Shot Incoming!</span>
           <span className="proof-coords">{displayCoords}</span>
+        </div>
+        <div className="proof-result" style={{ 
+          background: wasHit ? "rgba(255, 87, 34, 0.2)" : "rgba(33, 150, 243, 0.2)",
+          borderColor: resultColor,
+          color: resultColor
+        }}>
+          <span className="proof-result-icon">{resultIcon}</span>
+          <span className="proof-result-text">{resultText}</span>
         </div>
         <button
           onClick={handleApplyProof}
@@ -66,7 +80,7 @@ export function ProofApplication() {
           className="danger"
           style={{ width: "100%", fontSize: "14px", padding: "10px" }}
         >
-          {isLoading ? "⏳ Applying..." : "🛡️ Apply Proof"}
+          {isLoading ? "⏳ Applying..." : "Apply Proof"}
         </button>
       </div>
     </div>
